@@ -1,0 +1,24 @@
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+.idea/
+
+# Build
+bin/
+obj/
+Debug/
+Release/
+
+# NuGet
+packages/
+*.nupkg
+
+# Environment
+.env
+appsettings.Local.json
+
+# OS
+.DS_Store
+Thumbs.db
