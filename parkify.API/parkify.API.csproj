@@ -22,4 +22,8 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\parkify.Service\parkify.Service.csproj" />
+  </ItemGroup>
+
 </Project>

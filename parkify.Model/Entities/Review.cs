@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public int ParkingZoneId { get; set; }
         public string UserId { get; set; } = string.Empty;
-        public int Rating { get; set; }  // 1-5 zvjezdica
+        public int Rating { get; set; }
         public string ReviewText { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 

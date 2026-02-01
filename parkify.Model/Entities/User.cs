@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNet.Identity.EntityFramework;
+﻿using Microsoft.AspNetCore.Identity;
 
 
 namespace parkify.Model.Entities
@@ -12,11 +12,10 @@ namespace parkify.Model.Entities
         public string Address { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
 
-        // Relacije (kasnije će biti popunjene)
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-        public ICollection<Review> ReviewRatings { get; set; } = new List<Review>();
-        public UserPreference UserPreference { get; set; }
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public Preference? Preference { get; set; }
     }
 }

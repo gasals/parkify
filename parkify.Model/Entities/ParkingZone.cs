@@ -20,8 +20,6 @@
 
         public ICollection<ParkingSpot> Spots { get; set; } = new List<ParkingSpot>();
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
-        public ICollection<ParkingZoneOccupancyLog> OccupancyLogs { get; set; } = new List<ParkingZoneOccupancyLog>();
-        public ICollection<ReviewRating> Reviews { get; set; } = new List<ReviewRating>();
-        public ICollection<ParkingPricingRule> PricingRules { get; set; } = new List<ParkingPricingRule>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }
