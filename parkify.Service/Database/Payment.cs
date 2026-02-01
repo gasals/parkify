@@ -1,11 +1,11 @@
-﻿namespace parkify.Model.Entities
+﻿namespace parkify.Service.Database  
 {
     public class Payment
     {
         public int Id { get; set; }
         public string PaymentCode { get; set; } = string.Empty;
         public int ReservationId { get; set; }
-        public string UserId { get; set; } = string.Empty;
+        public int UserId { get; set; }
         public decimal Amount { get; set; }
         public string Currency { get; set; } = "BAM";
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;

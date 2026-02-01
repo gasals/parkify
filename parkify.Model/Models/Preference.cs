@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace parkify.Model.Entities
+namespace parkify.Model.Models
 {
     public class Preference
     {

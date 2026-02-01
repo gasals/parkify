@@ -1,10 +1,10 @@
-﻿namespace parkify.Model.Entities
+﻿namespace parkify.Service.Database
 {
     public class Review
     {
         public int Id { get; set; }
         public int ParkingZoneId { get; set; }
-        public string UserId { get; set; } = string.Empty;
+        public int UserId { get; set; }
         public int Rating { get; set; }
         public string ReviewText { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;

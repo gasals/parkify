@@ -12,8 +12,8 @@ using parkify.Service.Database;
 namespace parkify.Service.Migrations
 {
     [DbContext(typeof(ParkifyContext))]
-    [Migration("20260201110552_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260201154942_UpdateUsers")]
+    partial class UpdateUsers
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,140 +25,7 @@ namespace parkify.Service.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.ToTable("AspNetRoles", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AspNetRoleClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AspNetUserClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("LoginProvider", "ProviderKey");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AspNetUserLogins", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AspNetUserRoles", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserId", "LoginProvider", "Name");
-
-                    b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("parkify.Model.Models.Notification", b =>
+            modelBuilder.Entity("parkify.Service.Database.Notification", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -192,9 +59,8 @@ namespace parkify.Service.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -203,7 +69,7 @@ namespace parkify.Service.Migrations
                     b.ToTable("Notifications");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.ParkingSpot", b =>
+            modelBuilder.Entity("parkify.Service.Database.ParkingSpot", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -243,7 +109,7 @@ namespace parkify.Service.Migrations
                     b.ToTable("ParkingSpots");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.ParkingZone", b =>
+            modelBuilder.Entity("parkify.Service.Database.ParkingZone", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -304,7 +170,7 @@ namespace parkify.Service.Migrations
                     b.ToTable("ParkingZones");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Payment", b =>
+            modelBuilder.Entity("parkify.Service.Database.Payment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -359,9 +225,8 @@ namespace parkify.Service.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -376,7 +241,7 @@ namespace parkify.Service.Migrations
                     b.ToTable("Payments");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Preference", b =>
+            modelBuilder.Entity("parkify.Service.Database.Preference", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -403,9 +268,8 @@ namespace parkify.Service.Migrations
                     b.Property<bool>("PrefersNearby")
                         .HasColumnType("bit");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -417,7 +281,7 @@ namespace parkify.Service.Migrations
                     b.ToTable("Preference");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Reservation", b =>
+            modelBuilder.Entity("parkify.Service.Database.Reservation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -488,9 +352,8 @@ namespace parkify.Service.Migrations
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -506,7 +369,7 @@ namespace parkify.Service.Migrations
                     b.ToTable("Reservations");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Review", b =>
+            modelBuilder.Entity("parkify.Service.Database.Review", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -527,9 +390,8 @@ namespace parkify.Service.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -537,35 +399,27 @@ namespace parkify.Service.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Review");
+                    b.ToTable("Reviews");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.User", b =>
+            modelBuilder.Entity("parkify.Service.Database.User", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("AccessFailedCount")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
                     b.Property<string>("Address")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -578,109 +432,36 @@ namespace parkify.Service.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PhoneNumber")
+                    b.Property<string>("PasswordSalt")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                    b.HasIndex("Email")
+                        .IsUnique();
 
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+                    b.HasIndex("Username")
+                        .IsUnique();
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("parkify.Service.Database.Notification", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.HasOne("parkify.Model.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.HasOne("parkify.Model.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("parkify.Model.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.HasOne("parkify.Model.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("parkify.Model.Models.Notification", b =>
-                {
-                    b.HasOne("parkify.Model.Models.User", "User")
+                    b.HasOne("parkify.Service.Database.User", "User")
                         .WithMany("Notifications")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -689,9 +470,9 @@ namespace parkify.Service.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.ParkingSpot", b =>
+            modelBuilder.Entity("parkify.Service.Database.ParkingSpot", b =>
                 {
-                    b.HasOne("parkify.Model.Models.ParkingZone", "ParkingZone")
+                    b.HasOne("parkify.Service.Database.ParkingZone", "ParkingZone")
                         .WithMany("Spots")
                         .HasForeignKey("ParkingZoneId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -700,15 +481,15 @@ namespace parkify.Service.Migrations
                     b.Navigation("ParkingZone");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Payment", b =>
+            modelBuilder.Entity("parkify.Service.Database.Payment", b =>
                 {
-                    b.HasOne("parkify.Model.Models.Reservation", "Reservation")
+                    b.HasOne("parkify.Service.Database.Reservation", "Reservation")
                         .WithOne("Payment")
-                        .HasForeignKey("parkify.Model.Models.Payment", "ReservationId")
+                        .HasForeignKey("parkify.Service.Database.Payment", "ReservationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("parkify.Model.Models.User", "User")
+                    b.HasOne("parkify.Service.Database.User", "User")
                         .WithMany("Payments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -719,15 +500,15 @@ namespace parkify.Service.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Preference", b =>
+            modelBuilder.Entity("parkify.Service.Database.Preference", b =>
                 {
-                    b.HasOne("parkify.Model.Models.ParkingZone", "FavoriteParkingZone")
+                    b.HasOne("parkify.Service.Database.ParkingZone", "FavoriteParkingZone")
                         .WithMany()
                         .HasForeignKey("FavoriteParkingZoneId");
 
-                    b.HasOne("parkify.Model.Models.User", "User")
+                    b.HasOne("parkify.Service.Database.User", "User")
                         .WithOne("Preference")
-                        .HasForeignKey("parkify.Model.Models.Preference", "UserId")
+                        .HasForeignKey("parkify.Service.Database.Preference", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -736,21 +517,21 @@ namespace parkify.Service.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Reservation", b =>
+            modelBuilder.Entity("parkify.Service.Database.Reservation", b =>
                 {
-                    b.HasOne("parkify.Model.Models.ParkingSpot", "ParkingSpot")
+                    b.HasOne("parkify.Service.Database.ParkingSpot", "ParkingSpot")
                         .WithMany("Reservations")
                         .HasForeignKey("ParkingSpotId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("parkify.Model.Models.ParkingZone", "ParkingZone")
+                    b.HasOne("parkify.Service.Database.ParkingZone", "ParkingZone")
                         .WithMany("Reservations")
                         .HasForeignKey("ParkingZoneId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("parkify.Model.Models.User", "User")
+                    b.HasOne("parkify.Service.Database.User", "User")
                         .WithMany("Reservations")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -763,15 +544,15 @@ namespace parkify.Service.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Review", b =>
+            modelBuilder.Entity("parkify.Service.Database.Review", b =>
                 {
-                    b.HasOne("parkify.Model.Models.ParkingZone", "ParkingZone")
+                    b.HasOne("parkify.Service.Database.ParkingZone", "ParkingZone")
                         .WithMany("Reviews")
                         .HasForeignKey("ParkingZoneId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("parkify.Model.Models.User", "User")
+                    b.HasOne("parkify.Service.Database.User", "User")
                         .WithMany("Reviews")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -782,12 +563,12 @@ namespace parkify.Service.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.ParkingSpot", b =>
+            modelBuilder.Entity("parkify.Service.Database.ParkingSpot", b =>
                 {
                     b.Navigation("Reservations");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.ParkingZone", b =>
+            modelBuilder.Entity("parkify.Service.Database.ParkingZone", b =>
                 {
                     b.Navigation("Reservations");
 
@@ -796,13 +577,13 @@ namespace parkify.Service.Migrations
                     b.Navigation("Spots");
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.Reservation", b =>
+            modelBuilder.Entity("parkify.Service.Database.Reservation", b =>
                 {
                     b.Navigation("Payment")
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("parkify.Model.Models.User", b =>
+            modelBuilder.Entity("parkify.Service.Database.User", b =>
                 {
                     b.Navigation("Notifications");
 

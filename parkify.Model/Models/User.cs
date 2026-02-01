@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-
-namespace parkify.Model.Entities
+﻿namespace parkify.Model.Models
 {
-    public class User : IdentityUser
+    public class User
     {
+        public int Id { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;

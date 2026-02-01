@@ -1,4 +1,4 @@
-﻿namespace parkify.Model.Entities
+﻿namespace parkify.Service.Database
 {
     public class ParkingZone
     {

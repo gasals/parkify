@@ -1,29 +1,57 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-using parkify.Model.Entities;
-using System.Collections.Generic;
-using System.Reflection.Emit;
+﻿using Microsoft.EntityFrameworkCore;
 
-namespace parkify.Service.Data
+namespace parkify.Service.Database
 {
-    public class ApplicationDbContext : IdentityDbContext<User>
+    public class ParkifyContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public ParkifyContext(DbContextOptions<ParkifyContext> options)
             : base(options)
         {
         }
 
+        public DbSet<User> Users { get; set; }
         public DbSet<ParkingZone> ParkingZones { get; set; }
         public DbSet<ParkingSpot> ParkingSpots { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
-        public DbSet<Review> Review { get; set; }
+        public DbSet<Review> Reviews { get; set; }
         public DbSet<Preference> Preference { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // ==================== USER ====================
+            modelBuilder.Entity<User>()
+                .HasKey(u => u.Id);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Username)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Email)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.PasswordHash)
+                .IsRequired();
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.PasswordSalt)
+                .IsRequired();
+
 
             // ==================== PARKINGZONE ====================
             modelBuilder.Entity<ParkingZone>()

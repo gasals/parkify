@@ -1,0 +1,17 @@
+﻿namespace parkify.Service.Database
+{
+    public class Preference
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public bool PrefersCovered { get; set; } = false;
+        public bool PrefersNearby { get; set; } = true;
+        public string PreferredCity { get; set; } = string.Empty;
+        public int? FavoriteParkingZoneId { get; set; }
+        public bool NotifyAboutOffers { get; set; } = true;
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+        public required User User { get; set; }
+        public ParkingZone? FavoriteParkingZone { get; set; }
+    }
+}

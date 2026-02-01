@@ -1,9 +1,9 @@
-﻿namespace parkify.Model.Entities
+﻿namespace parkify.Service.Database
 {
     public class Notification
     {
         public int Id { get; set; }
-        public string UserId { get; set; } = string.Empty;
+        public int UserId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
         public NotificationType Type { get; set; }

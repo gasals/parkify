@@ -1,4 +1,4 @@
-﻿namespace parkify.Model.Entities
+﻿namespace parkify.Model.Models
 {
     public class Reservation
     {
