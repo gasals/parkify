@@ -12,13 +12,11 @@ namespace parkify.API.Authentication
     {
         private readonly IUserService _userService;
 
-        [Obsolete]
         public BasicAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            ISystemClock clock,
-            IUserService userService) : base(options, logger, encoder, clock)
+            IUserService userService) : base(options, logger, encoder)
         {
             _userService = userService;
         }
@@ -57,9 +55,9 @@ namespace parkify.API.Authentication
 
                 return AuthenticateResult.Success(ticket);
             }
-            catch
+            catch (Exception ex)
             {
-                return AuthenticateResult.Fail("Invalid authorization header");
+                return AuthenticateResult.Fail($"Invalid authorization header: {ex.Message}");
             }
         }
     }
