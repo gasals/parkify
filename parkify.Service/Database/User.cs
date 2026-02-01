@@ -7,8 +7,9 @@
         public string Email { get; set; } = null!;
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
-        public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
-        public bool IsActive { get; set; }
+        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTime? Modified { get; set; }
+        public bool IsActive { get; set; } = true;
         public string? Address { get; set; }
         public string? City { get; set; }
         public string PasswordHash { get; set; }

@@ -15,8 +15,8 @@
         public decimal PricePerHour { get; set; }
         public decimal DailyRate { get; set; }
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedDate { get; set; }
+        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTime? Modified { get; set; }
 
         public ICollection<ParkingSpot> Spots { get; set; } = new List<ParkingSpot>();
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();

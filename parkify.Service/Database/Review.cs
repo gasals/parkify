@@ -7,7 +7,8 @@
         public int UserId { get; set; }
         public int Rating { get; set; }
         public string ReviewText { get; set; } = string.Empty;
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTime? Modified { get; set; }
 
         public required ParkingZone ParkingZone { get; set; }
         public required User User { get; set; }

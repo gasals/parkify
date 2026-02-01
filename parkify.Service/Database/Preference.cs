@@ -9,7 +9,8 @@
         public string PreferredCity { get; set; } = string.Empty;
         public int? FavoriteParkingZoneId { get; set; }
         public bool NotifyAboutOffers { get; set; } = true;
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTime? Modified { get; set; }
 
         public required User User { get; set; }
         public ParkingZone? FavoriteParkingZone { get; set; }

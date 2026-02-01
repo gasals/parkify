@@ -17,14 +17,9 @@ namespace parkify.Service.Services
 
             BeforeInsert(request, entity);
 
-            if (typeof(TDbEntity).GetProperty("DatumIzmjene") != null)
+            if (typeof(TDbEntity).GetProperty("Created") != null)
             {
-                typeof(TDbEntity)?.GetProperty("DatumIzmjene")?.SetValue(entity, DateTime.Now);
-            }
-
-            if (typeof(TDbEntity).GetProperty("DatumKreiranja") != null)
-            {
-                typeof(TDbEntity)?.GetProperty("DatumKreiranja")?.SetValue(entity, DateTime.Now);
+                typeof(TDbEntity)?.GetProperty("Created")?.SetValue(entity, DateTime.Now);
             }
 
             Context.Add(entity);
@@ -53,9 +48,9 @@ namespace parkify.Service.Services
 
             BeforeUpdate(request, entity);
 
-            if (typeof(TDbEntity).GetProperty("DatumIzmjene") != null)
+            if (typeof(TDbEntity).GetProperty("Modified") != null)
             {
-                typeof(TDbEntity)?.GetProperty("DatumIzmjene")?.SetValue(entity, DateTime.Now);
+                typeof(TDbEntity)?.GetProperty("Modified")?.SetValue(entity, DateTime.Now);
             }
 
             Context.SaveChanges();

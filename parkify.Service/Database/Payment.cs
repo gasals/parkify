@@ -13,9 +13,10 @@
         public string StripeSessionId { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = "stripe";
         public string TransactionId { get; set; } = string.Empty;
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? CompletedDate { get; set; }
-        public DateTime? RefundedDate { get; set; }
+        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTime? Modified { get; set; }
+        public DateTime? Completed { get; set; }
+        public DateTime? Refunded { get; set; }
         public string RefundReason { get; set; } = string.Empty;
 
         public required Reservation Reservation { get; set; }

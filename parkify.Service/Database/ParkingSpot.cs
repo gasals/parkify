@@ -9,7 +9,8 @@
         public int? RowNumber { get; set; }
         public int? ColumnNumber { get; set; }
         public bool IsAvailable { get; set; } = true;
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTime? Modified { get; set; }
 
         public required ParkingZone ParkingZone { get; set; }
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();

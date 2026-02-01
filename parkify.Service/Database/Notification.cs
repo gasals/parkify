@@ -10,7 +10,8 @@
         public int? ReservationId { get; set; }
         public int? ParkingZoneId { get; set; }
         public bool IsRead { get; set; } = false;
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime Created { get; set; } = DateTime.UtcNow;
+        public DateTime? Modified { get; set; }
         public DateTime? ReadDate { get; set; }
 
         public required User User { get; set; }

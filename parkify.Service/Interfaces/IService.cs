@@ -1,10 +1,5 @@
 ﻿using parkify.Model.Helpers;
 using parkify.Model.SearchObject;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace parkify.Service.Interfaces
 {

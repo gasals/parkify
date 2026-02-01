@@ -17,9 +17,9 @@ namespace parkify.API.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public User Login(string username, string password)
+        public User? Login(string username, string password)
         {
-            return (_service as IUserService).Login(username, password);
+            return (_service as IUserService)?.Login(username, password);
         }
 
         [HttpPost("register")]
