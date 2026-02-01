@@ -21,10 +21,7 @@ builder.Services.AddMapster();
 
 // ==================== SERVICES ====================
 builder.Services.AddTransient<IUserService, UserService>();
-// Dodaj ostale servise kasnije:
-// builder.Services.AddTransient<IParkingZoneService, ParkingZoneService>();
-// builder.Services.AddTransient<IReservationService, ReservationService>();
-// builder.Services.AddTransient<IPaymentService, PaymentService>();
+builder.Services.AddTransient<IParkingZoneService, ParkingZoneService>();
 
 // ==================== CONTROLLERS ====================
 builder.Services.AddControllers(x =>

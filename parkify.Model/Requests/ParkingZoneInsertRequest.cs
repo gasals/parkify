@@ -1,8 +1,7 @@
-﻿namespace parkify.Service.Database
+﻿namespace parkify.Model.Requests
 {
-    public class ParkingZone
+    public class ParkingZoneInsertRequest
     {
-        public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public string Address { get; set; }
@@ -15,11 +14,5 @@
         public decimal PricePerHour { get; set; }
         public decimal DailyRate { get; set; }
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedDate { get; set; }
-
-        public ICollection<ParkingSpot> Spots { get; set; } = new List<ParkingSpot>();
-        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
-        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

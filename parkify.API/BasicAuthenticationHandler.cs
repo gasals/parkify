@@ -12,6 +12,7 @@ namespace parkify.API.Authentication
     {
         private readonly IUserService _userService;
 
+        [Obsolete]
         public BasicAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
