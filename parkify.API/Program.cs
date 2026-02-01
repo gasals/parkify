@@ -22,6 +22,7 @@ builder.Services.AddMapster();
 // ==================== SERVICES ====================
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IParkingZoneService, ParkingZoneService>();
+builder.Services.AddTransient<IParkingSpotService, ParkingSpotService>();
 
 // ==================== CONTROLLERS ====================
 builder.Services.AddControllers(x =>

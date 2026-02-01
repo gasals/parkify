@@ -19,7 +19,6 @@ namespace parkify.Service.Services
         {
         }
 
-        #region Filters
         public override IQueryable<Database.User> AddFilter(UserSearch search, IQueryable<Database.User> query)
         {
             query = base.AddFilter(search, query);
@@ -46,9 +45,7 @@ namespace parkify.Service.Services
 
             return query;
         }
-        #endregion
 
-        #region Insert / Update
         public override void BeforeInsert(UserInsertRequest request, Database.User entity)
         {
             if (request.Password != request.PasswordConfirm)
@@ -91,9 +88,7 @@ namespace parkify.Service.Services
 
             base.BeforeUpdate(request, entity);
         }
-        #endregion
 
-        #region Auth
         public User Login(string username, string password)
         {
             var entity = Context.Users
@@ -119,9 +114,6 @@ namespace parkify.Service.Services
 
             return Mapper.Map<User>(entity);
         }
-        #endregion
-
-        #region Get / Delete
         public override User GetById(int id)
         {
             var entity = Context.Users
@@ -146,9 +138,6 @@ namespace parkify.Service.Services
             return Mapper.Map<User>(entity);
         }
 
-        #endregion
-
-        #region Helpers
         public static string GenerateSalt()
         {
             var bytes = RandomNumberGenerator.GetBytes(16);
@@ -192,6 +181,5 @@ namespace parkify.Service.Services
                 return false;
             }
         }
-        #endregion
     }
 }
