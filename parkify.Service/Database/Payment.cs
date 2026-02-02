@@ -19,8 +19,6 @@
         public DateTime? Refunded { get; set; }
         public string RefundReason { get; set; } = string.Empty;
 
-        public required Reservation Reservation { get; set; }
-        public required User User { get; set; }
     }
 
     public enum PaymentStatus

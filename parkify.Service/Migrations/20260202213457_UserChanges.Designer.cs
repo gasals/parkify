@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using parkify.Service.Database;
 
@@ -11,9 +12,11 @@ using parkify.Service.Database;
 namespace parkify.Service.Migrations
 {
     [DbContext(typeof(ParkifyContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202213457_UserChanges")]
+    partial class UserChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,8 +57,7 @@ namespace parkify.Service.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
@@ -64,6 +66,8 @@ namespace parkify.Service.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
                 });
@@ -96,8 +100,7 @@ namespace parkify.Service.Migrations
 
                     b.Property<string>("SpotCode")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
@@ -122,13 +125,11 @@ namespace parkify.Service.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("City")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("CoveredSpots")
                         .HasColumnType("int");
@@ -161,8 +162,7 @@ namespace parkify.Service.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("PricePerHour")
                         .HasPrecision(10, 2)
@@ -196,16 +196,14 @@ namespace parkify.Service.Migrations
 
                     b.Property<string>("Currency")
                         .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("Modified")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PaymentCode")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
@@ -244,6 +242,11 @@ namespace parkify.Service.Migrations
                     b.HasIndex("PaymentCode")
                         .IsUnique();
 
+                    b.HasIndex("ReservationId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("Payments");
                 });
 
@@ -269,8 +272,7 @@ namespace parkify.Service.Migrations
 
                     b.Property<string>("PreferredCity")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("PrefersCovered")
                         .HasColumnType("bit");
@@ -282,6 +284,10 @@ namespace parkify.Service.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FavoriteParkingZoneId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Preference");
                 });
@@ -346,8 +352,7 @@ namespace parkify.Service.Migrations
 
                     b.Property<string>("ReservationCode")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("ReservationEnd")
                         .HasColumnType("datetime2");
@@ -363,8 +368,14 @@ namespace parkify.Service.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ParkingSpotId");
+
+                    b.HasIndex("ParkingZoneId");
+
                     b.HasIndex("ReservationCode")
                         .IsUnique();
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Reservations");
                 });
@@ -397,6 +408,10 @@ namespace parkify.Service.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParkingZoneId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
                 });
@@ -461,6 +476,17 @@ namespace parkify.Service.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("parkify.Service.Database.Notification", b =>
+                {
+                    b.HasOne("parkify.Service.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("parkify.Service.Database.ParkingSpot", b =>
                 {
                     b.HasOne("parkify.Service.Database.ParkingZone", "ParkingZone")
@@ -472,9 +498,107 @@ namespace parkify.Service.Migrations
                     b.Navigation("ParkingZone");
                 });
 
+            modelBuilder.Entity("parkify.Service.Database.Payment", b =>
+                {
+                    b.HasOne("parkify.Service.Database.Reservation", "Reservation")
+                        .WithOne("Payment")
+                        .HasForeignKey("parkify.Service.Database.Payment", "ReservationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("parkify.Service.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Reservation");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("parkify.Service.Database.Preference", b =>
+                {
+                    b.HasOne("parkify.Service.Database.ParkingZone", "FavoriteParkingZone")
+                        .WithMany()
+                        .HasForeignKey("FavoriteParkingZoneId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("parkify.Service.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FavoriteParkingZone");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("parkify.Service.Database.Reservation", b =>
+                {
+                    b.HasOne("parkify.Service.Database.ParkingSpot", "ParkingSpot")
+                        .WithMany("Reservations")
+                        .HasForeignKey("ParkingSpotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("parkify.Service.Database.ParkingZone", "ParkingZone")
+                        .WithMany("Reservations")
+                        .HasForeignKey("ParkingZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("parkify.Service.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ParkingSpot");
+
+                    b.Navigation("ParkingZone");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("parkify.Service.Database.Review", b =>
+                {
+                    b.HasOne("parkify.Service.Database.ParkingZone", "ParkingZone")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ParkingZoneId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("parkify.Service.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ParkingZone");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("parkify.Service.Database.ParkingSpot", b =>
+                {
+                    b.Navigation("Reservations");
+                });
+
             modelBuilder.Entity("parkify.Service.Database.ParkingZone", b =>
                 {
+                    b.Navigation("Reservations");
+
+                    b.Navigation("Reviews");
+
                     b.Navigation("Spots");
+                });
+
+            modelBuilder.Entity("parkify.Service.Database.Reservation", b =>
+                {
+                    b.Navigation("Payment")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

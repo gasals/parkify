@@ -14,7 +14,6 @@
         public DateTime? Modified { get; set; }
         public DateTime? ReadDate { get; set; }
 
-        public required User User { get; set; }
     }
 
     public enum NotificationType

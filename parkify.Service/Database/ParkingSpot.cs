@@ -12,8 +12,8 @@
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }
 
-        public required ParkingZone ParkingZone { get; set; }
-        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+        public ParkingZone ParkingZone { get; set; }
+
     }
 
     public enum ParkingSpotType

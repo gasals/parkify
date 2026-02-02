@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using parkify.Service.Database;
 
@@ -11,9 +12,11 @@ using parkify.Service.Database;
 namespace parkify.Service.Migrations
 {
     [DbContext(typeof(ParkifyContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202214535_CollectionChanges")]
+    partial class CollectionChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -463,13 +466,11 @@ namespace parkify.Service.Migrations
 
             modelBuilder.Entity("parkify.Service.Database.ParkingSpot", b =>
                 {
-                    b.HasOne("parkify.Service.Database.ParkingZone", "ParkingZone")
+                    b.HasOne("parkify.Service.Database.ParkingZone", null)
                         .WithMany("Spots")
                         .HasForeignKey("ParkingZoneId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("ParkingZone");
                 });
 
             modelBuilder.Entity("parkify.Service.Database.ParkingZone", b =>

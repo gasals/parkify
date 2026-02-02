@@ -19,11 +19,23 @@ builder.Services.AddDbContext<ParkifyContext>(options =>
 // ==================== MAPSTER ====================
 builder.Services.AddMapster();
 
+var config = TypeAdapterConfig.GlobalSettings;
+
+config.NewConfig<ParkingZone, parkify.Model.Models.ParkingZone>()
+    .Ignore(dest => dest.Spots);
+
+config.NewConfig<ParkingSpot, parkify.Model.Models.ParkingSpot>()
+    .Ignore(dest => dest.ParkingZone);
+
 // ==================== SERVICES ====================
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IParkingZoneService, ParkingZoneService>();
 builder.Services.AddTransient<IParkingSpotService, ParkingSpotService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
+builder.Services.AddTransient<IReservationService, ReservationService>();
+builder.Services.AddTransient<IPaymentService, PaymentService>();
+builder.Services.AddTransient<IPreferenceService, PreferenceService>();
+builder.Services.AddTransient<IReviewService, ReviewService>();
 
 // ==================== CONTROLLERS ====================
 builder.Services.AddControllers(x =>

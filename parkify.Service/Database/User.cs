@@ -14,11 +14,5 @@
         public string? City { get; set; }
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
-
-        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
-        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
-        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-        public ICollection<Review> Reviews { get; set; } = new List<Review>();
-        public Preference? Preference { get; set; }
     }
 }

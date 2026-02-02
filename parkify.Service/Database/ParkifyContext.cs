@@ -22,7 +22,6 @@ namespace parkify.Service.Database
         {
             base.OnModelCreating(modelBuilder);
 
-            // ==================== USER ====================
             modelBuilder.Entity<User>()
                 .HasKey(u => u.Id);
 
@@ -52,24 +51,24 @@ namespace parkify.Service.Database
                 .Property(u => u.PasswordSalt)
                 .IsRequired();
 
-
-            // ==================== PARKINGZONE ====================
             modelBuilder.Entity<ParkingZone>()
                 .HasKey(p => p.Id);
 
             modelBuilder.Entity<ParkingZone>()
-                .HasMany(p => p.Spots)
-                .WithOne(s => s.ParkingZone)
-                .HasForeignKey(s => s.ParkingZoneId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .Property(p => p.Name)
+                .IsRequired()
+                .HasMaxLength(100);
 
             modelBuilder.Entity<ParkingZone>()
-                .HasMany(p => p.Reservations)
-                .WithOne(r => r.ParkingZone)
-                .HasForeignKey(r => r.ParkingZoneId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .Property(p => p.Address)
+                .IsRequired()
+                .HasMaxLength(200);
 
-            // ==================== PARKINGSPOT ====================
+            modelBuilder.Entity<ParkingZone>()
+                .Property(p => p.City)
+                .IsRequired()
+                .HasMaxLength(100);
+
             modelBuilder.Entity<ParkingSpot>()
                 .HasKey(p => p.Id);
 
@@ -78,12 +77,16 @@ namespace parkify.Service.Database
                 .IsUnique();
 
             modelBuilder.Entity<ParkingSpot>()
-                .HasMany(p => p.Reservations)
-                .WithOne(r => r.ParkingSpot)
-                .HasForeignKey(r => r.ParkingSpotId)
+                .Property(p => p.SpotCode)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<ParkingSpot>()
+                .HasOne(ps => ps.ParkingZone)
+                .WithMany(pz => pz.Spots)
+                .HasForeignKey(ps => ps.ParkingZoneId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ==================== RESERVATION ====================
             modelBuilder.Entity<Reservation>()
                 .HasKey(r => r.Id);
 
@@ -92,18 +95,10 @@ namespace parkify.Service.Database
                 .IsUnique();
 
             modelBuilder.Entity<Reservation>()
-                .HasOne(r => r.User)
-                .WithMany(u => u.Reservations)
-                .HasForeignKey(r => r.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .Property(r => r.ReservationCode)
+                .IsRequired()
+                .HasMaxLength(50);
 
-            modelBuilder.Entity<Reservation>()
-                .HasOne(r => r.Payment)
-                .WithOne(p => p.Reservation)
-                .HasForeignKey<Payment>(p => p.ReservationId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // ==================== PAYMENT ====================
             modelBuilder.Entity<Payment>()
                 .HasKey(p => p.Id);
 
@@ -112,48 +107,45 @@ namespace parkify.Service.Database
                 .IsUnique();
 
             modelBuilder.Entity<Payment>()
-                .HasOne(p => p.User)
-                .WithMany(u => u.Payments)
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .Property(p => p.PaymentCode)
+                .IsRequired()
+                .HasMaxLength(50);
 
-            // ==================== NOTIFICATION ====================
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.Currency)
+                .IsRequired()
+                .HasMaxLength(3);
+
             modelBuilder.Entity<Notification>()
                 .HasKey(n => n.Id);
 
             modelBuilder.Entity<Notification>()
-                .HasOne(n => n.User)
-                .WithMany(u => u.Notifications)
-                .HasForeignKey(n => n.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .Property(n => n.Title)
+                .IsRequired()
+                .HasMaxLength(200);
 
-            // ==================== REVIEW ====================
+            modelBuilder.Entity<Notification>()
+                .Property(n => n.Message)
+                .IsRequired();
+
             modelBuilder.Entity<Review>()
                 .HasKey(r => r.Id);
 
             modelBuilder.Entity<Review>()
-                .HasOne(r => r.User)
-                .WithMany(u => u.Reviews)
-                .HasForeignKey(r => r.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .Property(r => r.ReviewText)
+                .IsRequired();
 
             modelBuilder.Entity<Review>()
-                .HasOne(r => r.ParkingZone)
-                .WithMany(pz => pz.Reviews)
-                .HasForeignKey(r => r.ParkingZoneId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .Property(r => r.Rating)
+                .IsRequired();
 
-            // ==================== PREFERENCE ====================
             modelBuilder.Entity<Preference>()
                 .HasKey(p => p.Id);
 
             modelBuilder.Entity<Preference>()
-                .HasOne(p => p.User)
-                .WithOne(u => u.Preference)
-                .HasForeignKey<Preference>(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .Property(p => p.PreferredCity)
+                .HasMaxLength(100);
 
-            // ==================== DECIMAL PRECISION ====================
             modelBuilder.Entity<ParkingZone>()
                 .Property(p => p.PricePerHour)
                 .HasPrecision(10, 2);

@@ -24,10 +24,6 @@
         public DateTime? CheckInTime { get; set; }
         public DateTime? CheckOutTime { get; set; }
 
-        public required User User { get; set; }
-        public required ParkingZone ParkingZone { get; set; }
-        public required ParkingSpot ParkingSpot { get; set; }
-        public required Payment Payment { get; set; }
     }
 
     public enum ReservationStatus

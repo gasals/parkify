@@ -12,7 +12,5 @@
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }
 
-        public required User User { get; set; }
-        public ParkingZone? FavoriteParkingZone { get; set; }
     }
 }
