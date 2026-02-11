@@ -48,5 +48,16 @@ namespace parkify.Service.Services
             entity.SpotCode = $"Z{request.ParkingZoneId}/{request.RowNumber}-{request.ColumnNumber}";
             base.BeforeInsert(request, entity);
         }
+
+        public ParkingSpot SetAvailable(int id, bool isAvailable)
+        {
+            var spot = GetById(id);
+            if (spot == null)
+                throw new Exception("Ne postoji mjesto sa proslijeđenim ID-em.");
+
+            ParkingSpotUpdateRequest updateRequest = new ParkingSpotUpdateRequest { SpotCode = spot.SpotCode, IsAvailable = isAvailable };
+
+            return Update(id, updateRequest);
+        }
     }
 }

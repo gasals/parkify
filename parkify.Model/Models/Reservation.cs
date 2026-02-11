@@ -10,7 +10,7 @@
         public DateTime ReservationStart { get; set; }
         public DateTime ReservationEnd { get; set; }
         public int DurationInHours { get; set; }
-        public ReservationStatus Status { get; set; } = ReservationStatus.Pending;
+        public int Status { get; set; }
         public bool IsCheckedIn { get; set; } = false;
         public bool IsCheckedOut { get; set; } = false;
         public decimal CalculatedPrice { get; set; }
@@ -25,13 +25,4 @@
         public DateTime? CheckOutTime { get; set; }
     }
 
-    public enum ReservationStatus
-    {
-        Pending = 1,
-        Confirmed = 2,
-        Active = 3,
-        Completed = 4,
-        Cancelled = 5,
-        NoShow = 6
-    }
 }

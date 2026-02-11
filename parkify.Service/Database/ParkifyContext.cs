@@ -81,12 +81,6 @@ namespace parkify.Service.Database
                 .IsRequired()
                 .HasMaxLength(50);
 
-            modelBuilder.Entity<ParkingSpot>()
-                .HasOne(ps => ps.ParkingZone)
-                .WithMany(pz => pz.Spots)
-                .HasForeignKey(ps => ps.ParkingZoneId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<Reservation>()
                 .HasKey(r => r.Id);
 

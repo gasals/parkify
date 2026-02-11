@@ -4,5 +4,6 @@
     {
         public string? Name { get; set; }
         public string? City { get; set; }
+        public bool IncludeSpots { get; set; }
     }
 }

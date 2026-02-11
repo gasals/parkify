@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -27,6 +28,11 @@ namespace parkify.Service.Services
             if (!string.IsNullOrWhiteSpace(search?.City))
             {
                 query = query.Where(x => x.City == search.City);
+            }
+
+            if (search?.IncludeSpots == true)
+            {
+                query = query.Include(x => x.Spots);
             }
 
             return query;

@@ -10,9 +10,14 @@ namespace parkify.Service.Services
         : BaseCRUDService<Reservation, ReservationSearch, Database.Reservation, ReservationInsertRequest, ReservationUpdateRequest>,
           IReservationService
     {
-        public ReservationService(Database.ParkifyContext context, IMapper mapper)
+        private readonly IParkingZoneService _parkingZoneService;
+        private readonly IParkingSpotService _parkingSpotService;
+
+        public ReservationService(Database.ParkifyContext context, IMapper mapper, IParkingZoneService parkingZoneService, IParkingSpotService parkingSpotService)
             : base(context, mapper)
         {
+            _parkingZoneService = parkingZoneService;
+            _parkingSpotService = parkingSpotService;
         }
 
         public override IQueryable<Database.Reservation> AddFilter(ReservationSearch search, IQueryable<Database.Reservation> query)
@@ -35,6 +40,27 @@ namespace parkify.Service.Services
             }
 
             return query;
+        }
+
+        public override void BeforeInsert(ReservationInsertRequest request, Database.Reservation entity)
+        {
+
+            entity.DurationInHours = (int)Math.Ceiling((entity.ReservationEnd - entity.ReservationStart).TotalHours);
+
+            var parkingZone = _parkingZoneService.GetById(entity.ParkingZoneId);
+
+            if(parkingZone != null)
+            {
+                var pricePerHour = parkingZone.PricePerHour;
+                entity.CalculatedPrice = pricePerHour * entity.DurationInHours;
+                entity.FinalPrice = entity.CalculatedPrice;
+            }
+
+            entity.ReservationCode = Guid.NewGuid().ToString();
+
+            _parkingSpotService.SetAvailable(entity.ParkingSpotId, false);
+
+            base.BeforeInsert(request, entity);
         }
     }
 }

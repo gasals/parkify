@@ -18,6 +18,6 @@
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }
 
-        public ICollection<ParkingSpot> Spots { get; set; } = new List<ParkingSpot>();
+        public ICollection<ParkingSpot> Spots { get; set; }
     }
 }
