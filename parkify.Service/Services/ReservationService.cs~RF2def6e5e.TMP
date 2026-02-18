@@ -54,14 +54,11 @@ namespace parkify.Service.Services
                 var pricePerHour = parkingZone.PricePerHour;
                 entity.CalculatedPrice = pricePerHour * entity.DurationInHours;
                 entity.FinalPrice = entity.CalculatedPrice;
-                ParkingZoneUpdateRequest updateRequest = new ParkingZoneUpdateRequest { AvailableSpots = parkingZone.AvailableSpots - 1 };
-                _parkingZoneService.Update(parkingZone.Id, updateRequest);
             }
 
             entity.ReservationCode = Guid.NewGuid().ToString();
 
             _parkingSpotService.SetAvailable(entity.ParkingSpotId, false);
-
 
             base.BeforeInsert(request, entity);
         }

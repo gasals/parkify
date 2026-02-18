@@ -12,6 +12,7 @@
         public int TotalSpots { get; set; }
         public int DisabledSpots { get; set; }
         public int CoveredSpots { get; set; }
+        public int AvailableSpots { get; set; }
         public decimal PricePerHour { get; set; }
         public decimal DailyRate { get; set; }
         public bool IsActive { get; set; } = true;

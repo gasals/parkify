@@ -11,17 +11,19 @@ class ReservationProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<bool> createReservation(Map<String, dynamic> reservationData) async {
+  Future<Reservation> createReservation(Map<String, dynamic> reservationData) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-
     try {
       final result = await ApiService.createReservation(reservationData);
-      return true;
+      final reservation = Reservation.fromJson(result);
+      _reservations.add(reservation);
+      notifyListeners();
+      return reservation;
     } catch (e) {
       _errorMessage = e.toString();
-      return false;
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();

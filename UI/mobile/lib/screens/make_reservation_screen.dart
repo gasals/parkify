@@ -334,9 +334,9 @@ class _MakeReservationScreenState extends State<MakeReservationScreen> {
       'requiresDisabledSpot': _requiresDisabledSpot,
     };
 
-    final success = await reservationProvider.createReservation(reservationData);
+    final reservation = await reservationProvider.createReservation(reservationData);
 
-    if (success) {
+    if (reservation.id != 0) {
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
         '/reservation-confirmed',

@@ -10,9 +10,11 @@ namespace parkify.Service.Services
         : BaseCRUDService<ParkingSpot, ParkingSpotSearch, Database.ParkingSpot, ParkingSpotInsertRequest, ParkingSpotUpdateRequest>,
           IParkingSpotService
     {
-        public ParkingSpotService(Database.ParkifyContext context, IMapper mapper)
+        IParkingZoneService _parkingZoneService;
+        public ParkingSpotService(Database.ParkifyContext context, IMapper mapper, IParkingZoneService parkingZoneService)
             : base(context, mapper)
         {
+            _parkingZoneService = parkingZoneService;
         }
 
         public override IQueryable<Database.ParkingSpot> AddFilter(ParkingSpotSearch search, IQueryable<Database.ParkingSpot> query)
@@ -45,7 +47,22 @@ namespace parkify.Service.Services
 
         public override void BeforeInsert(ParkingSpotInsertRequest request, Database.ParkingSpot entity)
         {
+            ParkingZone parkingZone = _parkingZoneService.GetById(request.ParkingZoneId);
+            if(parkingZone == null)
+                throw new Exception("Ne postoji zona sa proslijeđenim ID-em.");
+
+            ParkingZoneUpdateRequest updateRequest = new ParkingZoneUpdateRequest
+            {
+                TotalSpots = parkingZone.TotalSpots + 1,
+                DisabledSpots = request.Type == (int)ParkingSpotType.Disabled ? parkingZone.DisabledSpots + 1 : parkingZone.DisabledSpots,
+                CoveredSpots = request.Type == (int)ParkingSpotType.Covered ? parkingZone.CoveredSpots + 1 : parkingZone.CoveredSpots,
+                AvailableSpots = request.IsAvailable ? parkingZone.AvailableSpots + 1 : parkingZone.AvailableSpots
+            };
+
+            _parkingZoneService.Update(parkingZone.Id, updateRequest);
+
             entity.SpotCode = $"Z{request.ParkingZoneId}/{request.RowNumber}-{request.ColumnNumber}";
+
             base.BeforeInsert(request, entity);
         }
 

@@ -9,6 +9,7 @@ class ParkingZone {
   final int totalSpots;
   final int disabledSpots;
   final int coveredSpots;
+  final int availableSpots;
   final double pricePerHour;
   final double dailyRate;
   final bool isActive;
@@ -27,6 +28,7 @@ class ParkingZone {
     required this.totalSpots,
     required this.disabledSpots,
     required this.coveredSpots,
+    required this.availableSpots,
     required this.pricePerHour,
     required this.dailyRate,
     this.isActive = true,
@@ -47,6 +49,7 @@ class ParkingZone {
       totalSpots: json['totalSpots'] ?? 0,
       disabledSpots: json['disabledSpots'] ?? 0,
       coveredSpots: json['coveredSpots'] ?? 0,
+      availableSpots: json['availableSpots'] ?? 0,
       pricePerHour: (json['pricePerHour'] ?? 0).toDouble(),
       dailyRate: (json['dailyRate'] ?? 0).toDouble(),
       isActive: json['isActive'] ?? true,
