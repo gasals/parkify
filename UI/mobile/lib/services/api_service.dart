@@ -221,4 +221,107 @@ class ApiService {
       throw Exception('Greška: $e');
     }
   }
+
+
+  static Future<Map<String, dynamic>> createPayment({
+    required int reservationId,
+    required int userId,
+    required double amount,
+  }) async {
+    try {
+      var url = '${AppUrls.payments}/create-with-intent';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var data = {
+        'reservationId': reservationId,
+        'userId': userId,
+        'amount': amount,
+        'currency': 'bam',
+      };
+
+      var jsonRequest = jsonEncode(data);
+      var response = await http.post(uri, headers: headers, body: jsonRequest)
+          .timeout(Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri kreiranju plaćanja');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> confirmPayment({
+    required int paymentId,
+  }) async {
+    try {
+      var url = '${AppUrls.payments}/$paymentId/confirm';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var response = await http.put(uri, headers: headers)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri potvrdi plaćanja');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getUserPayments({
+    required int userId,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      var url = '${AppUrls.payments}?userId=$userId&page=$page&pageSize=$pageSize';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var response = await http.get(uri, headers: headers)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri učitavanju plaćanja');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> refundPayment({
+    required int paymentId,
+    required String reason,
+  }) async {
+    try {
+      var url = '${AppUrls.payments}/$paymentId/refund';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var data = {
+        'reason': reason,
+      };
+
+      var jsonRequest = jsonEncode(data);
+      var response = await http.put(uri, headers: headers, body: jsonRequest)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri vraćanju plaćanja');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
 }

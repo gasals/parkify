@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../providers/auth_provider.dart';
@@ -174,16 +175,60 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(height: 32),
           ElevatedButton(
-            onPressed: () => _onItemTapped(2),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            ),
-            child: Text(
-              'Pronađi parking',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
+  onPressed: () async {
+    final clientSecret = "pi_3T1BX3JZZ3t7DnXE1vJJrSYi_secret_A6HPav1c3aS62VdRc3TJuzzp3";
+    
+    try {
+      print('=== STRIPE TEST ===');
+      print('ClientSecret: $clientSecret');
+      print('PublishableKey: ${Stripe.publishableKey}');
+      print('Merchant: ${Stripe.merchantIdentifier}');
+      print('URLScheme: ${Stripe.urlScheme}');
+      
+      print('\n1. initPaymentSheet...');
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Parkify',
+          style: ThemeMode.dark,
+        ),
+      );
+      print('✅ initPaymentSheet OK');
+      
+      print('\n2. presentPaymentSheet...');
+      await Stripe.instance.presentPaymentSheet();
+      print('✅ presentPaymentSheet OK');
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ Plaćanje uspješno!'),
+          backgroundColor: Colors.green,
+        )
+      );
+    } on StripeException catch (e) {
+      print('\n❌ StripeException');
+      print('Message: ${e.error.message}');
+      print('Code: ${e.error.code}');
+      print('Type: ${e.error.type}');
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Stripe greška: ${e.error.message}'),
+          backgroundColor: Colors.red,
+        )
+      );
+    } catch (e) {
+      print('\n❌ Exception: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        )
+      );
+    }
+  },
+  child: Text('Test Stripe Payment'),
+),
         ],
       ),
     );

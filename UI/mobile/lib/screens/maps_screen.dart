@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:mobile/providers/payment_provider.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
@@ -138,28 +139,60 @@ class _MapsScreenState extends State<MapsScreen> {
 
   void _makeReservation(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final reservationProvider =
-        Provider.of<ReservationProvider>(context, listen: false);
+    final reservationProvider = Provider.of<ReservationProvider>(context, listen: false);
+    final paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
 
-    final reservationData = {
-      'userId': authProvider.user!.id,
-      'parkingZoneId': _selectedZone!.id,
-      'parkingSpotId': _selectedSpot!.id,
-      'reservationStart': _startTime.toIso8601String(),
-      'reservationEnd': _endTime.toIso8601String(),
-      'requiresDisabledSpot': _requiresDisabledSpot
-    };
+    try {
+      final reservationData = {
+        'userId': authProvider.user!.id,
+        'parkingZoneId': _selectedZone!.id,
+        'parkingSpotId': _selectedSpot!.id,
+        'reservationStart': _startTime.toIso8601String(),
+        'reservationEnd': _endTime.toIso8601String(),
+        'requiresDisabledSpot': _requiresDisabledSpot
+      };
 
-    final success = await reservationProvider.createReservation(reservationData);
+      final reservationSuccess = await reservationProvider.createReservation(reservationData);
 
-    if (success) {
-      _reservationCode =
-          'CPA-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
-      setState(() => _sheetState = BottomSheetState.confirmed);
-    } else {
+      if (!reservationSuccess) {
+        throw Exception('Greška pri kreiranju rezervacije');
+      }
+
+      final reservationId = reservationProvider.reservations.last.id;
+
+      final payment = await paymentProvider.createPayment(
+        reservationId: reservationId,
+        userId: authProvider.user!.id,
+        amount: _calculatedPrice,
+      );
+
+      if (payment.id == 0) {
+        throw Exception('Greška pri kreiranju plaćanja');
+      }
+
+      final paymentSuccess = await paymentProvider.presentPaymentSheet(
+        clientSecret: payment.clientSecret,
+      );
+      
+      if (!paymentSuccess) {
+        throw Exception('Plaćanje je otkazano');
+      }
+
+      final confirmed = await paymentProvider.confirmPayment(
+        paymentId: payment.id,
+      );
+
+      if (confirmed) {
+        _reservationCode = payment.paymentCode;
+        setState(() => _sheetState = BottomSheetState.confirmed);
+      } else {
+        throw Exception('Plaćanje nije potvrđeno');
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(reservationProvider.errorMessage ?? 'Greška pri rezervaciji'),
+          content: Text('Greška: ${e.toString()}'),
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -642,28 +675,26 @@ class _MapsScreenState extends State<MapsScreen> {
           SizedBox(
             width: double.infinity,
             height: 48,
-            child: Consumer<ReservationProvider>(
-              builder: (context, provider, _) {
+            child: Consumer2<ReservationProvider, PaymentProvider>(
+              builder: (context, reservationProvider, paymentProvider, _) {
+                final isLoading = reservationProvider.isLoading || paymentProvider.isLoading;
                 return ElevatedButton(
-                  onPressed: provider.isLoading
-                      ? null
-                      : () => _makeReservation(context),
+                  onPressed: isLoading ? null : () => _makeReservation(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                   ),
-                  child: provider.isLoading
+                  child: isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation(Colors.white),
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
                           ),
                         )
                       : const Text(
                           'Rezerviši mjesto',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                 );
               },

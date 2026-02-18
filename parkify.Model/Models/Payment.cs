@@ -8,7 +8,7 @@
         public int UserId { get; set; }
         public decimal Amount { get; set; }
         public string Currency { get; set; } = "BAM";
-        public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
+        public int Status { get; set; }
         public string StripePaymentIntentId { get; set; }
         public string StripeSessionId { get; set; }
         public string PaymentMethod { get; set; } = "stripe";
@@ -19,14 +19,5 @@
         public DateTime? Refunded { get; set; }
         public string? RefundReason { get; set; }
 
-    }
-
-    public enum PaymentStatus
-    {
-        Pending = 1,
-        Processing = 2,
-        Completed = 3,
-        Failed = 4,
-        Refunded = 5
     }
 }

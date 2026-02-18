@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:mobile/constants/stripe_keys.dart';
+import 'package:mobile/providers/payment_provider.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'constants/app_strings.dart';
@@ -14,7 +18,12 @@ import 'screens/reservation_confirmed_screen.dart';
 import 'screens/my_reservations_screen.dart';
 import 'models/parking_zone_model.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  Stripe.publishableKey = StripeKeys.publishableKey;
+  Stripe.merchantIdentifier = StripeKeys.merchantIdentifier;
+  Stripe.urlScheme = StripeKeys.urlScheme;
   runApp(MyApp());
 }
 
@@ -26,6 +35,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ParkingZoneProvider()),
         ChangeNotifierProvider(create: (_) => ReservationProvider()),
+        ChangeNotifierProvider(create:  (_) => PaymentProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
