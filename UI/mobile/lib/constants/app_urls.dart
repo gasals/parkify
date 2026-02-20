@@ -15,4 +15,6 @@ class AppUrls {
   static const String reviews = '$baseUrl/reviews';
   
   static const String preferences = '$baseUrl/preferences';
+
+  static const String cities = '$baseUrl/city';
 }

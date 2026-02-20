@@ -28,6 +28,7 @@ builder.Services.AddTransient<IReservationService, ReservationService>();
 builder.Services.AddTransient<IPaymentService, PaymentService>();
 builder.Services.AddTransient<IPreferenceService, PreferenceService>();
 builder.Services.AddTransient<IReviewService, ReviewService>();
+builder.Services.AddTransient<ICityService, CityService>();
 
 // ==================== CONTROLLERS ====================
 builder.Services.AddControllers(x =>

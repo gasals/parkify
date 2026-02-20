@@ -3,7 +3,7 @@
     public class ParkingZoneSearch : BaseSearchObject
     {
         public string? Name { get; set; }
-        public string? City { get; set; }
+        public int? CityId { get; set; }
         public bool IncludeSpots { get; set; }
     }
 }

@@ -13,12 +13,10 @@ namespace parkify.API.Controllers
     public class PaymentsController : BaseCRUDController<Payment, PaymentSearch, PaymentInsertRequest, PaymentUpdateRequest>
     {
         private readonly IPaymentService _paymentService;
-        private readonly IConfiguration _configuration;
 
         public PaymentsController(IPaymentService service, IConfiguration configuration) : base(service)
         {
             _paymentService = service;
-            _configuration = configuration;
             StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
         }
 

@@ -18,8 +18,30 @@ class ParkingDetailsScreen extends StatefulWidget {
 class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
   ParkingSpot? _selectedSpot;
 
+  List<ParkingSpot> _getSortedSpots() {
+    if (widget.parkingZone.spots == null) return [];
+    final sorted = List<ParkingSpot>.from(widget.parkingZone.spots!);
+    sorted.sort((a, b) {
+      final rowCompare = a.rowNumber.compareTo(b.rowNumber);
+      if (rowCompare != 0) return rowCompare;
+      return a.columnNumber.compareTo(b.columnNumber);
+    });
+    return sorted;
+  }
+
+  int _getMaxColumn() {
+    if (widget.parkingZone.spots == null || widget.parkingZone.spots!.isEmpty) {
+      return 4;
+    }
+    return widget.parkingZone.spots!
+        .fold<int>(0, (max, spot) => spot.columnNumber > max ? spot.columnNumber : max);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final sortedSpots = _getSortedSpots();
+    final maxColumn = _getMaxColumn();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.parkingZone.name),
@@ -46,7 +68,7 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${widget.parkingZone.address}, ${widget.parkingZone.city}',
+                        '${widget.parkingZone.address}',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -70,13 +92,25 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                   Column(
                     children: [
                       Text(
-                        '${widget.parkingZone.totalSpots}',
+                        '${widget.parkingZone.availableSpots}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const Text('Slobodno mjesta'),
+                      const Text('Dostupna mjesta'),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text(
+                        '${widget.parkingZone.coveredSpots}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text('Pokrivena'),
                     ],
                   ),
                   Column(
@@ -88,95 +122,158 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const Text('Invalidska mjesta'),
+                      const Text('Invalidska'),
                     ],
                   ),
                 ],
               ),
               const SizedBox(height: 32),
               Text(
-                'Odaberite mjesto',
+                'Raspored mjesta',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 16),
-              if (widget.parkingZone.spots != null && widget.parkingZone.spots!.isNotEmpty)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: 1,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: widget.parkingZone.spots!.length,
-                  itemBuilder: (context, index) {
-                    final spot = widget.parkingZone.spots![index];
-                    final isSelected = _selectedSpot?.id == spot.id;
-                    final isAvailable = spot.isAvailable;
-                    final isDisabled = spot.type == 2;
+              if (sortedSpots.isNotEmpty)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Column(
+                    children: List.generate(
+                      (sortedSpots.isNotEmpty
+                              ? sortedSpots
+                                  .map((s) => s.rowNumber)
+                                  .reduce((a, b) => a > b ? a : b)
+                              : 0) +
+                          1,
+                      (rowIndex) {
+                        final spotsInRow = sortedSpots
+                            .where((spot) => spot.rowNumber == rowIndex)
+                            .toList();
 
-                    return GestureDetector(
-                      onTap: isAvailable
-                          ? () {
-                              setState(() {
-                                _selectedSpot = spot;
-                              });
-                            }
-                          : null,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : isAvailable
-                                  ? Colors.white
-                                  : AppColors.surfaceVariant,
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : isAvailable
-                                    ? AppColors.border
-                                    : AppColors.textTertiary,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              isDisabled
-                                  ? Icons.wheelchair_pickup
-                                  : Icons.local_parking,
-                              size: 24,
-                              color: isSelected
-                                  ? Colors.white
-                                  : isAvailable
-                                      ? AppColors.primary
-                                      : AppColors.textTertiary,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              spot.spotCode.split('-').last,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected
-                                    ? Colors.white
-                                    : isAvailable
-                                        ? AppColors.textPrimary
-                                        : AppColors.textTertiary,
+                        if (spotsInRow.isEmpty) return SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 40,
+                                child: Text(
+                                  'Red ${rowIndex + 1}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                              const SizedBox(width: 12),
+                              Row(
+                                children: List.generate(
+                                  maxColumn,
+                                  (colIndex) {
+                                    final spot = spotsInRow.firstWhere(
+                                      (s) => s.columnNumber == colIndex,
+                                      orElse: () => ParkingSpot(
+                                        id: -1,
+                                        parkingZoneId: 0,
+                                        spotCode: '',
+                                        rowNumber: rowIndex,
+                                        columnNumber: colIndex,
+                                        type: 0,
+                                        isAvailable: false,
+                                        isCovered: false,
+                                      ),
+                                    );
+
+                                    if (spot.id == -1) {
+                                      return SizedBox(
+                                        width: 50,
+                                        height: 50,
+                                        child: Container(
+                                          margin: const EdgeInsets.all(4),
+                                          color: Colors.grey[200],
+                                        ),
+                                      );
+                                    }
+
+                                    final isSelected = _selectedSpot?.id == spot.id;
+                                    final isAvailable = spot.isAvailable;
+                                    final isDisabled = spot.type == 2;
+                                    final isCovered = spot.isCovered;
+
+                                    return GestureDetector(
+                                      onTap: isAvailable
+                                          ? () {
+                                              setState(() {
+                                                _selectedSpot = spot;
+                                              });
+                                            }
+                                          : null,
+                                      child: Container(
+                                        width: 50,
+                                        height: 50,
+                                        margin: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? AppColors.primary
+                                              : isAvailable
+                                                  ? Colors.white
+                                                  : AppColors.surfaceVariant,
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? AppColors.primary
+                                                : isAvailable
+                                                    ? AppColors.border
+                                                    : AppColors.textTertiary,
+                                            width: 2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              isDisabled
+                                                  ? Icons.wheelchair_pickup
+                                                  : isCovered
+                                                      ? Icons.roofing
+                                                      : Icons.local_parking,
+                                              size: 16,
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : isAvailable
+                                                      ? AppColors.primary
+                                                      : AppColors.textTertiary,
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${rowIndex + 1}${String.fromCharCode(65 + colIndex)}',
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : isAvailable
+                                                        ? AppColors.textPrimary
+                                                        : AppColors.textTertiary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               const SizedBox(height: 32),
               if (_selectedSpot != null)
@@ -194,7 +291,9 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                           Icon(
                             _selectedSpot!.type == 2
                                 ? Icons.wheelchair_pickup
-                                : Icons.local_parking,
+                                : _selectedSpot!.isCovered
+                                    ? Icons.roofing
+                                    : Icons.local_parking,
                             color: AppColors.primary,
                           ),
                           const SizedBox(width: 12),
@@ -212,6 +311,11 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                                   'Invalidsko mjesto',
                                   style: TextStyle(fontSize: 12),
                                 ),
+                              if (_selectedSpot!.isCovered)
+                                const Text(
+                                  'Pokriveno mjesto',
+                                  style: TextStyle(fontSize: 12),
+                                ),
                             ],
                           ),
                         ],
@@ -223,7 +327,7 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).push(
+                          Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                               builder: (context) => ReservationScreen(
                                 parkingZone: widget.parkingZone,

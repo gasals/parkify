@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/parking_zone_model.dart';
-import '../models/reservation_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/reservation_provider.dart';
 
@@ -121,7 +120,7 @@ class _MakeReservationScreenState extends State<MakeReservationScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${widget.zone.address}, ${widget.zone.city}',
+                    widget.zone.address,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,

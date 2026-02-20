@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:mobile/constants/stripe_keys.dart';
+import 'package:mobile/providers/city_provider.dart';
 import 'package:mobile/providers/payment_provider.dart';
+import 'package:mobile/providers/preference_provider.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'constants/app_strings.dart';
@@ -30,6 +32,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ParkingZoneProvider()),
         ChangeNotifierProvider(create: (_) => ReservationProvider()),
         ChangeNotifierProvider(create:  (_) => PaymentProvider()),
+        ChangeNotifierProvider(create: (_) => PreferenceProvider()),
+        ChangeNotifierProvider(create: (_) => CityProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,

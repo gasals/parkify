@@ -9,6 +9,7 @@ namespace parkify.Service.Database
         {
         }
 
+        public DbSet<City> Cities { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<ParkingZone> ParkingZones { get; set; }
         public DbSet<ParkingSpot> ParkingSpots { get; set; }
@@ -16,11 +17,18 @@ namespace parkify.Service.Database
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Review> Reviews { get; set; }
-        public DbSet<Preference> Preference { get; set; }
+        public DbSet<Preference> Preferences { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<City>()
+                .HasKey(u => u.Id);
+
+            modelBuilder.Entity<City>()
+                .HasIndex(u => u.Name)
+                .IsUnique();
 
             modelBuilder.Entity<User>()
                 .HasKey(u => u.Id);
@@ -65,9 +73,8 @@ namespace parkify.Service.Database
                 .HasMaxLength(200);
 
             modelBuilder.Entity<ParkingZone>()
-                .Property(p => p.City)
-                .IsRequired()
-                .HasMaxLength(100);
+                .Property(p => p.CityId)
+                .IsRequired();
 
             modelBuilder.Entity<ParkingSpot>()
                 .HasKey(p => p.Id);
@@ -137,8 +144,8 @@ namespace parkify.Service.Database
                 .HasKey(p => p.Id);
 
             modelBuilder.Entity<Preference>()
-                .Property(p => p.PreferredCity)
-                .HasMaxLength(100);
+                .Property(p => p.PreferredCityId)
+                .IsRequired(false);
 
             modelBuilder.Entity<ParkingZone>()
                 .Property(p => p.PricePerHour)

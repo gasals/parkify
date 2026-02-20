@@ -324,4 +324,91 @@ class ApiService {
       throw Exception('Greška: $e');
     }
   }
+
+  static Future<Map<String, dynamic>> getUserPreference({
+    required int userId,
+  }) async {
+    try {
+      var url = '${AppUrls.preferences}/user/$userId';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var response = await http.get(uri, headers: headers)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri učitavanju preference');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateUserPreferences({
+    required int userId,
+    required Map<String, dynamic> preferences,
+  }) async {
+    try {
+      var url = '${AppUrls.preferences}/user/$userId';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var jsonRequest = jsonEncode(preferences);
+      var response = await http.put(uri, headers: headers, body: jsonRequest)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri ažuriranju preference');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+   static Future<Map<String, dynamic>> getAllCities({
+    int page = 1,
+    int pageSize = 100,
+  }) async {
+    try {
+      var url = '${AppUrls.cities}?page=$page&pageSize=$pageSize';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var response = await http.get(uri, headers: headers)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri učitavanju gradova: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getCityById({
+    required int cityId,
+  }) async {
+    try {
+      var url = '${AppUrls.cities}/$cityId';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var response = await http.get(uri, headers: headers)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri učitavanju grada: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
 }

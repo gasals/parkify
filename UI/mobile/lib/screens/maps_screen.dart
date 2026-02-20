@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:mobile/providers/city_provider.dart';
+import 'package:mobile/providers/preference_provider.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../models/parking_zone_model.dart';
+import '../models/preference_model.dart';
 import '../providers/parking_zone_provider.dart';
+import '../providers/auth_provider.dart';
 import '../screens/parking_details_screen.dart';
 
 class MapsScreen extends StatefulWidget {
@@ -19,6 +23,7 @@ class _MapsScreenState extends State<MapsScreen> {
   List<ParkingZone> _filteredZones = [];
   ParkingZone? _selectedZone;
   BottomSheetState _sheetState = BottomSheetState.closed;
+  Preference? _userPreference;
 
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -29,13 +34,47 @@ class _MapsScreenState extends State<MapsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<ParkingZoneProvider>(context, listen: false);
-      provider.getParkingZones().then((_) {
-        setState(() {
-          _filteredZones = provider.parkingZones;
-        });
-      });
+      _loadPreferencesAndZones();
     });
+  }
+
+  Future<void> _loadPreferencesAndZones() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final zoneProvider = Provider.of<ParkingZoneProvider>(context, listen: false);
+    final preferenceProvider = Provider.of<PreferenceProvider>(context, listen: false);
+    final cityProvider = Provider.of<CityProvider>(context, listen: false);
+
+    final userId = authProvider.user?.id;
+
+    if (userId != null) {
+      await preferenceProvider.loadUserPreference(userId: userId);
+      setState(() {
+        _userPreference = preferenceProvider.userPreference;
+      });
+    }
+
+    await zoneProvider.getParkingZones();
+    await cityProvider.getAllCities();
+
+    setState(() {
+      _filteredZones = zoneProvider.parkingZones;
+    });
+
+    _animateToPreferredCity(cityProvider);
+  }
+
+  void _animateToPreferredCity(CityProvider cityProvider) {
+    if (_userPreference?.preferredCityId != null && _mapController != null) {
+      final preferredCity = cityProvider.findCityById(_userPreference!.preferredCityId!);
+      
+      if (preferredCity != null) {
+        _mapController?.animateCamera(
+          CameraUpdate.newLatLng(
+            LatLng(preferredCity.latitude, preferredCity.longitude),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -52,8 +91,7 @@ class _MapsScreenState extends State<MapsScreen> {
         final query = _searchQuery.toLowerCase();
         _filteredZones = zones.where((zone) {
           return zone.name.toLowerCase().contains(query) ||
-              zone.address.toLowerCase().contains(query) ||
-              zone.city.toLowerCase().contains(query);
+              zone.address.toLowerCase().contains(query);
         }).toList();
       }
     });
@@ -75,11 +113,56 @@ class _MapsScreenState extends State<MapsScreen> {
         onTap: () {
           setState(() {
             _selectedZone = zone;
+            if (_selectedZone != null) {
+              _selectedZone!.isFavorite = _userPreference?.favoriteParkingZoneId == zone.id;
+            }
             _sheetState = BottomSheetState.info;
           });
         },
       );
     }).toSet();
+  }
+
+  Future<void> _toggleFavorite(ParkingZone zone) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final preferenceProvider = Provider.of<PreferenceProvider>(context, listen: false);
+
+    try {
+      final isFavorite = zone.isFavorite;
+      final newFavoriteId = isFavorite ? 0 : zone.id;
+
+      await preferenceProvider.updateFavoriteParking(
+        userId: authProvider.user!.id,
+        parkingZoneId: newFavoriteId,
+      );
+
+      setState(() {
+        for (var z in _filteredZones) {
+          z.isFavorite = preferenceProvider.userPreference?.favoriteParkingZoneId == z.id;
+        }
+        
+        if (_selectedZone != null) {
+          _selectedZone!.isFavorite = preferenceProvider.userPreference?.favoriteParkingZoneId == _selectedZone!.id;
+        }
+        
+        _userPreference = preferenceProvider.userPreference;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(zone.isFavorite ? 'Dodano u favorite' : 'Uklonjeno iz favorite'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Greška: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -99,6 +182,13 @@ class _MapsScreenState extends State<MapsScreen> {
             _filteredZones = provider.parkingZones;
           }
 
+          final favoriteZone = _userPreference?.favoriteParkingZoneId != null
+              ? _filteredZones.firstWhere(
+                  (zone) => zone.id == _userPreference?.favoriteParkingZoneId,
+                  orElse: () => _filteredZones.isNotEmpty ? _filteredZones.first : null as ParkingZone,
+                )
+              : null;
+
           return Stack(
             children: [
               GoogleMap(
@@ -114,8 +204,60 @@ class _MapsScreenState extends State<MapsScreen> {
                 },
               ),
 
+              if (favoriteZone != null)
+                Positioned(
+                  top: 50,
+                  left: 12,
+                  right: 12,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedZone = favoriteZone;
+                        _selectedZone!.isFavorite = true;
+                        _sheetState = BottomSheetState.info;
+                      });
+                      _mapController?.animateCamera(
+                        CameraUpdate.newLatLng(
+                          LatLng(favoriteZone.latitude, favoriteZone.longitude),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star, color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Moj favorit: ${favoriteZone.name}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
               Positioned(
-                top: 100,
+                top: favoriteZone != null ? 110 : 100,
                 left: 12,
                 right: 12,
                 child: Container(
@@ -158,7 +300,7 @@ class _MapsScreenState extends State<MapsScreen> {
 
               if (_searchQuery.isNotEmpty && _filteredZones.isNotEmpty)
                 Positioned(
-                  top: 150,
+                  top: favoriteZone != null ? 170 : 160,
                   left: 12,
                   right: 12,
                   child: Container(
@@ -186,13 +328,14 @@ class _MapsScreenState extends State<MapsScreen> {
                             style: const TextStyle(fontSize: 14),
                           ),
                           subtitle: Text(
-                            '${zone.city}, ${zone.address}',
+                            '${zone.address}',
                             style: const TextStyle(fontSize: 12),
                           ),
                           onTap: () {
                             _searchController.text = zone.name;
                             setState(() {
                               _selectedZone = zone;
+                              _selectedZone!.isFavorite = _userPreference?.favoriteParkingZoneId == zone.id;
                               _sheetState = BottomSheetState.info;
                               _searchQuery = '';
                             });
@@ -260,23 +403,37 @@ class _MapsScreenState extends State<MapsScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _selectedZone!.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _selectedZone!.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     Text(
                       '${_selectedZone!.pricePerHour}KM/h',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _toggleFavorite(_selectedZone!),
+                      child: Icon(
+                        _selectedZone!.isFavorite
+                            ? Icons.star
+                            : Icons.star_outline,
+                        color: _selectedZone!.isFavorite
+                            ? Colors.amber
+                            : AppColors.textSecondary,
+                        size: 24,
                       ),
                     ),
                     GestureDetector(
@@ -312,7 +469,7 @@ class _MapsScreenState extends State<MapsScreen> {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${_selectedZone!.address}, ${_selectedZone!.city}',
+                  '${_selectedZone!.address}',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
@@ -326,8 +483,12 @@ class _MapsScreenState extends State<MapsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildInfoChip(
-                '${_selectedZone!.totalSpots}',
-                'Slobodnih mjesta',
+                '${_selectedZone!.availableSpots}',
+                'Dostupna',
+              ),
+              _buildInfoChip(
+                '${_selectedZone!.coveredSpots}',
+                'Pokrivena',
               ),
               _buildInfoChip(
                 '${_selectedZone!.disabledSpots}',

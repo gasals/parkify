@@ -1,4 +1,5 @@
 using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -24,12 +25,50 @@ namespace parkify.Service.Services
                 query = query.Where(x => x.UserId == search.UserId);
             }
 
-            if (!string.IsNullOrWhiteSpace(search?.PreferredCity))
+            if (search?.PreferredCityId.HasValue == true)
             {
-                query = query.Where(x => x.PreferredCity.Contains(search.PreferredCity));
+                query = query.Where(x => x.PreferredCityId == search.PreferredCityId);
             }
 
             return query;
+        }
+
+        public async Task<Preference> GetOrCreateUserPreference(int userId)
+        {
+            var search = new PreferenceSearch { UserId = userId };
+            var query = AddFilter(search, Context.Set<Database.Preference>().AsQueryable());
+            var preference = query.FirstOrDefault();
+
+            if (preference == null)
+            {
+                var newPreference = new PreferenceInsertRequest
+                {
+                    UserId = userId,
+                    PrefersCovered = false,
+                    PrefersNearby = true,
+                    NotifyAboutOffers = true
+                };
+
+                var created = Insert(newPreference);
+                return created;
+            }
+
+            return Mapper.Map<Preference>(preference);
+        }
+
+        public async Task<Preference> UpdateUserPreferences(int userId, PreferenceUpdateRequest request)
+        {
+            var search = new PreferenceSearch { UserId = userId };
+            var query = AddFilter(search, Context.Set<Database.Preference>().AsQueryable());
+            var preference = query.FirstOrDefault();
+
+            if (preference == null)
+            {
+                throw new Exception("Korisni?ke preference nisu prona?ene");
+            }
+
+            Update(preference.Id, request);
+            return Mapper.Map<Preference>(preference);
         }
     }
 }

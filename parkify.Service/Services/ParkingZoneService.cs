@@ -25,9 +25,9 @@ namespace parkify.Service.Services
                 query = query.Where(x => x.Name.Contains(search.Name));
             }
 
-            if (!string.IsNullOrWhiteSpace(search?.City))
+            if (search?.CityId.HasValue == true)
             {
-                query = query.Where(x => x.City == search.City);
+                query = query.Where(x => x.CityId == search.CityId);
             }
 
             if (search?.IncludeSpots == true)

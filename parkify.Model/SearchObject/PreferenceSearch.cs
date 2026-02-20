@@ -5,6 +5,6 @@ namespace parkify.Model.SearchObject
     public class PreferenceSearch : BaseSearchObject
     {
         public int? UserId { get; set; }
-        public string PreferredCity { get; set; }
+        public int? PreferredCityId { get; set; }
     }
 }
