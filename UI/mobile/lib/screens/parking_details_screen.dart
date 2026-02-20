@@ -158,16 +158,6 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Row(
                             children: [
-                              SizedBox(
-                                width: 40,
-                                child: Text(
-                                  'Red ${rowIndex + 1}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
                               const SizedBox(width: 12),
                               Row(
                                 children: List.generate(
@@ -250,7 +240,7 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              '${rowIndex + 1}${String.fromCharCode(65 + colIndex)}',
+                                              spot.spotCode,
                                               style: TextStyle(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,

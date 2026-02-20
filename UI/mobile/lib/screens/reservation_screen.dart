@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/providers/payment_provider.dart';
+import 'package:mobile/services/navigation_service.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/parking_zone_model.dart';
@@ -380,17 +381,38 @@ class _ReservationScreenState extends State<ReservationScreen> {
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    _startNavigation();
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                  ),
-                  child: const Text(
+                  icon: const Icon(Icons.navigation),
+                  label: const Text(
                     'Kreni na parking',
                     style: TextStyle(
                       color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.primary),
+                  ),
+                  child: Text(
+                    'Nazad na mapu',
+                    style: TextStyle(
+                      color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -401,6 +423,21 @@ class _ReservationScreenState extends State<ReservationScreen> {
         ),
       ),
     );
+  }
+
+  void _startNavigation() {
+    NavigationService.startNavigation(
+      destinationLat: widget.parkingZone.latitude,
+      destinationLng: widget.parkingZone.longitude,
+      destinationName: widget.parkingZone.name,
+    ).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Greška: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    });
   }
 
   Widget _buildDetailRow(String label, String value) {

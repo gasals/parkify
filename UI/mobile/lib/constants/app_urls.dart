@@ -17,4 +17,6 @@ class AppUrls {
   static const String preferences = '$baseUrl/preferences';
 
   static const String cities = '$baseUrl/city';
+
+  static const String navigation = 'https://www.google.com/maps/dir/?api=1&destination={lat},{lng}&travelmode=driving';
 }
