@@ -29,18 +29,34 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
     return sorted;
   }
 
-  int _getMaxColumn() {
-    if (widget.parkingZone.spots == null || widget.parkingZone.spots!.isEmpty) {
-      return 4;
-    }
-    return widget.parkingZone.spots!
-        .fold<int>(0, (max, spot) => spot.columnNumber > max ? spot.columnNumber : max);
+  int _getMaxColumn(List<ParkingSpot> spots) {
+    return spots
+        .map((s) => s.columnNumber)
+        .reduce((a, b) => a > b ? a : b);
+  }
+
+  int _getMaxRow(List<ParkingSpot> spots) {
+    return spots
+        .map((s) => s.rowNumber)
+        .reduce((a, b) => a > b ? a : b);
   }
 
   @override
   Widget build(BuildContext context) {
     final sortedSpots = _getSortedSpots();
-    final maxColumn = _getMaxColumn();
+
+    if (sortedSpots.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.parkingZone.name),
+          backgroundColor: AppColors.primary,
+        ),
+        body: const Center(child: Text("Nema mjesta")),
+      );
+    }
+
+    final maxColumn = _getMaxColumn(sortedSpots);
+    final maxRow = _getMaxRow(sortedSpots);
 
     return Scaffold(
       appBar: AppBar(
@@ -68,7 +84,7 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${widget.parkingZone.address}',
+                        widget.parkingZone.address,
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -85,187 +101,140 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        '${widget.parkingZone.availableSpots}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text('Dostupna mjesta'),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        '${widget.parkingZone.coveredSpots}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text('Pokrivena'),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        '${widget.parkingZone.disabledSpots}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text('Invalidska'),
-                    ],
-                  ),
-                ],
-              ),
+
               const SizedBox(height: 32),
-              Text(
+
+              const Text(
                 'Raspored mjesta',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 16),
-              if (sortedSpots.isNotEmpty)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Column(
-                    children: List.generate(
-                      (sortedSpots.isNotEmpty
-                              ? sortedSpots
-                                  .map((s) => s.rowNumber)
-                                  .reduce((a, b) => a > b ? a : b)
-                              : 0) +
-                          1,
-                      (rowIndex) {
-                        final spotsInRow = sortedSpots
-                            .where((spot) => spot.rowNumber == rowIndex)
-                            .toList();
 
-                        if (spotsInRow.isEmpty) return SizedBox.shrink();
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Column(
+                  children: List.generate(
+                    maxRow,
+                    (rowIndex) {
+                      final rowNumber = rowIndex + 1;
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 12),
-                              Row(
-                                children: List.generate(
-                                  maxColumn,
-                                  (colIndex) {
-                                    final spot = spotsInRow.firstWhere(
-                                      (s) => s.columnNumber == colIndex,
-                                      orElse: () => ParkingSpot(
-                                        id: -1,
-                                        parkingZoneId: 0,
-                                        spotCode: '',
-                                        rowNumber: rowIndex,
-                                        columnNumber: colIndex,
-                                        type: 0,
-                                        isAvailable: false,
-                                        isCovered: false,
-                                      ),
-                                    );
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: List.generate(
+                            maxColumn,
+                            (colIndex) {
+                              final columnNumber = colIndex + 1;
 
-                                    if (spot.id == -1) {
-                                      return SizedBox(
-                                        width: 50,
-                                        height: 50,
-                                        child: Container(
-                                          margin: const EdgeInsets.all(4),
-                                          color: Colors.grey[200],
-                                        ),
-                                      );
-                                    }
-
-                                    final isSelected = _selectedSpot?.id == spot.id;
-                                    final isAvailable = spot.isAvailable;
-                                    final isDisabled = spot.type == 2;
-                                    final isCovered = spot.isCovered;
-
-                                    return GestureDetector(
-                                      onTap: isAvailable
-                                          ? () {
-                                              setState(() {
-                                                _selectedSpot = spot;
-                                              });
-                                            }
-                                          : null,
-                                      child: Container(
-                                        width: 50,
-                                        height: 50,
-                                        margin: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? AppColors.primary
-                                              : isAvailable
-                                                  ? Colors.white
-                                                  : AppColors.surfaceVariant,
-                                          border: Border.all(
-                                            color: isSelected
-                                                ? AppColors.primary
-                                                : isAvailable
-                                                    ? AppColors.border
-                                                    : AppColors.textTertiary,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              isDisabled
-                                                  ? Icons.wheelchair_pickup
-                                                  : isCovered
-                                                      ? Icons.roofing
-                                                      : Icons.local_parking,
-                                              size: 16,
-                                              color: isSelected
-                                                  ? Colors.white
-                                                  : isAvailable
-                                                      ? AppColors.primary
-                                                      : AppColors.textTertiary,
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              spot.spotCode,
-                                              style: TextStyle(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: isSelected
-                                                    ? Colors.white
-                                                    : isAvailable
-                                                        ? AppColors.textPrimary
-                                                        : AppColors.textTertiary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
+                              final spot = sortedSpots.firstWhere(
+                                (s) =>
+                                    s.rowNumber == rowNumber &&
+                                    s.columnNumber == columnNumber,
+                                orElse: () => ParkingSpot(
+                                  id: -1,
+                                  parkingZoneId: 0,
+                                  spotCode: '',
+                                  rowNumber: rowNumber,
+                                  columnNumber: columnNumber,
+                                  type: 0,
+                                  isAvailable: false,
+                                  isCovered: false,
                                 ),
-                              ),
-                            ],
+                              );
+
+                              if (spot.id == -1) {
+                                return Container(
+                                  width: 50,
+                                  height: 50,
+                                  margin: const EdgeInsets.all(4),
+                                  color: Colors.grey[200],
+                                );
+                              }
+
+                              final isSelected =
+                                  _selectedSpot?.id == spot.id;
+                              final isAvailable = spot.isAvailable;
+                              final isDisabled = spot.type == 2;
+                              final isCovered = spot.isCovered;
+
+                              return GestureDetector(
+                                onTap: isAvailable
+                                    ? () {
+                                        setState(() {
+                                          _selectedSpot = spot;
+                                        });
+                                      }
+                                    : null,
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  margin: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : isAvailable
+                                            ? Colors.white
+                                            : AppColors.surfaceVariant,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : isAvailable
+                                              ? AppColors.border
+                                              : AppColors.textTertiary,
+                                      width: 2,
+                                    ),
+                                    borderRadius:
+                                        BorderRadius.circular(6),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        isDisabled
+                                            ? Icons.wheelchair_pickup
+                                            : isCovered
+                                                ? Icons.roofing
+                                                : Icons.local_parking,
+                                        size: 16,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : isAvailable
+                                                ? AppColors.primary
+                                                : AppColors.textTertiary,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        spot.spotCode,
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : isAvailable
+                                                  ? AppColors.textPrimary
+                                                  : AppColors.textTertiary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
+              ),
+
               const SizedBox(height: 32),
+
               if (_selectedSpot != null)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,39 +245,11 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _selectedSpot!.type == 2
-                                ? Icons.wheelchair_pickup
-                                : _selectedSpot!.isCovered
-                                    ? Icons.roofing
-                                    : Icons.local_parking,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Odabrano mjesto: ${_selectedSpot!.spotCode}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              if (_selectedSpot!.type == 2)
-                                const Text(
-                                  'Invalidsko mjesto',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              if (_selectedSpot!.isCovered)
-                                const Text(
-                                  'Pokriveno mjesto',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                            ],
-                          ),
-                        ],
+                      child: Text(
+                        'Odabrano mjesto: ${_selectedSpot!.spotCode}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -317,9 +258,10 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).pushReplacement(
+                          Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => ReservationScreen(
+                              builder: (context) =>
+                                  ReservationScreen(
                                 parkingZone: widget.parkingZone,
                                 parkingSpot: _selectedSpot!,
                               ),

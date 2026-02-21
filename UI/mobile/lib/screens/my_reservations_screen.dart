@@ -6,21 +6,67 @@ import '../providers/auth_provider.dart';
 import '../providers/reservation_provider.dart';
 
 class MyReservationsScreen extends StatefulWidget {
+  const MyReservationsScreen({Key? key}) : super(key: key);
+
   @override
   State<MyReservationsScreen> createState() => _MyReservationsScreenState();
 }
 
 class _MyReservationsScreenState extends State<MyReservationsScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  int _currentPage = 1;
+  bool _isFetchingMore = false;
+
   @override
   void initState() {
     super.initState();
+
+    _scrollController.addListener(_onScroll);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.user?.id ?? 0;
-      
-      Provider.of<ReservationProvider>(context, listen: false)
-          .getUserReservations(userId: userId);
+
+      if (mounted) {
+        Provider.of<ReservationProvider>(context, listen: false)
+            .getUserReservations(
+          userId: userId,
+          page: _currentPage,
+        );
+      }
     });
+  }
+
+  void _onScroll() async {
+    if (!_scrollController.hasClients) return;
+
+    final provider =
+        Provider.of<ReservationProvider>(context, listen: false);
+
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isFetchingMore &&
+        provider.hasMore) {
+      _isFetchingMore = true;
+      _currentPage++;
+
+      final authProvider =
+          Provider.of<AuthProvider>(context, listen: false);
+
+      await provider.getUserReservations(
+        userId: authProvider.user?.id ?? 0,
+        page: _currentPage,
+      );
+
+      _isFetchingMore = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -32,7 +78,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       ),
       body: Consumer<ReservationProvider>(
         builder: (context, provider, _) {
-          if (provider.isLoading) {
+          if (provider.isLoading && provider.reservations.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -62,17 +108,38 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                       color: AppColors.textSecondary,
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/home');
+                    },
+                    icon: const Icon(Icons.map),
+                    label: const Text('Idi na mapu'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
+                  ),
                 ],
               ),
             );
           }
 
           return ListView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.all(12),
-            itemCount: provider.reservations.length,
+            itemCount: provider.hasMore
+                ? provider.reservations.length + 1
+                : provider.reservations.length,
             itemBuilder: (context, index) {
-              final reservation = provider.reservations[index];
-              return _buildReservationCard(context, reservation);
+              if (index < provider.reservations.length) {
+                final reservation = provider.reservations[index];
+                return _buildReservationCard(context, reservation);
+              } else {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
             },
           );
         },
@@ -84,63 +151,95 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       BuildContext context, Reservation reservation) {
     final statusColor = _getStatusColor(reservation.status);
     final statusText = reservation.getStatusText();
+    final statusIcon = _getStatusIcon(reservation.status);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Kod: ${reservation.reservationCode}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(Icons.confirmation_number,
+                              size: 16, color: AppColors.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Kod: ${reservation.reservationCode}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 10,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Text(
-                          statusText,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: statusColor,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(statusIcon, size: 13, color: statusColor),
+                            const SizedBox(width: 5),
+                            Text(
+                              statusText,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: statusColor,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  '\$${reservation.finalPrice.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${reservation.finalPrice.toStringAsFixed(2)}KM',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${reservation.durationInHours}h',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -150,50 +249,56 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDetailRow(
-                    'Vrijeme početka',
+                  _buildDetailRowWithIcon(
+                    Icons.access_time,
+                    'Početak',
                     '${reservation.reservationStart.hour.toString().padLeft(2, '0')}:${reservation.reservationStart.minute.toString().padLeft(2, '0')}',
                   ),
                   const SizedBox(height: 8),
-                  _buildDetailRow(
-                    'Vrijeme završetka',
+                  _buildDetailRowWithIcon(
+                    Icons.schedule,
+                    'Završetak',
                     '${reservation.reservationEnd.hour.toString().padLeft(2, '0')}:${reservation.reservationEnd.minute.toString().padLeft(2, '0')}',
                   ),
                   const SizedBox(height: 8),
-                  _buildDetailRow(
+                  _buildDetailRowWithIcon(
+                    Icons.timelapse,
                     'Trajanje',
-                    '${reservation.durationInHours}h',
+                    '${reservation.durationInHours} sati',
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.of(context).pushNamed(
-                        '/reservation-details',
-                        arguments: reservation,
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Detalji rezervacije'),
+                        ),
                       );
                     },
+                    icon: const Icon(Icons.info, size: 18),
+                    label: const Text('Detalji',
+                        overflow: TextOverflow.ellipsis),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                    ),
-                    child: const Text(
-                      'Detalji',
-                      style: TextStyle(color: Colors.white),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 if (reservation.status == 1 || reservation.status == 2)
                   Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _cancelReservation(context, reservation),
-                      child: const Text('Otkaži'),
+                    child: OutlinedButton.icon(
+                      onPressed: () =>
+                          _cancelReservation(context, reservation),
+                      icon: const Icon(Icons.close, size: 18),
+                      label: const Text('Otkaži',
+                          overflow: TextOverflow.ellipsis),
                     ),
                   ),
               ],
@@ -204,6 +309,35 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     );
   }
 
+  Widget _buildDetailRowWithIcon(
+      IconData icon, String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 15, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   void _cancelReservation(
       BuildContext context, Reservation reservation) {
     showDialog(
@@ -211,7 +345,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Otkaži rezervaciju?'),
         content: Text(
-          'Jeste li sigurni da želite da otažete rezervaciju ${reservation.reservationCode}?',
+          'Jeste li sigurni da želite otkazati rezervaciju ${reservation.reservationCode}?',
         ),
         actions: [
           TextButton(
@@ -240,28 +374,6 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
   Color _getStatusColor(int status) {
     switch (status) {
       case 1:
@@ -276,6 +388,23 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+
+  IconData _getStatusIcon(int status) {
+    switch (status) {
+      case 1:
+        return Icons.schedule;
+      case 2:
+        return Icons.check_circle;
+      case 3:
+        return Icons.done_all;
+      case 4:
+        return Icons.cancel;
+      case 5:
+        return Icons.close;
+      default:
+        return Icons.help;
     }
   }
 }

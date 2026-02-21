@@ -13,13 +13,15 @@ import 'providers/reservation_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/my_reservations_screen.dart';
+import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  
   Stripe.publishableKey = StripeKeys.publishableKey;
   Stripe.merchantIdentifier = StripeKeys.merchantIdentifier;
   Stripe.urlScheme = StripeKeys.urlScheme;
+  
   runApp(MyApp());
 }
 
@@ -31,19 +33,21 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ParkingZoneProvider()),
         ChangeNotifierProvider(create: (_) => ReservationProvider()),
-        ChangeNotifierProvider(create:  (_) => PaymentProvider()),
+        ChangeNotifierProvider(create: (_) => PaymentProvider()),
         ChangeNotifierProvider(create: (_) => PreferenceProvider()),
         ChangeNotifierProvider(create: (_) => CityProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
         theme: AppTheme.lightTheme,
+        debugShowCheckedModeBanner: false,
         home: _buildHome(),
         routes: {
           '/login': (_) => LoginScreen(),
           '/home': (_) => HomeScreen(),
           '/my-reservations': (_) => MyReservationsScreen(),
-        }
+          '/settings': (_) => SettingsScreen(),
+        },
       ),
     );
   }

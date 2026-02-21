@@ -411,4 +411,66 @@ class ApiService {
       throw Exception('Greška: $e');
     }
   }
+
+   static Future<Map<String, dynamic>> updateUser({
+    required int userId,
+    required String email,
+    required String firstName,
+    required String lastName,
+    required String? phoneNumber,
+  }) async {
+    try {
+      var url = '${AppUrls.baseUrl}/Users/$userId';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var data = {
+        'email': email,
+        'firstName': firstName,
+        'lastName': lastName,
+        'phoneNumber': phoneNumber,
+      };
+
+      var jsonRequest = jsonEncode(data);
+      var response = await http.put(uri, headers: headers, body: jsonRequest)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri ažuriranju korisnika: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<bool> changePassword({
+    required int userId,
+    required String password,
+    required String passwordConfirm,
+  }) async {
+    try {
+      var url = '${AppUrls.baseUrl}/Users/$userId';
+      var uri = Uri.parse(url);
+      var headers = _getHeaders();
+
+      var data = {
+        'password': password,
+        'passwordConfirm': passwordConfirm,
+      };
+
+      var jsonRequest = jsonEncode(data);
+      var response = await http.put(uri, headers: headers, body: jsonRequest)
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Greška pri promjeni lozinke: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
 }

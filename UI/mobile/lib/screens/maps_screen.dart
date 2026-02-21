@@ -10,6 +10,7 @@ import '../models/preference_model.dart';
 import '../providers/parking_zone_provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/parking_details_screen.dart';
+import 'package:collection/collection.dart';
 
 class MapsScreen extends StatefulWidget {
   @override
@@ -183,10 +184,7 @@ class _MapsScreenState extends State<MapsScreen> {
           }
 
           final favoriteZone = _userPreference?.favoriteParkingZoneId != null
-              ? _filteredZones.firstWhere(
-                  (zone) => zone.id == _userPreference?.favoriteParkingZoneId,
-                  orElse: () => _filteredZones.isNotEmpty ? _filteredZones.first : null as ParkingZone,
-                )
+              ? _filteredZones.firstWhereOrNull((zone) => zone.id == _userPreference?.favoriteParkingZoneId)
               : null;
 
           return Stack(

@@ -84,22 +84,30 @@ class PreferenceProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateCoverPreference({
+  Future<void> updatePreference({
     required int userId,
-    required bool prefersCovered,
+    bool? prefersCovered,
+    bool? prefersNearby,
+    int? preferredCityId,
+    int? favoriteParkingZoneId,
+    bool? notifyAboutOffers,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final updateData = {
-        'prefersCovered': prefersCovered,
-      };
+      final data = <String, dynamic>{};
+      
+      if (prefersCovered != null) data['prefersCovered'] = prefersCovered;
+      if (prefersNearby != null) data['prefersNearby'] = prefersNearby;
+      if (preferredCityId != null) data['preferredCityId'] = preferredCityId;
+      if (favoriteParkingZoneId != null) data['favoriteParkingZoneId'] = favoriteParkingZoneId;
+      if (notifyAboutOffers != null) data['notifyAboutOffers'] = notifyAboutOffers;
 
       final result = await ApiService.updateUserPreferences(
         userId: userId,
-        preferences: updateData,
+        preferences: data,
       );
 
       _userPreference = Preference.fromJson(result);

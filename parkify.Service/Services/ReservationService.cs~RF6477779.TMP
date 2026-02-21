@@ -39,8 +39,6 @@ namespace parkify.Service.Services
                 query = query.Where(x => (int)x.Status == search.Status);
             }
 
-            query = query.OrderByDescending(x => x.Created);
-
             return query;
         }
 

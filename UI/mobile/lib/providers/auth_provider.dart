@@ -54,4 +54,65 @@ class AuthProvider extends ChangeNotifier {
     ApiService.logout();
     notifyListeners();
   }
+
+  Future<bool> updateUser({
+    required String email,
+    required String firstName,
+    required String lastName,
+    required String? phoneNumber,
+  }) async {
+    if (user == null) return false;
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final result = await ApiService.updateUser(
+        userId: user!.id,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+      );
+
+      _user = User.fromJson(result);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> changePassword({
+    required String password,
+    required String passwordConfirm,
+  }) async {
+    if (user == null) return false;
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final success = await ApiService.changePassword(
+        userId: user!.id,
+        password: password,
+        passwordConfirm: passwordConfirm,
+      );
+
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }
