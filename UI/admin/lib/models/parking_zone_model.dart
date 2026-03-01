@@ -88,3 +88,29 @@ class ParkingZone {
     };
   }
 }
+
+enum ReservationStatus {
+  pending(1, 'Pending'),
+  confirmed(2, 'Confirmed'),
+  active(3, 'Active'),
+  completed(4, 'Completed'),
+  cancelled(5, 'Cancelled'),
+  noShow(6, 'NoShow');
+
+  final int value;
+  final String label;
+
+  const ReservationStatus(this.value, this.label);
+
+  static ReservationStatus fromValue(int value) {
+    return ReservationStatus.values.firstWhere(
+      (status) => status.value == value,
+      orElse: () => ReservationStatus.pending,
+    );
+  }
+
+  static ReservationStatus? fromValueNullable(int? value) {
+    if (value == null) return null;
+    return fromValue(value);
+  }
+}

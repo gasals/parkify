@@ -11,6 +11,7 @@
         public bool IsAvailable { get; set; } = true;
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }
+        public bool IsActive { get; set; } = true;
 
     }
 

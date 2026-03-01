@@ -8,30 +8,34 @@ class ApiService {
 
   static Map<String, String> _getHeaders() {
     final headers = {'Content-Type': 'application/json'};
-    
+
     if (_username != null && _password != null) {
       final credentials = '$_username:$_password';
       final encoded = base64Encode(utf8.encode(credentials));
       headers['Authorization'] = 'Basic $encoded';
       headers['ngrok-skip-browser-warning'] = 'true';
     }
-    
+
     return headers;
   }
 
-  
-  static Future<Map<String, dynamic>> login(String username, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String username,
+    String password,
+  ) async {
     try {
       final credentials = '$username:$password';
       final encoded = base64Encode(utf8.encode(credentials));
-      
-      final response = await http.post(
-        Uri.parse('${AppUrls.login}?username=$username&password=$password'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic $encoded',
-        },
-      ).timeout(Duration(seconds: 10));
+
+      final response = await http
+          .post(
+            Uri.parse('${AppUrls.login}?username=$username&password=$password'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Basic $encoded',
+            },
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -46,14 +50,17 @@ class ApiService {
     }
   }
 
-  
-  static Future<Map<String, dynamic>> register(Map<String, dynamic> userData) async {
+  static Future<Map<String, dynamic>> register(
+    Map<String, dynamic> userData,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse(AppUrls.register),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(userData),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse(AppUrls.register),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(userData),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -65,41 +72,43 @@ class ApiService {
     }
   }
 
-  
   static void logout() {
     _username = null;
     _password = null;
   }
 
-  
   static Future<Map<String, dynamic>> getParkingZones({
     int page = 1,
     int pageSize = 10,
     bool includeSpots = true,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.parkingZones}?page=$page&pageSize=$pageSize&includeSpots=$includeSpots'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.parkingZones}?page=$page&pageSize=$pageSize&includeSpots=$includeSpots',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Greška pri učitavanju parking zona: ${response.statusCode}');
+        throw Exception(
+          'Greška pri učitavanju parking zona: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Greška: $e');
     }
   }
 
-  
   static Future<Map<String, dynamic>> getParkingZoneById(int id) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.parkingZones}/$id'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(Uri.parse('${AppUrls.parkingZones}/$id'), headers: _getHeaders())
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -111,7 +120,6 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> updateParkingZone({
     required int zoneId,
     required String? name,
@@ -131,11 +139,13 @@ class ApiService {
         if (isActive != null) 'isActive': isActive,
       };
 
-      var response = await http.put(
-        Uri.parse('${AppUrls.parkingZones}/$zoneId'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.parkingZones}/$zoneId'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -147,7 +157,6 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> createParkingSpot({
     required int parkingZoneId,
     required int type,
@@ -164,11 +173,13 @@ class ApiService {
         'isAvailable': isAvailable,
       };
 
-      var response = await http.post(
-        Uri.parse('${AppUrls.baseUrl}/parkingspots'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .post(
+            Uri.parse('${AppUrls.baseUrl}/parkingspots'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -180,7 +191,6 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> updateParkingSpot({
     required int spotId,
     required String? spotCode,
@@ -188,6 +198,7 @@ class ApiService {
     required int? rowNumber,
     required int? columnNumber,
     required bool? isAvailable,
+    bool? isActive,
   }) async {
     try {
       var data = {
@@ -198,11 +209,13 @@ class ApiService {
         if (isAvailable != null) 'isAvailable': isAvailable,
       };
 
-      var response = await http.put(
-        Uri.parse('${AppUrls.baseUrl}/parkingspots/$spotId'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.baseUrl}/parkingspots/$spotId'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -214,13 +227,14 @@ class ApiService {
     }
   }
 
-  
   static Future<bool> deleteParkingSpot(int spotId) async {
     try {
-      var response = await http.delete(
-        Uri.parse('${AppUrls.baseUrl}/parkingspots/$spotId'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .delete(
+            Uri.parse('${AppUrls.baseUrl}/parkingspots/$spotId'),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return true;
@@ -232,14 +246,17 @@ class ApiService {
     }
   }
 
-  
-  static Future<Map<String, dynamic>> createReservation(Map<String, dynamic> reservationData) async {
+  static Future<Map<String, dynamic>> createReservation(
+    Map<String, dynamic> reservationData,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse(AppUrls.reservations),
-        headers: _getHeaders(),
-        body: jsonEncode(reservationData),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse(AppUrls.reservations),
+            headers: _getHeaders(),
+            body: jsonEncode(reservationData),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -251,17 +268,20 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> getUserReservations({
     required int userId,
     int page = 1,
     int pageSize = 10,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.reservations}?userId=$userId&page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.reservations}?userId=$userId&page=$page&pageSize=$pageSize',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -273,16 +293,17 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> getAllReservations({
     int page = 1,
     int pageSize = 20,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.reservations}?page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('${AppUrls.reservations}?page=$page&pageSize=$pageSize'),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -294,17 +315,18 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> updateReservationStatus(
     int reservationId,
     int status,
   ) async {
     try {
-      final response = await http.put(
-        Uri.parse('${AppUrls.reservations}/$reservationId'),
-        headers: _getHeaders(),
-        body: jsonEncode({'status': status}),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .put(
+            Uri.parse('${AppUrls.reservations}/$reservationId'),
+            headers: _getHeaders(),
+            body: jsonEncode({'status': status}),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -316,7 +338,6 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> checkInReservation(
     int reservationId,
   ) async {
@@ -326,11 +347,13 @@ class ApiService {
         'checkInTime': DateTime.now().toIso8601String(),
       };
 
-      final response = await http.put(
-        Uri.parse('${AppUrls.reservations}/$reservationId'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .put(
+            Uri.parse('${AppUrls.reservations}/$reservationId'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -342,7 +365,6 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> checkOutReservation(
     int reservationId,
   ) async {
@@ -352,11 +374,13 @@ class ApiService {
         'checkOutTime': DateTime.now().toIso8601String(),
       };
 
-      final response = await http.put(
-        Uri.parse('${AppUrls.reservations}/$reservationId'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .put(
+            Uri.parse('${AppUrls.reservations}/$reservationId'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -368,13 +392,17 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> cancelReservation(int reservationId) async {
+  static Future<Map<String, dynamic>> cancelReservation(
+    int reservationId,
+  ) async {
     try {
-      final response = await http.put(
-        Uri.parse('${AppUrls.reservations}/$reservationId'),
-        headers: _getHeaders(),
-        body: jsonEncode({'status': 5}),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .put(
+            Uri.parse('${AppUrls.reservations}/$reservationId'),
+            headers: _getHeaders(),
+            body: jsonEncode({'status': 5}),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -392,10 +420,14 @@ class ApiService {
     int pageSize = 10,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.notifications}?userId=$userId&page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.notifications}?userId=$userId&page=$page&pageSize=$pageSize',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -407,13 +439,17 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> createReview(Map<String, dynamic> reviewData) async {
+  static Future<Map<String, dynamic>> createReview(
+    Map<String, dynamic> reviewData,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse(AppUrls.reviews),
-        headers: _getHeaders(),
-        body: jsonEncode(reviewData),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse(AppUrls.reviews),
+            headers: _getHeaders(),
+            body: jsonEncode(reviewData),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -431,10 +467,14 @@ class ApiService {
     int pageSize = 10,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.reviews}?parkingZoneId=$parkingZoneId&page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.reviews}?parkingZoneId=$parkingZoneId&page=$page&pageSize=$pageSize',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -459,11 +499,13 @@ class ApiService {
         'currency': 'bam',
       };
 
-      var response = await http.post(
-        Uri.parse('${AppUrls.payments}/create-with-intent'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 15));
+      var response = await http
+          .post(
+            Uri.parse('${AppUrls.payments}/create-with-intent'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -479,10 +521,12 @@ class ApiService {
     required int paymentId,
   }) async {
     try {
-      var response = await http.put(
-        Uri.parse('${AppUrls.payments}/$paymentId/confirm'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.payments}/$paymentId/confirm'),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -500,10 +544,14 @@ class ApiService {
     int pageSize = 10,
   }) async {
     try {
-      var response = await http.get(
-        Uri.parse('${AppUrls.payments}?userId=$userId&page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.payments}?userId=$userId&page=$page&pageSize=$pageSize',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -520,15 +568,15 @@ class ApiService {
     required String reason,
   }) async {
     try {
-      var data = {
-        'reason': reason,
-      };
+      var data = {'reason': reason};
 
-      var response = await http.put(
-        Uri.parse('${AppUrls.payments}/$paymentId/refund'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.payments}/$paymentId/refund'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -544,10 +592,12 @@ class ApiService {
     required int userId,
   }) async {
     try {
-      var response = await http.get(
-        Uri.parse('${AppUrls.preferences}/user/$userId'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .get(
+            Uri.parse('${AppUrls.preferences}/user/$userId'),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -564,11 +614,13 @@ class ApiService {
     required Map<String, dynamic> preferences,
   }) async {
     try {
-      var response = await http.put(
-        Uri.parse('${AppUrls.preferences}/user/$userId'),
-        headers: _getHeaders(),
-        body: jsonEncode(preferences),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.preferences}/user/$userId'),
+            headers: _getHeaders(),
+            body: jsonEncode(preferences),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -585,11 +637,13 @@ class ApiService {
     required Map<String, dynamic> preferenceData,
   }) async {
     try {
-      var response = await http.put(
-        Uri.parse('${AppUrls.preferences}/user/$userId'),
-        headers: _getHeaders(),
-        body: jsonEncode(preferenceData),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.preferences}/user/$userId'),
+            headers: _getHeaders(),
+            body: jsonEncode(preferenceData),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -603,32 +657,33 @@ class ApiService {
 
   static Future<Map<String, dynamic>> getAllCities({
     int page = 1,
-    int pageSize = 100,
+    int pageSize = 1000,
   }) async {
     try {
-      var response = await http.get(
-        Uri.parse('${AppUrls.cities}?page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .get(
+            Uri.parse('${AppUrls.cities}?page=$page&pageSize=$pageSize'),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Greška pri učitavanju gradova: ${response.statusCode}');
+        throw Exception(
+          'Greška pri učitavanju gradova: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Greška: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> getCityById({
-    required int cityId,
-  }) async {
+  static Future<Map<String, dynamic>> getCityById({required int cityId}) async {
     try {
-      var response = await http.get(
-        Uri.parse('${AppUrls.cities}/$cityId'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .get(Uri.parse('${AppUrls.cities}/$cityId'), headers: _getHeaders())
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -657,39 +712,41 @@ class ApiService {
         'city': city,
       };
 
-      var response = await http.put(
-        Uri.parse('${AppUrls.baseUrl}/users/$userId'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.baseUrl}/users/$userId'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Greška pri ažuriranju korisnika: ${response.statusCode}');
+        throw Exception(
+          'Greška pri ažuriranju korisnika: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Greška: $e');
     }
   }
 
-  
   static Future<bool> changePassword({
     required int userId,
     required String password,
     required String passwordConfirm,
   }) async {
     try {
-      var data = {
-        'password': password,
-        'passwordConfirm': passwordConfirm,
-      };
+      var data = {'password': password, 'passwordConfirm': passwordConfirm};
 
-      var response = await http.put(
-        Uri.parse('${AppUrls.baseUrl}/users/$userId'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.baseUrl}/users/$userId'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return true;
@@ -701,21 +758,20 @@ class ApiService {
     }
   }
 
-  
   static Future<Map<String, dynamic>> toggleUserActive({
     required int userId,
     required bool isActive,
   }) async {
     try {
-      var data = {
-        'isActive': isActive,
-      };
+      var data = {'isActive': isActive};
 
-      var response = await http.put(
-        Uri.parse('${AppUrls.baseUrl}/users/$userId'),
-        headers: _getHeaders(),
-        body: jsonEncode(data),
-      ).timeout(Duration(seconds: 10));
+      var response = await http
+          .put(
+            Uri.parse('${AppUrls.baseUrl}/users/$userId'),
+            headers: _getHeaders(),
+            body: jsonEncode(data),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -732,15 +788,405 @@ class ApiService {
     int pageSize = 20,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.baseUrl}/users?page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('${AppUrls.baseUrl}/users?page=$page&pageSize=$pageSize'),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
         throw Exception('Greška pri učitavanju korisnika');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> searchReservations({
+    int? userId,
+    int? parkingZoneId,
+    int? status,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final Map<String, String> queryParams = {
+        'page': page.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      if (userId != null) {
+        queryParams['userId'] = userId.toString();
+      }
+      if (parkingZoneId != null) {
+        queryParams['parkingZoneId'] = parkingZoneId.toString();
+      }
+      if (status != null) {
+        queryParams['status'] = status.toString();
+      }
+
+      final uri = Uri.parse(
+        AppUrls.reservations,
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http
+          .get(uri, headers: _getHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška pri pretrazi rezervacija: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> searchUsers({
+    String? username,
+    String? email,
+    String? firstName,
+    String? lastName,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final Map<String, String> queryParams = {
+        'page': page.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      if (username != null && username.trim().isNotEmpty) {
+        queryParams['username'] = username.trim();
+      }
+      if (email != null && email.trim().isNotEmpty) {
+        queryParams['email'] = email.trim();
+      }
+      if (firstName != null && firstName.trim().isNotEmpty) {
+        queryParams['firstName'] = firstName.trim();
+      }
+      if (lastName != null && lastName.trim().isNotEmpty) {
+        queryParams['lastName'] = lastName.trim();
+      }
+
+      final uri = Uri.parse(
+        AppUrls.users,
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http
+          .get(uri, headers: _getHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result;
+      } else {
+        throw Exception('Greška: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Greška pri pretrazi korisnika: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> searchParkingZones({
+    String? name,
+    int? cityId,
+    int page = 1,
+    int pageSize = 20,
+    bool includeSpots = true,
+  }) async {
+    try {
+      final Map<String, String> queryParams = {
+        'page': page.toString(),
+        'pageSize': pageSize.toString(),
+        'includeSpots': includeSpots.toString(),
+      };
+
+      if (name != null && name.trim().isNotEmpty) {
+        queryParams['name'] = name.trim();
+      }
+      if (cityId != null) {
+        queryParams['cityId'] = cityId.toString();
+      }
+
+      final uri = Uri.parse(
+        AppUrls.parkingZones,
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http
+          .get(uri, headers: _getHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška pri pretrazi parking zona: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> createParkingZone({
+    required String name,
+    required String description,
+    required String address,
+    required String city,
+    required double latitude,
+    required double longitude,
+    required double pricePerHour,
+    double? dailyRate,
+  }) async {
+    try {
+      final body = {
+        'name': name,
+        'description': description,
+        'address': address,
+        'city': city,
+        'latitude': latitude,
+        'longitude': longitude,
+        'pricePerHour': pricePerHour,
+        'dailyRate': dailyRate ?? 0,
+        'isActive': false,
+      };
+
+      final response = await http
+          .post(
+            Uri.parse('${AppUrls.baseUrl}/parkingzones'),
+            headers: _getHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška pri kreiranju zone: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> toggleParkingSpotActive({
+    required int spotId,
+    required bool isAvailable,
+  }) async {
+    try {
+      final body = {'isAvailable': isAvailable};
+
+      final response = await http
+          .put(
+            Uri.parse('${AppUrls.baseUrl}/parkingspots/$spotId'),
+            headers: _getHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška pri updateanju: $e');
+    }
+  }
+
+  static Future<List<dynamic>> searchParkingZonesList({String? name}) async {
+    try {
+      final queryParams = <String, String>{'pageSize': '1000'};
+
+      if (name != null && name.isNotEmpty) {
+        queryParams['name'] = name;
+      }
+
+      final uri = Uri.parse(
+        '${AppUrls.baseUrl}/parkingzones',
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http
+          .get(uri, headers: _getHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result['results'] ?? [];
+      } else {
+        throw Exception('Greška pri pretrazi zona');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<List<dynamic>> getAllUsersList() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${AppUrls.baseUrl}/users?pageSize=1000'),
+            headers: _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result['results'] ?? [];
+      } else {
+        throw Exception('Greška pri preuzimanju korisnika');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<List<dynamic>> searchUsersList({
+    String? username,
+    String? email,
+  }) async {
+    try {
+      final queryParams = <String, String>{'pageSize': '1000'};
+
+      if (username != null && username.isNotEmpty) {
+        queryParams['username'] = username;
+      }
+      if (email != null && email.isNotEmpty) {
+        queryParams['email'] = email;
+      }
+
+      final uri = Uri.parse(
+        '${AppUrls.baseUrl}/users',
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http
+          .get(uri, headers: _getHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result['results'] ?? [];
+      } else {
+        throw Exception('Greška pri pretrazi korisnika');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<List<dynamic>> getAllParkingZonesList() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${AppUrls.baseUrl}/parkingzones?pageSize=1000'),
+            headers: _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result['results'] ?? [];
+      } else {
+        throw Exception('Greška pri preuzimanju zona');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<List<dynamic>> searchParkingZonesListForReservation({
+    String? name,
+  }) async {
+    try {
+      final queryParams = <String, String>{'pageSize': '1000'};
+
+      if (name != null && name.isNotEmpty) {
+        queryParams['name'] = name;
+      }
+
+      final uri = Uri.parse(
+        '${AppUrls.baseUrl}/parkingzones',
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http
+          .get(uri, headers: _getHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result['results'] ?? [];
+      } else {
+        throw Exception('Greška pri pretrazi zona');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> createUser({
+    required String username,
+    required String email,
+    required String password,
+    required String passwordConfirm,
+    required String firstName,
+    required String lastName,
+    String? address,
+    String? city,
+  }) async {
+    try {
+      final body = {
+        'username': username,
+        'email': email,
+        'password': password,
+        'passwordConfirm': passwordConfirm,
+        'firstName': firstName,
+        'lastName': lastName,
+        'address': address ?? '',
+        'city': city ?? '',
+      };
+
+      final response = await http
+          .post(
+            Uri.parse(AppUrls.register),
+            headers: _getHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Greška pri kreiranju korisnika: $e');
+    }
+  }
+
+  static Future<List<dynamic>> searchCitiesList({String? name}) async {
+    try {
+      final queryParams = <String, String>{'pageSize': '1000'};
+
+      if (name != null && name.isNotEmpty) {
+        queryParams['name'] = name;
+      }
+
+      final uri = Uri.parse(
+        AppUrls.cities,
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http
+          .get(uri, headers: _getHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result['results'] ?? [];
+      } else {
+        throw Exception('Greška pri pretrazi gradova');
       }
     } catch (e) {
       throw Exception('Greška: $e');

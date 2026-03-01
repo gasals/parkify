@@ -60,12 +60,40 @@ namespace parkify.Service.Services
                 _parkingZoneService.Update(parkingZone.Id, updateRequest);
             }
 
-            entity.ReservationCode = Guid.NewGuid().ToString();
+            entity.ReservationCode = GenerateReservationCode(request);
 
             _parkingSpotService.SetAvailable(entity.ParkingSpotId, false);
 
 
             base.BeforeInsert(request, entity);
+        }
+
+        public override void BeforeUpdate(ReservationUpdateRequest request, Database.Reservation entity)
+        {
+            if (request.IsCheckedIn.HasValue && request.IsCheckedIn.Value)
+            {
+                entity.IsCheckedIn = true;
+                entity.CheckInTime = request.CheckInTime ?? DateTime.UtcNow;
+                entity.Status = Database.ReservationStatus.Active;
+            }
+
+            if (request.IsCheckedOut.HasValue && request.IsCheckedOut.Value)
+            {
+                entity.IsCheckedOut = true;
+                entity.CheckOutTime = request.CheckOutTime ?? DateTime.UtcNow;
+                entity.Status = Database.ReservationStatus.Completed;
+            }
+
+            base.BeforeUpdate(request, entity);
+        }
+
+        private string GenerateReservationCode(ReservationInsertRequest request)
+        {
+            var dateTimePart = request.ReservationStart.ToString("yyMMddHHmm");
+
+            return $"U{request.UserId}-" +
+                   $"Z{request.ParkingZoneId}-" +
+                   $"{dateTimePart}";
         }
     }
 }

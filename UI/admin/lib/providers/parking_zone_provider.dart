@@ -1,3 +1,4 @@
+import 'package:admin/models/city_model.dart';
 import 'package:flutter/material.dart';
 import '../models/parking_zone_model.dart';
 import '../services/api_service.dart';
@@ -17,7 +18,9 @@ class ParkingZoneProvider extends ChangeNotifier {
   int get totalPages => _totalPages;
   int get totalCount => _totalCount;
 
-  Future<void> getParkingZones({
+  Future<void> searchParkingZones({
+    String? name,
+    int? cityId,
     int page = 1,
     int pageSize = 20,
     bool includeSpots = true,
@@ -27,16 +30,20 @@ class ParkingZoneProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.getParkingZones(
+      final result = await ApiService.searchParkingZones(
+        name: name,
+        cityId: cityId,
         page: page,
         pageSize: pageSize,
         includeSpots: includeSpots,
       );
 
       final resultsList = result['results'] as List? ?? [];
+
       if (page == 1) {
         _parkingZones = [];
       }
+
       _parkingZones.addAll(
         resultsList
             .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
@@ -50,21 +57,11 @@ class ParkingZoneProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+
       notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
-    }
-  }
-
-  Future<ParkingZone?> getParkingZoneById(int id) async {
-    try {
-      final result = await ApiService.getParkingZoneById(id);
-      return ParkingZone.fromJson(result);
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return null;
     }
   }
 
@@ -79,7 +76,6 @@ class ParkingZoneProvider extends ChangeNotifier {
   }) async {
     try {
       _isLoading = true;
-      _errorMessage = null;
       notifyListeners();
 
       final result = await ApiService.updateParkingZone(
@@ -118,7 +114,6 @@ class ParkingZoneProvider extends ChangeNotifier {
   }) async {
     try {
       _isLoading = true;
-      _errorMessage = null;
       notifyListeners();
 
       await ApiService.createParkingSpot(
@@ -129,7 +124,28 @@ class ParkingZoneProvider extends ChangeNotifier {
         isAvailable: isAvailable,
       );
 
-      await getParkingZones();
+      final index = _parkingZones.indexWhere((z) => z.id == parkingZoneId);
+      if (index != -1) {
+        final response = await ApiService.searchParkingZones(
+          page: 1,
+          pageSize: 1000,
+        );
+
+        final zones =
+            (response['results'] as List?)
+                ?.map((z) => ParkingZone.fromJson(z as Map<String, dynamic>))
+                .toList() ??
+            [];
+
+        final updatedZone = zones.firstWhere(
+          (z) => z.id == parkingZoneId,
+          orElse: () => _parkingZones[index],
+        );
+
+        _parkingZones[index] = updatedZone;
+      }
+
+      notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
@@ -150,7 +166,6 @@ class ParkingZoneProvider extends ChangeNotifier {
   }) async {
     try {
       _isLoading = true;
-      _errorMessage = null;
       notifyListeners();
 
       await ApiService.updateParkingSpot(
@@ -162,7 +177,7 @@ class ParkingZoneProvider extends ChangeNotifier {
         isAvailable: isAvailable,
       );
 
-      await getParkingZones();
+      await searchParkingZones(includeSpots: true);
       return true;
     } catch (e) {
       _errorMessage = e.toString();
@@ -176,12 +191,11 @@ class ParkingZoneProvider extends ChangeNotifier {
   Future<bool> deleteParkingSpot(int spotId) async {
     try {
       _isLoading = true;
-      _errorMessage = null;
       notifyListeners();
 
       await ApiService.deleteParkingSpot(spotId);
-      
-      await getParkingZones();
+
+      await searchParkingZones(includeSpots: true);
       return true;
     } catch (e) {
       _errorMessage = e.toString();
@@ -189,6 +203,91 @@ class ParkingZoneProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<bool> createParkingZone({
+    required String name,
+    required String description,
+    required String address,
+    required String city,
+    required double latitude,
+    required double longitude,
+    required double pricePerHour,
+    double? dailyRate,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final result = await ApiService.createParkingZone(
+        name: name,
+        description: description,
+        address: address,
+        city: city,
+        latitude: latitude,
+        longitude: longitude,
+        pricePerHour: pricePerHour,
+        dailyRate: dailyRate,
+      );
+
+      final newZone = ParkingZone.fromJson(result);
+      _parkingZones.insert(0, newZone);
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> toggleParkingSpotActive({
+    required int spotId,
+    required bool isAvailable,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await ApiService.toggleParkingSpotActive(
+        spotId: spotId,
+        isAvailable: isAvailable,
+      );
+
+      await searchParkingZones(includeSpots: true);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<dynamic>> searchParkingZonesList({String? name}) async {
+    try {
+      return await ApiService.searchParkingZonesList(name: name);
+    } catch (e) {
+      _errorMessage = e.toString();
+      return [];
+    }
+  }
+
+  Future<List<City>> searchCitiesList({String? name}) async {
+    try {
+      final result = await ApiService.searchCitiesList(name: name);
+      return result
+          .map((city) => City.fromJson(city as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _errorMessage = e.toString();
+      return [];
     }
   }
 

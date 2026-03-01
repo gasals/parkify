@@ -55,7 +55,6 @@ namespace parkify.Service.Services
             {
                 TotalSpots = parkingZone.TotalSpots + 1,
                 DisabledSpots = request.Type == (int)ParkingSpotType.Disabled ? parkingZone.DisabledSpots + 1 : parkingZone.DisabledSpots,
-                CoveredSpots = request.Type == (int)ParkingSpotType.Covered ? parkingZone.CoveredSpots + 1 : parkingZone.CoveredSpots,
                 AvailableSpots = request.IsAvailable ? parkingZone.AvailableSpots + 1 : parkingZone.AvailableSpots
             };
 

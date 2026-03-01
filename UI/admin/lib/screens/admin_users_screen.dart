@@ -12,17 +12,29 @@ class AdminUsersScreen extends StatefulWidget {
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _addUsernameController = TextEditingController();
+  final TextEditingController _addEmailController = TextEditingController();
+  final TextEditingController _addPasswordController = TextEditingController();
+  final TextEditingController _addPasswordConfirmController =
+      TextEditingController();
+  final TextEditingController _addFirstNameController = TextEditingController();
+  final TextEditingController _addLastNameController = TextEditingController();
+  final TextEditingController _addAddressController = TextEditingController();
+  final TextEditingController _addCityController = TextEditingController();
+
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Provider.of<UserProvider>(context, listen: false).getAllUsers();
+        Provider.of<UserProvider>(context, listen: false).searchUsers();
       }
     });
   }
@@ -30,7 +42,18 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _searchController.dispose();
+    _usernameController.dispose();
+    _emailController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _addUsernameController.dispose();
+    _addEmailController.dispose();
+    _addPasswordController.dispose();
+    _addPasswordConfirmController.dispose();
+    _addFirstNameController.dispose();
+    _addLastNameController.dispose();
+    _addAddressController.dispose();
+    _addCityController.dispose();
     super.dispose();
   }
 
@@ -38,23 +61,54 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     final provider = Provider.of<UserProvider>(context, listen: false);
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      if (provider.currentPage < provider.totalPages) {
-        provider.getAllUsers(page: provider.currentPage + 1);
+      if (provider.currentPage < provider.totalPages && !_isSearching) {
+        provider.searchUsers(
+          username: _usernameController.text.isEmpty
+              ? null
+              : _usernameController.text,
+          email: _emailController.text.isEmpty ? null : _emailController.text,
+          firstName: _firstNameController.text.isEmpty
+              ? null
+              : _firstNameController.text,
+          lastName: _lastNameController.text.isEmpty
+              ? null
+              : _lastNameController.text,
+          page: provider.currentPage + 1,
+        );
       }
     }
   }
 
   Future<void> _performSearch() async {
     final provider = Provider.of<UserProvider>(context, listen: false);
+    setState(() => _isSearching = true);
+    await provider.searchUsers(
+      username: _usernameController.text.isEmpty
+          ? null
+          : _usernameController.text,
+      email: _emailController.text.isEmpty ? null : _emailController.text,
+      firstName: _firstNameController.text.isEmpty
+          ? null
+          : _firstNameController.text,
+      lastName: _lastNameController.text.isEmpty
+          ? null
+          : _lastNameController.text,
+    );
+    setState(() => _isSearching = false);
+  }
 
-    if (_searchQuery.isEmpty) {
-      await provider.getAllUsers();
-    }
+  void _clearSearch() {
+    _usernameController.clear();
+    _emailController.clear();
+    _firstNameController.clear();
+    _lastNameController.clear();
+    _performSearch();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -62,47 +116,122 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           children: [
             const Text(
               'Svi korisnici',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
             ),
             const SizedBox(height: 24),
-
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Pretraga korisnika...',
-                        prefixIcon:
-                            const Icon(Icons.search, size: 20),
-                        isDense: true,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSearchField(
+                          _usernameController,
+                          'Username',
+                          Icons.alternate_email,
                         ),
                       ),
-                      onChanged: (value) {
-                        setState(() => _searchQuery = value);
-                      },
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSearchField(
+                          _emailController,
+                          'Email',
+                          Icons.email_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSearchField(
+                          _firstNameController,
+                          'Ime',
+                          Icons.person_outline,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSearchField(
+                          _lastNameController,
+                          'Prezime',
+                          Icons.person_outline,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: _clearSearch,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Očisti filtre'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: _isSearching ? null : _performSearch,
+                        icon: _isSearching
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.search,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                        label: const Text(
+                          'Pretraži',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6366F1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddUserDialog(),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Dodaj korisnika'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  height: 44,
-                  child: ElevatedButton.icon(
-                    onPressed: _performSearch,
-                    icon: const Icon(Icons.search, size: 18),
-                    label: const Text('Traži'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6366F1),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -110,47 +239,30 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               child: Consumer<UserProvider>(
                 builder: (context, provider, _) {
                   if (provider.isLoading && provider.users.isEmpty) {
-                    return const Center(
-                        child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   }
-
                   if (provider.users.isEmpty) {
                     return const Center(
-                        child: Text('Nema korisnika'));
+                      child: Text('Nema pronađenih korisnika.'),
+                    );
                   }
-
-                  final filteredUsers = provider.users
-                      .where((user) =>
-                          user.username
-                              .toLowerCase()
-                              .contains(_searchQuery.toLowerCase()) ||
-                          user.email
-                              .toLowerCase()
-                              .contains(_searchQuery.toLowerCase()) ||
-                          (user.firstName ?? '')
-                              .toLowerCase()
-                              .contains(_searchQuery.toLowerCase()))
-                      .toList();
 
                   return GridView.builder(
                     controller: _scrollController,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 1.70,
-                    ),
-                    itemCount: filteredUsers.length +
-                        (provider.isLoading ? 1 : 0),
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 20,
+                          mainAxisSpacing: 20,
+                          childAspectRatio: 2,
+                        ),
+                    itemCount:
+                        provider.users.length + (provider.isLoading ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (index == filteredUsers.length) {
-                        return const Center(
-                            child: CircularProgressIndicator());
+                      if (index == provider.users.length) {
+                        return const Center(child: CircularProgressIndicator());
                       }
-
-                      return _buildUserTile(
-                          filteredUsers[index], provider);
+                      return _buildUserTile(provider.users[index], provider);
                     },
                   );
                 },
@@ -163,134 +275,114 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   Widget _buildUserTile(User user, UserProvider provider) {
-    final initials = _getInitials(user);
-
     return Card(
-      elevation: 3,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Row(
               children: [
                 CircleAvatar(
-                  radius: 22,
-                  backgroundColor: const Color(0xFF6366F1),
+                  radius: 24,
+                  backgroundColor: const Color(0xFF6366F1).withOpacity(0.1),
                   child: Text(
-                    initials,
+                    _getInitials(user),
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
+                      color: Color(0xFF6366F1),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         user.username,
                         style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: user.isActive
-                              ? Colors.green
-                                  .withOpacity(0.15)
-                              : Colors.red
-                                  .withOpacity(0.15),
-                          borderRadius:
-                              BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          user.isActive
-                              ? 'Aktivan'
-                              : 'Neaktivan',
-                          style: TextStyle(
-                            color: user.isActive
-                                ? Colors.green
-                                : Colors.red,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
+                      Text(
+                        user.email,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
+                _buildStatusBadge(user.isActive),
               ],
             ),
-
-            const SizedBox(height: 16),
-
+            const Divider(height: 32),
             _buildInfoRow(
-                Icons.person,
-                "Ime",
-                '${user.firstName ?? ''} ${user.lastName ?? ''}'
-                    .trim()),
+              Icons.person_outline,
+              "Ime",
+              "${user.firstName ?? ''} ${user.lastName ?? ''}",
+            ),
             _buildInfoRow(Icons.email, "Email", user.email),
-
-            if (user.address != null &&
-                user.address!.isNotEmpty)
-              _buildInfoRow(
-                  Icons.location_on,
-                  "Adresa",
-                  '${user.address}, ${user.city ?? ''}'),
-
-            const SizedBox(height: 16),
-
+            _buildInfoRow(
+              Icons.location_on_outlined,
+              "Adresa",
+              "${user.address ?? 'N/A'} ${user.city ?? 'N/A'}",
+            ),
+            const Spacer(),
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () =>
-                        _showEditUserDialog(user, provider),
-                    icon: const Icon(Icons.edit, size: 18),
-                    label: const Text('Uredi'),
+                    onPressed: () => _showEditUserDialog(user, provider),
+                    icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                    label: const Text(
+                      'UREDI',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFF6366F1),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12),
+                      backgroundColor: const Color(0xFF6366F1),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 50,
-                  child: ElevatedButton(
-                    onPressed: () =>
-                        _toggleUserActive(user, provider),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: user.isActive
-                          ? Colors.red
-                          : Colors.green,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(8),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _toggleUserActive(user, provider),
+                    icon: Icon(
+                      user.isActive ? Icons.lock_outline : Icons.lock_open,
+                      size: 16,
+                    ),
+                    label: Text(
+                      user.isActive ? 'DEAKTIVIRAJ' : 'AKTIVIRAJ',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: Icon(
-                      user.isActive
-                          ? Icons.lock
-                          : Icons.lock_open,
-                      color: Colors.white,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: user.isActive
+                          ? Colors.red
+                          : Colors.green,
+                      side: BorderSide(
+                        color: user.isActive ? Colors.red : Colors.green,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ),
@@ -302,34 +394,60 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     );
   }
 
-  Widget _buildInfoRow(
-      IconData icon, String label, String value) {
+  Widget _buildSearchField(
+    TextEditingController controller,
+    String label,
+    IconData icon,
+  ) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20),
+        isDense: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive ? Colors.green[50] : Colors.red[50],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        isActive ? 'Aktivan' : 'Neaktivan',
+        style: TextStyle(
+          color: isActive ? Colors.green[700] : Colors.red[700],
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon,
-              size: 18,
-              color: const Color(0xFF6366F1)),
+          Icon(icon, size: 16, color: const Color(0xFF6366F1)),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600]),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          const Spacer(),
+          Text(
+            value.trim().isEmpty ? "-" : value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -337,29 +455,143 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   String _getInitials(User user) {
-    final first = user.firstName?.isNotEmpty == true
-        ? user.firstName![0]
-        : '';
-    final last = user.lastName?.isNotEmpty == true
-        ? user.lastName![0]
-        : '';
+    final first = user.firstName?.isNotEmpty == true ? user.firstName![0] : '';
+    final last = user.lastName?.isNotEmpty == true ? user.lastName![0] : '';
     return (first + last).toUpperCase();
   }
 
-  void _showEditUserDialog(
-      User user, UserProvider provider) {
+  void _showEditUserDialog(User user, UserProvider provider) {
     showDialog(
       context: context,
-      builder: (context) =>
-          _EditUserDialog(user: user, provider: provider),
+      builder: (context) => _EditUserDialog(user: user, provider: provider),
     );
   }
 
-  void _toggleUserActive(
-      User user, UserProvider provider) {
-    provider.toggleUserActive(
-      userId: user.id,
-      isActive: !user.isActive,
+  void _toggleUserActive(User user, UserProvider provider) {
+    provider.toggleUserActive(userId: user.id, isActive: !user.isActive);
+  }
+
+  void _showAddUserDialog() {
+    _addUsernameController.clear();
+    _addEmailController.clear();
+    _addPasswordController.clear();
+    _addPasswordConfirmController.clear();
+    _addFirstNameController.clear();
+    _addLastNameController.clear();
+    _addAddressController.clear();
+    _addCityController.clear();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Dodaj novog korisnika'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _addUsernameController,
+                decoration: const InputDecoration(labelText: 'Korisničko ime'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _addEmailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _addPasswordController,
+                decoration: const InputDecoration(labelText: 'Lozinka'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _addPasswordConfirmController,
+                decoration: const InputDecoration(labelText: 'Potvrdi lozinku'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _addFirstNameController,
+                decoration: const InputDecoration(labelText: 'Ime'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _addLastNameController,
+                decoration: const InputDecoration(labelText: 'Prezime'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _addAddressController,
+                decoration: const InputDecoration(
+                  labelText: 'Adresa (opcionalno)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _addCityController,
+                decoration: const InputDecoration(
+                  labelText: 'Grad (opcionalno)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Otkaži'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_addPasswordController.text !=
+                  _addPasswordConfirmController.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Lozinke se ne poklapaju'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              Navigator.pop(context);
+              final provider = Provider.of<UserProvider>(
+                context,
+                listen: false,
+              );
+
+              final success = await provider.createUser(
+                username: _addUsernameController.text,
+                email: _addEmailController.text,
+                password: _addPasswordController.text,
+                passwordConfirm: _addPasswordConfirmController.text,
+                firstName: _addFirstNameController.text,
+                lastName: _addLastNameController.text,
+                address: _addAddressController.text.isEmpty
+                    ? null
+                    : _addAddressController.text,
+                city: _addCityController.text.isEmpty
+                    ? null
+                    : _addCityController.text,
+              );
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success ? 'Korisnik je kreiran' : 'Greška pri kreiranju',
+                    ),
+                    backgroundColor: success ? Colors.green : Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Kreiraj'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -368,10 +600,7 @@ class _EditUserDialog extends StatefulWidget {
   final User user;
   final UserProvider provider;
 
-  const _EditUserDialog({
-    required this.user,
-    required this.provider,
-  });
+  const _EditUserDialog({required this.user, required this.provider});
 
   @override
   State<_EditUserDialog> createState() => _EditUserDialogState();
@@ -389,10 +618,12 @@ class _EditUserDialogState extends State<_EditUserDialog> {
   void initState() {
     super.initState();
     _emailController = TextEditingController(text: widget.user.email);
-    _firstNameController =
-        TextEditingController(text: widget.user.firstName ?? '');
-    _lastNameController =
-        TextEditingController(text: widget.user.lastName ?? '');
+    _firstNameController = TextEditingController(
+      text: widget.user.firstName ?? '',
+    );
+    _lastNameController = TextEditingController(
+      text: widget.user.lastName ?? '',
+    );
     _addressController = TextEditingController(text: widget.user.address ?? '');
     _cityController = TextEditingController(text: widget.user.city ?? '');
   }

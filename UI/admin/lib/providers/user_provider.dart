@@ -17,7 +17,11 @@ class UserProvider extends ChangeNotifier {
   int get totalPages => _totalPages;
   int get totalCount => _totalCount;
 
-  Future<void> getAllUsers({
+  Future<void> searchUsers({
+    String? username,
+    String? email,
+    String? firstName,
+    String? lastName,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -26,15 +30,21 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.getAllUsers(
+      final result = await ApiService.searchUsers(
+        username: username,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
         page: page,
         pageSize: pageSize,
       );
 
       final resultsList = result['results'] as List? ?? [];
+
       if (page == 1) {
         _users = [];
       }
+
       _users.addAll(
         resultsList
             .map((user) => User.fromJson(user as Map<String, dynamic>))
@@ -48,6 +58,7 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -112,6 +123,46 @@ class UserProvider extends ChangeNotifier {
       if (index != -1) {
         _users[index] = updatedUser;
       }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createUser({
+    required String username,
+    required String email,
+    required String password,
+    required String passwordConfirm,
+    required String firstName,
+    required String lastName,
+    String? address,
+    String? city,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final result = await ApiService.createUser(
+        username: username,
+        email: email,
+        password: password,
+        passwordConfirm: passwordConfirm,
+        firstName: firstName,
+        lastName: lastName,
+        address: address,
+        city: city,
+      );
+
+      final newUser = User.fromJson(result);
+      _users.insert(0, newUser);
 
       notifyListeners();
       return true;
