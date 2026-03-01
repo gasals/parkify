@@ -17,7 +17,6 @@
     public enum ParkingSpotType
     {
         Standard = 1,
-        Disabled = 2,
-        Covered = 3
+        Disabled = 2
     }
 }

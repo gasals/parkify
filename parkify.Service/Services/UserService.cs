@@ -160,7 +160,7 @@ namespace parkify.Service.Services
         public static bool IsValidEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
-                return false;
+                return true;
 
             try
             {

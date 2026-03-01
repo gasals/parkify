@@ -9,5 +9,6 @@
         public string? City { get; set; }
         public string? Password { get; set; }
         public string? PasswordConfirm { get; set; }
+        public bool? IsActive { get; set; }
     }
 }
