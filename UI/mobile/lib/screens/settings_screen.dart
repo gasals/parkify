@@ -136,10 +136,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: OutlinedButton.icon(
+                      child: ElevatedButton.icon(
                         onPressed: () => _showChangePasswordSheet(context),
                         icon: const Icon(Icons.lock),
                         label: const Text('Lozinka'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                        ),
                       ),
                     ),
                   ],

@@ -20,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       final result = await ApiService.login(username, password);
       await fetchAndSetUser(result['id']);
+      _errorMessage = null;
       return true;
     } catch (e) {
       _errorMessage = "Neuspješna prijava. Provjerite podatke.";
@@ -124,5 +125,10 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 }

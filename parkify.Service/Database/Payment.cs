@@ -4,14 +4,13 @@
     {
         public int Id { get; set; }
         public string PaymentCode { get; set; } = string.Empty;
-        public int ReservationId { get; set; }
+        public int? WalletId { get; set; }
+        public int? ReservationId { get; set; }
         public int UserId { get; set; }
         public decimal Amount { get; set; }
-        public string Currency { get; set; } = "BAM";
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
         public string StripePaymentIntentId { get; set; } = string.Empty;
         public string StripeSessionId { get; set; } = string.Empty;
-        public string PaymentMethod { get; set; } = "stripe";
         public string TransactionId { get; set; } = string.Empty;
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }

@@ -46,24 +46,36 @@ namespace parkify.Service.Services
 
         public override void BeforeInsert(ReservationInsertRequest request, Database.Reservation entity)
         {
-
             entity.DurationInHours = (int)Math.Ceiling((entity.ReservationEnd - entity.ReservationStart).TotalHours);
-
             var parkingZone = _parkingZoneService.GetById(entity.ParkingZoneId);
 
-            if(parkingZone != null)
+            if (parkingZone != null)
             {
                 var pricePerHour = parkingZone.PricePerHour;
                 entity.CalculatedPrice = pricePerHour * entity.DurationInHours;
-                entity.FinalPrice = entity.CalculatedPrice;
+
+                var wallet = Context.Wallets.FirstOrDefault(w => w.UserId == entity.UserId);
+
+                if (wallet != null && wallet.Balance > 0)
+                {
+                    var amountFromWallet = Math.Min(wallet.Balance, entity.CalculatedPrice);
+
+                    wallet.Balance -= amountFromWallet;
+                    wallet.Modified = DateTime.UtcNow;
+
+                    entity.FinalPrice = entity.CalculatedPrice - amountFromWallet;
+                }
+                else
+                {
+                    entity.FinalPrice = entity.CalculatedPrice;
+                }
+
                 ParkingZoneUpdateRequest updateRequest = new ParkingZoneUpdateRequest { AvailableSpots = parkingZone.AvailableSpots - 1 };
                 _parkingZoneService.Update(parkingZone.Id, updateRequest);
             }
 
             entity.ReservationCode = GenerateReservationCode(request);
-
             _parkingSpotService.SetAvailable(entity.ParkingSpotId, false);
-
 
             base.BeforeInsert(request, entity);
         }

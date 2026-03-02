@@ -11,11 +11,14 @@ namespace parkify.Service.Services
           IPaymentService
     {
         private readonly IReservationService _reservationService;
+        private readonly IWalletService _walletService;
 
-        public PaymentService(Database.ParkifyContext context, IMapper mapper, IReservationService reservationService)
+        public PaymentService(Database.ParkifyContext context, IMapper mapper, IReservationService reservationService, IWalletService walletService)
             : base(context, mapper)
         {
             _reservationService = reservationService;
+            _walletService = walletService;
+
         }
 
         public override IQueryable<Database.Payment> AddFilter(PaymentSearch search, IQueryable<Database.Payment> query)
@@ -32,6 +35,11 @@ namespace parkify.Service.Services
                 query = query.Where(x => x.ReservationId == search.ReservationId);
             }
 
+            if (search?.WalletId.HasValue == true)
+            {
+                query = query.Where(x => x.WalletId == search.WalletId);
+            }
+
             if (search?.Status.HasValue == true)
             {
                 query = query.Where(x => (int)x.Status == search.Status);
@@ -43,18 +51,38 @@ namespace parkify.Service.Services
         public override void BeforeInsert(PaymentInsertRequest request, Database.Payment entity)
         {
             entity.PaymentCode = Guid.NewGuid().ToString();
-
-            var reservation = _reservationService.GetById(request.ReservationId);
-            if (reservation == null)
-            {
-                throw new Exception("Rezervacija ne postoji");
-            }
-
             entity.Status = Database.PaymentStatus.Pending;
             entity.Created = DateTime.UtcNow;
 
+            if (entity.Amount <= 0)
+            {
+                throw new Exception("Iznos dopune mora biti veći od 0");
+            }
+
+            if (request.ReservationId.HasValue)
+            {
+                var reservation = _reservationService.GetById(request.ReservationId.Value);
+                if (reservation == null)
+                {
+                    throw new Exception("Rezervacija ne postoji");
+                }
+            }
+            else if (request.WalletId.HasValue)
+            {
+                var wallet = _walletService.GetById(request.WalletId.Value);
+                if (wallet == null)
+                {
+                    throw new Exception("Wallet ne postoji");
+                }
+            }
+            else
+            {
+                throw new Exception("Morate navesti Rezervaciju ili Novčanik");
+            }
+
             base.BeforeInsert(request, entity);
         }
+
 
         public async Task<Payment> ConfirmPayment(int paymentId)
         {
@@ -80,39 +108,18 @@ namespace parkify.Service.Services
             payment.Status = (int)Database.PaymentStatus.Completed;
             payment.Completed = DateTime.UtcNow;
 
-            return payment;
-        }
-
-        public async Task<Payment> RefundPayment(int paymentId, string reason)
-        {
-            var payment = GetById(paymentId);
-
-            if (payment == null)
+            if (payment.WalletId.HasValue)
             {
-                throw new Exception("Plaćanje nije pronađeno");
+                var wallet = Context.Wallets.Find(payment.WalletId.Value);
+                if (wallet != null)
+                {
+                    wallet.Balance += payment.Amount;
+                    wallet.Modified = DateTime.UtcNow;
+                    Context.Wallets.Update(wallet);
+                    Context.SaveChanges();
+                }
             }
 
-            if (payment.Status != 3)
-            {
-                throw new Exception("Samo potvrđena plaćanja se mogu vratiti");
-            }
-
-            var updateRequest = new PaymentUpdateRequest
-            {
-                Status = 5,
-            };
-
-            Update(paymentId, updateRequest);
-
-            var reservationUpdate = new ReservationUpdateRequest
-            {
-                Status = 5 
-            };
-            _reservationService.Update(payment.ReservationId, reservationUpdate);
-
-            payment.Status = 5;
-            payment.Refunded = DateTime.UtcNow;
-            payment.RefundReason = reason;
 
             return payment;
         }

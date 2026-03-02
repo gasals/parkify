@@ -18,6 +18,10 @@ namespace parkify.Service.Database
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Preference> Preferences { get; set; }
+        public DbSet<Vehicle> Vehicles { get; set; }
+
+        public DbSet<Wallet> Wallets { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -112,11 +116,6 @@ namespace parkify.Service.Database
                 .IsRequired()
                 .HasMaxLength(50);
 
-            modelBuilder.Entity<Payment>()
-                .Property(p => p.Currency)
-                .IsRequired()
-                .HasMaxLength(3);
-
             modelBuilder.Entity<Notification>()
                 .HasKey(n => n.Id);
 
@@ -146,6 +145,25 @@ namespace parkify.Service.Database
             modelBuilder.Entity<Preference>()
                 .Property(p => p.PreferredCityId)
                 .IsRequired(false);
+
+            modelBuilder.Entity<Vehicle>()
+                .HasKey(r => r.Id);
+
+            modelBuilder.Entity<Vehicle>()
+                .Property(r => r.UserId)
+                .IsRequired();
+
+            modelBuilder.Entity<Vehicle>()
+                .Property(r => r.LicensePlate)
+                .IsRequired();
+
+            modelBuilder.Entity<Wallet>()
+                .HasKey(r => r.Id);
+
+            modelBuilder.Entity<Wallet>()
+                .Property(r => r.UserId)
+                .IsRequired();
+
 
             modelBuilder.Entity<ParkingZone>()
                 .Property(p => p.PricePerHour)

@@ -9,15 +9,16 @@ class ReservationProvider extends ChangeNotifier {
   int _totalCount = 0;
   bool _hasMore = true;
 
-  bool get hasMore => _hasMore;
   List<Reservation> get reservations => _reservations;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get hasMore => _hasMore;
 
   Future<Reservation> createReservation(Map<String, dynamic> reservationData) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
     try {
       final result = await ApiService.createReservation(reservationData);
       final reservation = Reservation.fromJson(result);
@@ -26,6 +27,7 @@ class ReservationProvider extends ChangeNotifier {
       return reservation;
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
       rethrow;
     } finally {
       _isLoading = false;
@@ -37,7 +39,6 @@ class ReservationProvider extends ChangeNotifier {
     required int userId,
     int page = 1,
   }) async {
-
     if (page == 1) {
       _isLoading = true;
       _reservations = [];
@@ -52,18 +53,19 @@ class ReservationProvider extends ChangeNotifier {
       );
 
       final newReservations = (result['results'] as List)
-          .map((e) => Reservation.fromJson(e))
+          .map((e) => Reservation.fromJson(e as Map<String, dynamic>))
           .toList();
 
-      _totalCount = result['count'];
+      _totalCount = result['count'] ?? 0;
 
       if (page == 1) {
         _reservations = newReservations;
       } else {
         _reservations.addAll(newReservations);
       }
-      _hasMore = _reservations.length < _totalCount;
 
+      _hasMore = _reservations.length < _totalCount;
+      _errorMessage = null;
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -80,13 +82,20 @@ class ReservationProvider extends ChangeNotifier {
     try {
       await ApiService.cancelReservation(reservationId);
       _reservations.removeWhere((r) => r.id == reservationId);
+      notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
       return false;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 }

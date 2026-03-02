@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using parkify.Service.Database;
 
@@ -11,9 +12,11 @@ using parkify.Service.Database;
 namespace parkify.Service.Migrations
 {
     [DbContext(typeof(ParkifyContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260302133613_reservationlicenseplate")]
+    partial class reservationlicenseplate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -221,6 +224,11 @@ namespace parkify.Service.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
                     b.Property<DateTime?>("Modified")
                         .HasColumnType("datetime2");
 
@@ -229,6 +237,10 @@ namespace parkify.Service.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("RefundReason")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -236,7 +248,7 @@ namespace parkify.Service.Migrations
                     b.Property<DateTime?>("Refunded")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("ReservationId")
+                    b.Property<int>("ReservationId")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
@@ -255,9 +267,6 @@ namespace parkify.Service.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("WalletId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -516,31 +525,6 @@ namespace parkify.Service.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Vehicles");
-                });
-
-            modelBuilder.Entity("parkify.Service.Database.Wallet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("Modified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Wallets");
                 });
 
             modelBuilder.Entity("parkify.Service.Database.ParkingSpot", b =>

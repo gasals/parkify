@@ -22,6 +22,7 @@ class PreferenceProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -37,9 +38,7 @@ class PreferenceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final updateData = {
-        'favoriteParkingZoneId': parkingZoneId,
-      };
+      final updateData = {'favoriteParkingZoneId': parkingZoneId};
 
       final result = await ApiService.updateUserPreferences(
         userId: userId,
@@ -50,6 +49,7 @@ class PreferenceProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -65,9 +65,7 @@ class PreferenceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final updateData = {
-        'preferredCityId': cityId,
-      };
+      final updateData = {'preferredCityId': cityId};
 
       final result = await ApiService.updateUserPreferences(
         userId: userId,
@@ -78,6 +76,7 @@ class PreferenceProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -98,11 +97,13 @@ class PreferenceProvider extends ChangeNotifier {
 
     try {
       final data = <String, dynamic>{};
-      
+
       if (prefersCovered != null) data['prefersCovered'] = prefersCovered;
       if (prefersNearby != null) data['prefersNearby'] = prefersNearby;
       if (preferredCityId != null) data['preferredCityId'] = preferredCityId;
-      if (favoriteParkingZoneId != null) data['favoriteParkingZoneId'] = favoriteParkingZoneId;
+      if (favoriteParkingZoneId != null) {
+        data['favoriteParkingZoneId'] = favoriteParkingZoneId;
+      }
       if (notifyAboutOffers != null) data['notifyAboutOffers'] = notifyAboutOffers;
 
       final result = await ApiService.updateUserPreferences(
@@ -114,6 +115,7 @@ class PreferenceProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -122,5 +124,10 @@ class PreferenceProvider extends ChangeNotifier {
 
   bool isFavoriteParking(int parkingZoneId) {
     return _userPreference?.favoriteParkingZoneId == parkingZoneId;
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 }

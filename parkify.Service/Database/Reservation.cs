@@ -7,6 +7,7 @@
         public int UserId { get; set; }
         public int ParkingZoneId { get; set; }
         public int ParkingSpotId { get; set; }
+        public string VehicleLicensePlate { get; set; }
         public DateTime ReservationStart { get; set; }
         public DateTime ReservationEnd { get; set; }
         public int DurationInHours { get; set; }

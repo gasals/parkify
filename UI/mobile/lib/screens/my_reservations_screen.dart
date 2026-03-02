@@ -272,24 +272,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Detalji rezervacije'),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.info, size: 18),
-                    label: const Text('Detalji',
-                        overflow: TextOverflow.ellipsis),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
+
                 const SizedBox(width: 8),
                 if (reservation.status == 1 || reservation.status == 2)
                   Expanded(

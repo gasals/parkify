@@ -1,4 +1,5 @@
 using MapsterMapper;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -35,6 +36,13 @@ namespace parkify.Service.Services
             }
 
             return query;
+        }
+
+        public override void BeforeInsert(ReviewInsertRequest request, Database.Review entity) {
+            if(Context.Reviews.Any(x => x.UserId == request.UserId && x.ParkingZoneId == request.ParkingZoneId))
+                throw new Exception("Korisnik je ve? ocijenio ovu zonu.");
+
+            base.BeforeInsert(request, entity);
         }
     }
 }

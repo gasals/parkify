@@ -15,6 +15,8 @@ class ParkingZone {
   final bool isActive;
   bool isFavorite;
   final List<ParkingSpot>? spots;
+  double averageRating = 0.0;
+  int reviewCount = 0;
 
   ParkingZone({
     required this.id,

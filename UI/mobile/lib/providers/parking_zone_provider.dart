@@ -17,24 +17,40 @@ class ParkingZoneProvider extends ChangeNotifier {
   int get currentPage => _currentPage;
   int get totalCount => _totalCount;
 
-  Future<void> getParkingZones({int page = 1, int pageSize = 10, bool includeSpots = true}) async {
-  _isLoading = true;
-  
-  try {
-    final result = await ApiService.getParkingZones(page: page, pageSize: pageSize, includeSpots: includeSpots);
-    _parkingZones = (result['results'] as List)
-        .map((e) => ParkingZone.fromJson(e))
-        .toList();
-    _totalCount = result['count'] ?? 0;
+  Future<void> getParkingZones({
+    int page = 1,
+    int pageSize = 10,
+    bool includeSpots = true,
+  }) async {
+    _isLoading = true;
     _errorMessage = null;
-  } catch (e) {
-    _errorMessage = e.toString();
-    _parkingZones = [];
-  } finally {
-    _isLoading = false;
-    notifyListeners(); 
+    notifyListeners();
+
+    try {
+      final result = await ApiService.getParkingZones(
+        page: page,
+        pageSize: pageSize,
+        includeSpots: includeSpots,
+      );
+
+      final resultsList = result['results'] as List? ?? [];
+
+      _parkingZones = resultsList
+          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
+          .toList();
+
+      _totalCount = result['count'] ?? 0;
+      _currentPage = page;
+
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-}
 
   Future<void> getParkingZoneById(int id) async {
     _isLoading = true;
@@ -54,6 +70,11 @@ class ParkingZoneProvider extends ChangeNotifier {
 
   void clearSelectedZone() {
     _selectedZone = null;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _errorMessage = null;
     notifyListeners();
   }
 }

@@ -15,6 +15,7 @@
         public decimal PricePerHour { get; set; }
         public decimal DailyRate { get; set; }
         public bool IsActive { get; set; } = true;
+        public double AverageRating { get; set; }
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }
 

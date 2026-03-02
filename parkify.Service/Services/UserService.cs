@@ -68,7 +68,25 @@ namespace parkify.Service.Services
             entity.PasswordSalt = GenerateSalt();
             entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
 
+
             base.BeforeInsert(request, entity);
+        }
+
+        public override void AfterInsert(Database.User entity, UserInsertRequest request)
+        {
+            if (!entity.IsAdmin)
+            {
+                var newWallet = new Database.Wallet
+                {
+                    UserId = entity.Id,
+                    Balance = 0,
+                    Created = DateTime.UtcNow
+                };
+                Context.Wallets.Add(newWallet);
+                Context.SaveChanges();
+            }
+
+            base.AfterInsert(entity, request);
         }
 
         public override void BeforeUpdate(UserUpdateRequest request, Database.User entity)

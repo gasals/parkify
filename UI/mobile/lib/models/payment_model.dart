@@ -1,7 +1,8 @@
 class Payment {
   int id;
   String paymentCode;
-  int reservationId;
+  int? reservationId;
+  int? walletId;
   int userId;
   double amount;
   String currency;
@@ -17,7 +18,8 @@ class Payment {
   Payment({
     required this.id,
     required this.paymentCode,
-    required this.reservationId,
+    this.reservationId,
+    this.walletId,
     required this.userId,
     required this.amount,
     required this.currency,

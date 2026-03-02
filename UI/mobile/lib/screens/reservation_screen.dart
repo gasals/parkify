@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/providers/payment_provider.dart';
+import 'package:mobile/providers/vehicle_provider.dart';
+import 'package:mobile/providers/wallet_provider.dart';
 import 'package:mobile/services/navigation_service.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
@@ -71,6 +73,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final reservationProvider = Provider.of<ReservationProvider>(context, listen: false);
     final paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
+    final walletProvider = Provider.of<WalletProvider>(context, listen: false);
 
     try {
       final reservationData = {
@@ -80,6 +83,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
         'reservationStart': _startTime.toIso8601String(),
         'reservationEnd': _endTime.toIso8601String(),
         'requiresDisabledSpot': false,
+        'vehicleLicensePlate': context.read<VehicleProvider>().selectedVehicle?.licensePlate ?? '',
       };
 
       final reservation = await reservationProvider.createReservation(reservationData);
@@ -91,33 +95,42 @@ class _ReservationScreenState extends State<ReservationScreen> {
       final payment = await paymentProvider.createPayment(
         reservationId: reservation.id,
         userId: authProvider.user!.id,
-        amount: _calculatedPrice,
+        amount: reservation.finalPrice,
       );
 
       if (payment.id == 0) {
         throw Exception('Greška pri kreiranju plaćanja');
       }
 
-      final paymentSuccess = await paymentProvider.presentPaymentSheet(
-        clientSecret: payment.clientSecret,
-      );
+      if (payment.amount > 0) {
+        final paymentSuccess = await paymentProvider.presentPaymentSheet(
+          clientSecret: payment.clientSecret,
+        );
 
-      if (!paymentSuccess) {
-        throw Exception('Plaćanje je otkazano');
-      }
+        if (!paymentSuccess) {
+          throw Exception('Plaćanje je otkazano');
+        }
 
-      final confirmed = await paymentProvider.confirmPayment(
-        paymentId: payment.id,
-      );
-
-      if (confirmed) {
-        setState(() {
-          _reservationCode = payment.paymentCode;
-          _isConfirmed = true;
-        });
+        final confirmed = await paymentProvider.confirmPayment(
+          paymentId: payment.id,
+        );
+        
+        if (!confirmed) {
+          throw Exception('Plaćanje nije potvrđeno');
+        }
       } else {
-        throw Exception('Plaćanje nije potvrđeno');
+        await paymentProvider.confirmPayment(
+          paymentId: payment.id,
+        );
       }
+      
+      await walletProvider.fetchUserWallet(authProvider.user!.id);
+
+      setState(() {
+        _reservationCode = payment.paymentCode;
+        _isConfirmed = true;
+      });
+      
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -126,7 +139,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
         ),
       );
     }
-  }
+}
 
   @override
   Widget build(BuildContext context) {

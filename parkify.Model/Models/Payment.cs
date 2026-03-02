@@ -4,7 +4,8 @@
     {
         public int Id { get; set; }
         public string PaymentCode { get; set; } = string.Empty;
-        public int ReservationId { get; set; }
+        public int? ReservationId { get; set; }
+        public int? WalletId { get; set; }
         public int UserId { get; set; }
         public decimal Amount { get; set; }
         public string Currency { get; set; } = "BAM";

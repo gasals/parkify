@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
+import 'package:mobile/screens/vehicle_selection_screen.dart';
+import 'package:mobile/screens/wallet_screen.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../providers/auth_provider.dart';
@@ -18,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 2;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -52,9 +54,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
-        return _withTopSpacing(_buildHomeTab());
+        return VehicleSelectionScreen();
       case 1:
-        return _withTopSpacing(_buildWalletTab());
+        return WalletScreen();
       case 2:
         return MapsScreen();
       case 3:
@@ -62,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 4:
         return SettingsScreen();
       default:
-        return _withTopSpacing(_buildHomeTab());
+        return VehicleSelectionScreen();
     }
   }
 
@@ -92,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(index: 0, icon: Icons.home, label: 'Home'),
+          _buildNavItem(index: 0, icon: Icons.directions_car, label: 'Vozila'),
           _buildNavItem(index: 1, icon: Icons.account_balance_wallet, label: 'Novčanik'),
           GestureDetector(
             onTap: () => _onItemTapped(2),
@@ -151,90 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHomeTab() {
-    final authProvider = Provider.of<AuthProvider>(context);
-    return SingleChildScrollView(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.local_parking, size: 64, color: AppColors.primary),
-            const SizedBox(height: 16),
-            Text(
-              'Dobrodošli, ${authProvider.user?.firstName}!',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () async {
-                final clientSecret = "pi_3T1BX3JZZ3t7DnXE1vJJrSYi_secret_A6HPav1c3aS62VdRc3TJuzzp3";
-
-                try {
-                  print('=== STRIPE TEST ===');
-                  print('ClientSecret: $clientSecret');
-                  print('PublishableKey: ${Stripe.publishableKey}');
-                  print('Merchant: ${Stripe.merchantIdentifier}');
-                  print('URLScheme: ${Stripe.urlScheme}');
-
-                  print('\n1. initPaymentSheet...');
-                  await Stripe.instance.initPaymentSheet(
-                    paymentSheetParameters: SetupPaymentSheetParameters(
-                      paymentIntentClientSecret: clientSecret,
-                      merchantDisplayName: 'Parkify',
-                      style: ThemeMode.dark,
-                    ),
-                  );
-                  print('✅ initPaymentSheet OK');
-
-                  print('\n2. presentPaymentSheet...');
-                  await Stripe.instance.presentPaymentSheet();
-                  print('✅ presentPaymentSheet OK');
-
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('✅ Plaćanje uspješno!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                } on StripeException catch (e) {
-                  print('\n❌ StripeException');
-                  print('Message: ${e.error.message}');
-                  print('Code: ${e.error.code}');
-                  print('Type: ${e.error.type}');
-
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Stripe greška: ${e.error.message}'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  print('\n❌ Exception: $e');
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-              ),
-              child: const Text('Test Stripe Payment', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
       ),
     );
   }

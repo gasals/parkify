@@ -4,6 +4,9 @@ import 'package:mobile/constants/stripe_keys.dart';
 import 'package:mobile/providers/city_provider.dart';
 import 'package:mobile/providers/payment_provider.dart';
 import 'package:mobile/providers/preference_provider.dart';
+import 'package:mobile/providers/review_provider.dart';
+import 'package:mobile/providers/vehicle_provider.dart';
+import 'package:mobile/providers/wallet_provider.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'constants/app_strings.dart';
@@ -17,11 +20,11 @@ import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   Stripe.publishableKey = StripeKeys.publishableKey;
   Stripe.merchantIdentifier = StripeKeys.merchantIdentifier;
   Stripe.urlScheme = StripeKeys.urlScheme;
-  
+
   runApp(MyApp());
 }
 
@@ -36,6 +39,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PaymentProvider()),
         ChangeNotifierProvider(create: (_) => PreferenceProvider()),
         ChangeNotifierProvider(create: (_) => CityProvider()),
+        ChangeNotifierProvider(
+          create: (context) =>
+              ReviewProvider(Provider.of<AuthProvider>(context, listen: false)),
+        ),
+        ChangeNotifierProvider(create: (_) => VehicleProvider()),
+        ChangeNotifierProvider(create: (_) => WalletProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
