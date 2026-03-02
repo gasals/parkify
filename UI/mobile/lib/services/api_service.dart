@@ -223,6 +223,18 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getParkingSpotsByZoneId(int id) async {
+    try {
+      final response = await http
+          .get(Uri.parse('${AppUrls.parkingSpots}?parkingZoneId=$id'), headers: _getHeaders())
+          .timeout(_timeout);
+
+      return await _handleResponse(response);
+    } catch (e) {
+      throw Exception('Greška pri učitavanju parking mjesta: $e');
+    }
+  }
+
   static Future<Map<String, dynamic>> createReservation(
     Map<String, dynamic> reservationData,
   ) async {
@@ -564,5 +576,20 @@ class ApiService {
     } catch (e) {
       throw Exception('Greška pri učitavanju novčanika: $e');
     }
+  }
+
+  static Future<dynamic> getWalletHistory(int walletId) async {
+    try {
+        final response = await http
+            .get(
+              Uri.parse('${AppUrls.walletTransactions}?WalletId=$walletId'),
+              headers: _getHeaders(),
+            )
+            .timeout(_timeout);
+
+        return await _handleResponse(response);
+      } catch (e) {
+        throw Exception('Greška pri učitavanju novčanika: $e');
+      }
   }
 }

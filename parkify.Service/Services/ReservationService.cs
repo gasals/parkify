@@ -3,10 +3,11 @@ using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
+using Microsoft.EntityFrameworkCore; // Dodano
 
 namespace parkify.Service.Services
 {
-    public class ReservationService 
+    public class ReservationService
         : BaseCRUDService<Reservation, ReservationSearch, Database.Reservation, ReservationInsertRequest, ReservationUpdateRequest>,
           IReservationService
     {
@@ -62,20 +63,34 @@ namespace parkify.Service.Services
 
                     wallet.Balance -= amountFromWallet;
                     wallet.Modified = DateTime.UtcNow;
+                    Context.Wallets.Update(wallet);
+
+                    var transaction = new Database.WalletTransaction
+                    {
+                        WalletId = wallet.Id,
+                        Amount = -amountFromWallet,
+                        Type = Database.WalletTransactionType.Reservation,
+                        Created = DateTime.UtcNow
+                    };
+                    Context.WalletTransactions.Add(transaction);
 
                     entity.FinalPrice = entity.CalculatedPrice - amountFromWallet;
+
+                    if(entity.FinalPrice == 0)
+                    {
+                        entity.Status = Database.ReservationStatus.Completed;
+                        ParkingZoneUpdateRequest updateRequest = new ParkingZoneUpdateRequest { AvailableSpots = parkingZone.AvailableSpots - 1 };
+                        _parkingZoneService.Update(parkingZone.Id, updateRequest);
+                        _parkingSpotService.SetAvailable(entity.ParkingSpotId, false);
+                    }
                 }
                 else
                 {
                     entity.FinalPrice = entity.CalculatedPrice;
                 }
-
-                ParkingZoneUpdateRequest updateRequest = new ParkingZoneUpdateRequest { AvailableSpots = parkingZone.AvailableSpots - 1 };
-                _parkingZoneService.Update(parkingZone.Id, updateRequest);
             }
-
+            
             entity.ReservationCode = GenerateReservationCode(request);
-            _parkingSpotService.SetAvailable(entity.ParkingSpotId, false);
 
             base.BeforeInsert(request, entity);
         }

@@ -34,6 +34,7 @@ builder.Services.AddTransient<IReviewService, ReviewService>();
 builder.Services.AddTransient<ICityService, CityService>();
 builder.Services.AddTransient<IVehicleService, VehicleService>();
 builder.Services.AddTransient<IWalletService, WalletService>();
+builder.Services.AddTransient<IWalletTransactionService, WalletTransactionService>();
 
 // ==================== CONTROLLERS ====================
 builder.Services.AddControllers(x =>

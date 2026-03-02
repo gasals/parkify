@@ -15,7 +15,6 @@ class Reservation {
   final double finalPrice;
   final bool requiresDisabledSpot;
   final String notes;
-  final String qrCodeData;
   final DateTime created;
   final DateTime? modified;
   final DateTime? checkInTime;
@@ -38,7 +37,6 @@ class Reservation {
     required this.finalPrice,
     required this.requiresDisabledSpot,
     required this.notes,
-    required this.qrCodeData,
     required this.created,
     this.modified,
     this.checkInTime,
@@ -63,7 +61,6 @@ class Reservation {
       finalPrice: (json['finalPrice'] ?? 0).toDouble(),
       requiresDisabledSpot: json['requiresDisabledSpot'] ?? false,
       notes: json['notes'] ?? '',
-      qrCodeData: json['qrCodeData'] ?? '',
       created: DateTime.parse(json['created'] ?? DateTime.now().toString()),
       modified: json['modified'] != null ? DateTime.parse(json['modified']) : null,
       checkInTime: json['checkInTime'] != null ? DateTime.parse(json['checkInTime']) : null,
@@ -88,5 +85,31 @@ class Reservation {
       default:
         return 'Nepoznato';
     }
+  }
+}
+
+enum ReservationStatus {
+  pending(1, 'Pending'),
+  confirmed(2, 'Confirmed'),
+  active(3, 'Active'),
+  completed(4, 'Completed'),
+  cancelled(5, 'Cancelled'),
+  noShow(6, 'NoShow');
+
+  final int value;
+  final String label;
+
+  const ReservationStatus(this.value, this.label);
+
+  static ReservationStatus fromValue(int value) {
+    return ReservationStatus.values.firstWhere(
+      (status) => status.value == value,
+      orElse: () => ReservationStatus.pending,
+    );
+  }
+
+  static ReservationStatus? fromValueNullable(int? value) {
+    if (value == null) return null;
+    return fromValue(value);
   }
 }

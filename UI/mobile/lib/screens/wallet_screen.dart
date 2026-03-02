@@ -25,20 +25,16 @@ class _WalletScreenState extends State<WalletScreen> {
   Future<void> _loadData() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final walletProvider = Provider.of<WalletProvider>(context, listen: false);
-    final paymentProvider = Provider.of<PaymentProvider>(
-      context,
-      listen: false,
-    );
     final userId = authProvider.user?.id ?? 0;
 
     if (userId != 0) {
-      await Future.wait([
-        walletProvider.fetchUserWallet(userId),
-        if (walletProvider.userWallet != null)
-          paymentProvider.getWalletPayments(
-            walletId: walletProvider.userWallet!.id,
-          ),
-      ]);
+      await walletProvider.fetchUserWallet(userId);
+
+      if (walletProvider.userWallet != null) {
+        await walletProvider.getWalletHistory(
+          walletId: walletProvider.userWallet!.id,
+        );
+      }
     }
   }
 
@@ -57,7 +53,6 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget build(BuildContext context) {
     final walletProvider = Provider.of<WalletProvider>(context);
     final wallet = walletProvider.userWallet;
-    final paymentProvider = Provider.of<PaymentProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -134,20 +129,22 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    paymentProvider.isLoading
+                    walletProvider.isLoading
                         ? const Center(child: CircularProgressIndicator())
-                        : paymentProvider.walletPayments.isEmpty
+                        : walletProvider.walletTransactions.isEmpty
                         ? const Center(child: Text("Nema transakcija"))
                         : ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: paymentProvider.walletPayments.length,
+                            itemCount:
+                                walletProvider.walletTransactions.length,
                             itemBuilder: (context, index) {
-                              final payment = paymentProvider.walletPayments[index];
-                              final isTopUp = payment.amount > 0;
+                              final transaction =
+                                  walletProvider.walletTransactions[index];
+                              final isPositive = transaction.amount > 0;
                               final formattedDate = DateFormat(
                                 'dd.MM.yyyy HH:mm',
-                              ).format(payment.created);
+                              ).format(transaction.created);
 
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 12),
@@ -164,16 +161,16 @@ class _WalletScreenState extends State<WalletScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: isTopUp
+                                        color: isPositive
                                             ? Colors.green.withOpacity(0.1)
                                             : Colors.red.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Icon(
-                                        isTopUp
+                                        isPositive
                                             ? Icons.add_circle
                                             : Icons.remove_circle,
-                                        color: isTopUp
+                                        color: isPositive
                                             ? Colors.green
                                             : Colors.red,
                                         size: 20,
@@ -186,9 +183,11 @@ class _WalletScreenState extends State<WalletScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            isTopUp
-                                                ? 'Uplata sredstava'
-                                                : 'Plaćanje parkiranja',
+                                            transaction.description.isNotEmpty
+                                                ? transaction.description
+                                                : (isPositive
+                                                      ? 'Uplata'
+                                                      : 'Plaćanje'),
                                             style: const TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w500,
@@ -206,11 +205,11 @@ class _WalletScreenState extends State<WalletScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '${isTopUp ? '+' : ''}${payment.amount.toStringAsFixed(2)} KM',
+                                      '${isPositive ? '+' : ''}${transaction.amount.toStringAsFixed(2)} KM',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: isTopUp
+                                        color: isPositive
                                             ? Colors.green
                                             : Colors.red,
                                       ),

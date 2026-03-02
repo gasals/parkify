@@ -60,6 +60,25 @@ class ParkingZoneProvider extends ChangeNotifier {
     try {
       final result = await ApiService.getParkingZoneById(id);
       _selectedZone = ParkingZone.fromJson(result);
+      await getParkingSpots();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> getParkingSpots() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await ApiService.getParkingSpotsByZoneId(_selectedZone!.id);
+      _selectedZone!.spots = (result['results'] as List)
+          .map((spot) => ParkingSpot.fromJson(spot as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       _errorMessage = e.toString();
     } finally {

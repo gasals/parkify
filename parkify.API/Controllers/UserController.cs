@@ -62,9 +62,42 @@ namespace parkify.API.Controllers
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public override User Insert([FromBody] UserInsertRequest request)
+        public IActionResult Register([FromBody] UserInsertRequest request)
         {
-            return base.Insert(request);
+            var user = base.Insert(request);
+
+            if (user == null)
+            {
+                return BadRequest("Registracija nije uspjela.");
+            }
+
+            string role = "User";
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.Role, role)
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                Issuer = _configuration["Jwt:Issuer"],
+                Audience = _configuration["Jwt:Audience"],
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            return Ok(new
+            {
+                Token = tokenString,
+                user.Id
+            });
         }
 
         [HttpGet]

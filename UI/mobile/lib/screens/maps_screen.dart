@@ -116,7 +116,6 @@ class _MapsScreenState extends State<MapsScreen> {
         onTap: () async {
           final reviewProvider =
               Provider.of<ReviewProvider>(context, listen: false);
-
           await reviewProvider.getZoneReviews(parkingZoneId: zone.id);
 
           setState(() {
@@ -214,7 +213,7 @@ class _MapsScreenState extends State<MapsScreen> {
                   left: 12,
                   right: 12,
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       setState(() {
                         _selectedZone = favoriteZone;
                         _selectedZone!.isFavorite = true;
@@ -545,6 +544,8 @@ class _MapsScreenState extends State<MapsScreen> {
           height: 48,
           child: ElevatedButton(
             onPressed: () async {
+              final zoneProvider = Provider.of<ParkingZoneProvider>(context, listen: false);
+              await zoneProvider.getParkingZoneById(_selectedZone!.id);
               await Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) =>

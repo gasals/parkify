@@ -14,7 +14,7 @@ class ParkingZone {
   final double dailyRate;
   final bool isActive;
   bool isFavorite;
-  final List<ParkingSpot>? spots;
+  List<ParkingSpot>? spots;
   double averageRating = 0.0;
   int reviewCount = 0;
 

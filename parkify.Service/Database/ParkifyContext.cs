@@ -19,8 +19,8 @@ namespace parkify.Service.Database
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Preference> Preferences { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
-
         public DbSet<Wallet> Wallets { get; set; }
+        public DbSet<WalletTransaction> WalletTransactions { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -162,6 +162,13 @@ namespace parkify.Service.Database
 
             modelBuilder.Entity<Wallet>()
                 .Property(r => r.UserId)
+                .IsRequired();
+
+            modelBuilder.Entity<WalletTransaction>()
+                .HasKey(r => r.Id);
+
+            modelBuilder.Entity<WalletTransaction>()
+                .Property(r => r.WalletId)
                 .IsRequired();
 
 

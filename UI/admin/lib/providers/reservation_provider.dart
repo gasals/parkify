@@ -91,7 +91,6 @@ class ReservationProvider extends ChangeNotifier {
           finalPrice: updated.finalPrice,
           requiresDisabledSpot: updated.requiresDisabledSpot,
           notes: updated.notes,
-          qrCodeData: updated.qrCodeData,
           created: updated.created,
           modified: DateTime.now(),
           checkInTime: updated.checkInTime,

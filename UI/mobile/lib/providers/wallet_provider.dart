@@ -6,10 +6,12 @@ class WalletProvider extends ChangeNotifier {
   Wallet? _userWallet;
   bool _isLoading = false;
   String? _errorMessage;
+  List<WalletTransaction> _walletTransactions = [];
 
   Wallet? get userWallet => _userWallet;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  List<WalletTransaction> get walletTransactions => _walletTransactions;
 
   Future<void> fetchUserWallet(int userId) async {
     _isLoading = true;
@@ -24,6 +26,28 @@ class WalletProvider extends ChangeNotifier {
       }
       
       _errorMessage = null;
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> getWalletHistory({required int walletId}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final result = await ApiService.getWalletHistory(walletId);
+      
+      final List<dynamic> results = result['results'] ?? [];
+      _walletTransactions = results
+          .map((data) => WalletTransaction.fromJson(data as Map<String, dynamic>))
+          .toList();
+      
+      _walletTransactions.sort((a, b) => b.created.compareTo(a.created));
+      
     } catch (e) {
       _errorMessage = e.toString();
     } finally {

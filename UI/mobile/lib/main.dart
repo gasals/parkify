@@ -7,6 +7,7 @@ import 'package:mobile/providers/preference_provider.dart';
 import 'package:mobile/providers/review_provider.dart';
 import 'package:mobile/providers/vehicle_provider.dart';
 import 'package:mobile/providers/wallet_provider.dart';
+import 'package:mobile/screens/register_screen.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'constants/app_strings.dart';
@@ -14,6 +15,7 @@ import 'providers/auth_provider.dart';
 import 'providers/parking_zone_provider.dart';
 import 'providers/reservation_provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/my_reservations_screen.dart';
 import 'screens/settings_screen.dart';
@@ -56,6 +58,7 @@ class MyApp extends StatelessWidget {
           '/home': (_) => HomeScreen(),
           '/my-reservations': (_) => MyReservationsScreen(),
           '/settings': (_) => SettingsScreen(),
+          '/register': (_) => RegisterScreen(),
         },
       ),
     );

@@ -70,28 +70,30 @@ class _ReservationScreenState extends State<ReservationScreen> {
   }
 
   Future<void> _makeReservation(BuildContext context) async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final reservationProvider = Provider.of<ReservationProvider>(context, listen: false);
-    final paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
-    final walletProvider = Provider.of<WalletProvider>(context, listen: false);
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  final reservationProvider = Provider.of<ReservationProvider>(context, listen: false);
+  final paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
+  final walletProvider = Provider.of<WalletProvider>(context, listen: false);
 
-    try {
-      final reservationData = {
-        'userId': authProvider.user!.id,
-        'parkingZoneId': widget.parkingZone.id,
-        'parkingSpotId': widget.parkingSpot.id,
-        'reservationStart': _startTime.toIso8601String(),
-        'reservationEnd': _endTime.toIso8601String(),
-        'requiresDisabledSpot': false,
-        'vehicleLicensePlate': context.read<VehicleProvider>().selectedVehicle?.licensePlate ?? '',
-      };
+  try {
+    final reservationData = {
+      'userId': authProvider.user!.id,
+      'parkingZoneId': widget.parkingZone.id,
+      'parkingSpotId': widget.parkingSpot.id,
+      'reservationStart': _startTime.toIso8601String(),
+      'reservationEnd': _endTime.toIso8601String(),
+      'vehicleLicensePlate': context.read<VehicleProvider>().selectedVehicle?.licensePlate ?? '',
+    };
 
-      final reservation = await reservationProvider.createReservation(reservationData);
+    final reservation = await reservationProvider.createReservation(reservationData);
 
-      if (reservation.id == 0) {
-        throw Exception('Greška pri kreiranju rezervacije');
-      }
+    if (reservation.id == 0) {
+      throw Exception('Greška pri kreiranju rezervacije');
+    }
 
+    String finalCode = reservation.reservationCode;
+
+    if (reservation.finalPrice > 0) {
       final payment = await paymentProvider.createPayment(
         reservationId: reservation.id,
         userId: authProvider.user!.id,
@@ -102,43 +104,39 @@ class _ReservationScreenState extends State<ReservationScreen> {
         throw Exception('Greška pri kreiranju plaćanja');
       }
 
-      if (payment.amount > 0) {
-        final paymentSuccess = await paymentProvider.presentPaymentSheet(
-          clientSecret: payment.clientSecret,
-        );
-
-        if (!paymentSuccess) {
-          throw Exception('Plaćanje je otkazano');
-        }
-
-        final confirmed = await paymentProvider.confirmPayment(
-          paymentId: payment.id,
-        );
-        
-        if (!confirmed) {
-          throw Exception('Plaćanje nije potvrđeno');
-        }
-      } else {
-        await paymentProvider.confirmPayment(
-          paymentId: payment.id,
-        );
-      }
-      
-      await walletProvider.fetchUserWallet(authProvider.user!.id);
-
-      setState(() {
-        _reservationCode = payment.paymentCode;
-        _isConfirmed = true;
-      });
-      
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Greška: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
+      final paymentSuccess = await paymentProvider.presentPaymentSheet(
+        clientSecret: payment.clientSecret,
       );
+
+      if (!paymentSuccess) {
+        throw Exception('Plaćanje je otkazano');
+      }
+
+      final confirmed = await paymentProvider.confirmPayment(
+        paymentId: payment.id,
+      );
+
+      if (!confirmed) {
+        throw Exception('Plaćanje nije potvrđeno');
+      }
+      finalCode = payment.paymentCode;
     }
+
+    await walletProvider.fetchUserWallet(authProvider.user!.id);
+
+    setState(() {
+      _reservationCode = finalCode;
+      _isConfirmed = true;
+    });
+
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Greška: ${e.toString()}'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
 }
 
   @override
@@ -341,33 +339,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              const Text(
-                'QR kod za unos',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    _reservationCode.substring(0, 8).toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               Text(
                 'Kod: $_reservationCode',
                 style: const TextStyle(

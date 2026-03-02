@@ -5,6 +5,8 @@ class AppUrls {
   static const String register = '$baseUrl/users/register';
   
   static const String parkingZones = '$baseUrl/parkingzones';
+
+  static const String parkingSpots = '$baseUrl/parkingspots';
   
   static const String reservations = '$baseUrl/reservation';
   
@@ -21,6 +23,8 @@ class AppUrls {
   static const String vehicles = '$baseUrl/vehicle';
 
   static const String wallets = '$baseUrl/wallet';
+
+  static const String walletTransactions = '$baseUrl/wallettransaction';
 
   static const String navigation = 'https://www.google.com/maps/dir/?api=1&destination={lat},{lng}&travelmode=driving';
 }

@@ -923,7 +923,7 @@ class _SpotsGridDialogState extends State<_SpotsGridDialog> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Dodaj spot'),
+          title: const Text('Dodaj mjesto'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -968,7 +968,7 @@ class _SpotsGridDialogState extends State<_SpotsGridDialog> {
                 if (mounted) {
                   SnackBarHelper.showMessage(
                     context,
-                    success ? 'Spot dodan' : 'Greška',
+                    success ? 'Mjesto dodano' : 'Greška',
                     success,
                   );
                 }
@@ -990,7 +990,7 @@ class _SpotsGridDialogState extends State<_SpotsGridDialog> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Uredi spot'),
+          title: const Text('Uredi mjesto'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

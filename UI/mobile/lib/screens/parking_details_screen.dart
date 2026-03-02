@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/providers/parking_zone_provider.dart';
 import 'package:mobile/screens/reservation_screen.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/parking_zone_model.dart';
 

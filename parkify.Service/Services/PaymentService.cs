@@ -93,11 +93,6 @@ namespace parkify.Service.Services
                 throw new Exception("Plaćanje nije pronađeno");
             }
 
-            if (payment.Status != 1 && payment.Status != 2)
-            {
-                throw new Exception("Samo plaćanja sa statusom Pending ili Processing se mogu potvrditi");
-            }
-
             var updateRequest = new PaymentUpdateRequest
             {
                 Status = 3,
@@ -108,7 +103,31 @@ namespace parkify.Service.Services
             payment.Status = (int)Database.PaymentStatus.Completed;
             payment.Completed = DateTime.UtcNow;
 
-            if (payment.WalletId.HasValue)
+
+            if (payment.ReservationId.HasValue)
+            {
+                var reservation = Context.Reservations.Find(payment.ReservationId.Value);
+                if (reservation != null)
+                {
+                    reservation.Status = Database.ReservationStatus.Confirmed;
+                    Context.Reservations.Update(reservation);
+
+                    var parkingZone = Context.ParkingZones.Find(reservation.ParkingZoneId);
+                    if (parkingZone != null && parkingZone.AvailableSpots > 0)
+                    {
+                        parkingZone.AvailableSpots -= 1;
+                        Context.ParkingZones.Update(parkingZone);
+                    }
+
+                    var parkingSpot = Context.ParkingSpots.Find(reservation.ParkingSpotId);
+                    if (parkingSpot != null)
+                    {
+                        parkingSpot.IsAvailable = false;
+                        Context.ParkingSpots.Update(parkingSpot);
+                    }
+                }
+            }
+            else if (payment.WalletId.HasValue)
             {
                 var wallet = Context.Wallets.Find(payment.WalletId.Value);
                 if (wallet != null)
@@ -116,10 +135,19 @@ namespace parkify.Service.Services
                     wallet.Balance += payment.Amount;
                     wallet.Modified = DateTime.UtcNow;
                     Context.Wallets.Update(wallet);
-                    Context.SaveChanges();
+
+                    var transaction = new Database.WalletTransaction
+                    {
+                        WalletId = wallet.Id,
+                        Amount = payment.Amount,
+                        Type = Database.WalletTransactionType.TopUp,
+                        Created = DateTime.UtcNow
+                    };
+                    Context.WalletTransactions.Add(transaction);
                 }
             }
 
+            Context.SaveChanges();
 
             return payment;
         }

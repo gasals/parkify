@@ -48,7 +48,8 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final result = await ApiService.register(userData);
-      _user = User.fromJson(result);
+      await fetchAndSetUser(result['id']);
+      _errorMessage = null;
       return true;
     } catch (e) {
       _errorMessage = e.toString();

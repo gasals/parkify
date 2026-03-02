@@ -17,7 +17,6 @@ class Reservation {
   final double finalPrice;
   final bool requiresDisabledSpot;
   final String notes;
-  final String qrCodeData;
   final DateTime created;
   final DateTime? modified;
   final DateTime? checkInTime;
@@ -42,7 +41,6 @@ class Reservation {
     required this.finalPrice,
     required this.requiresDisabledSpot,
     required this.notes,
-    required this.qrCodeData,
     required this.created,
     this.modified,
     this.checkInTime,
@@ -74,7 +72,6 @@ class Reservation {
       finalPrice: (json['finalPrice'] as num?)?.toDouble() ?? 0.0,
       requiresDisabledSpot: json['requiresDisabledSpot'] as bool? ?? false,
       notes: json['notes'] as String? ?? '',
-      qrCodeData: json['qrCodeData'] as String? ?? '',
       created: json['created'] != null
           ? DateTime.parse(json['created'] as String)
           : DateTime.now(),
@@ -108,7 +105,6 @@ class Reservation {
       'finalPrice': finalPrice,
       'requiresDisabledSpot': requiresDisabledSpot,
       'notes': notes,
-      'qrCodeData': qrCodeData,
       'created': created.toIso8601String(),
       'modified': modified?.toIso8601String(),
       'checkInTime': checkInTime?.toIso8601String(),
