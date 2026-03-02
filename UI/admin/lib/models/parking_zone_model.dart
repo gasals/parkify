@@ -90,12 +90,13 @@ class ParkingZone {
 }
 
 enum ReservationStatus {
-  pending(1, 'Pending'),
-  confirmed(2, 'Confirmed'),
-  active(3, 'Active'),
-  completed(4, 'Completed'),
-  cancelled(5, 'Cancelled'),
-  noShow(6, 'NoShow');
+  pending(1, 'Na čekanju'),
+  confirmed(2, 'Potvrđena'),
+  active(3, 'Aktivna'),
+  completed(4, 'Završena'),
+  cancelled(5, 'Otkazana'),
+  noShow(6, 'Nije prikazana');
+
 
   final int value;
   final String label;

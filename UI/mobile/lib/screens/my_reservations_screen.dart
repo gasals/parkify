@@ -108,17 +108,6 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/home');
-                    },
-                    icon: const Icon(Icons.map),
-                    label: const Text('Idi na mapu'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                    ),
-                  ),
                 ],
               ),
             );
@@ -220,7 +209,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '${reservation.finalPrice.toStringAsFixed(2)}KM',
+                      '${reservation.calculatedPrice.toStringAsFixed(2)}KM',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -274,7 +263,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               children: [
 
                 const SizedBox(width: 8),
-                if (reservation.status == 1 || reservation.status == 2)
+                if (reservation.status == 1 || reservation.status == 2 && reservation.reservationStart.isAfter(DateTime.now()))
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () =>

@@ -25,119 +25,210 @@ class ReservationScreen extends StatefulWidget {
 
 class _ReservationScreenState extends State<ReservationScreen> {
   late DateTime _startTime;
-  late double _durationHours;
   late DateTime _endTime;
+  bool _isDailyOption = false;
   String _reservationCode = '';
   bool _isConfirmed = false;
+
+  static const int _maxHours = 23;
 
   @override
   void initState() {
     super.initState();
     _startTime = DateTime.now().add(const Duration(hours: 1));
-    _durationHours = 1;
-    _endTime = _startTime.add(Duration(hours: _durationHours.toInt()));
+    _endTime = _startTime.add(const Duration(hours: 1));
   }
 
-  double get _calculatedPrice => widget.parkingZone.pricePerHour * _durationHours;
+  double get _durationHours => _endTime.difference(_startTime).inMinutes / 60.0;
 
-  void _updateEndTime() {
-    setState(() {
-      _endTime = _startTime.add(Duration(
-        hours: _durationHours.toInt(),
-        minutes: ((_durationHours - _durationHours.toInt()) * 60).toInt(),
-      ));
-    });
+  double get _calculatedPrice =>
+      widget.parkingZone.pricePerHour * _durationHours;
+
+  String _formatDateTime(DateTime dt) {
+    final date =
+        '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+    final time =
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    return '$date $time';
   }
 
-  Future<void> _selectStartTime(BuildContext context) async {
-    final picked = await showTimePicker(
+  Future<void> _pickStartDateTime(BuildContext context) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _startTime,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+    );
+    if (date == null) return;
+
+    final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_startTime),
     );
+    if (time == null) return;
 
-    if (picked != null) {
-      setState(() {
-        _startTime = DateTime(
-          _startTime.year,
-          _startTime.month,
-          _startTime.day,
-          picked.hour,
-          picked.minute,
-        );
-        _updateEndTime();
-      });
+    final newStart = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+
+    setState(() {
+      _startTime = newStart;
+      if (_isDailyOption) {
+        _endTime = _startTime.add(const Duration(hours: 24));
+      } else {
+        final currentDuration = _endTime.difference(_startTime);
+        final clampedDuration =
+            currentDuration > const Duration(hours: _maxHours)
+            ? const Duration(hours: _maxHours)
+            : currentDuration < const Duration(hours: 1)
+            ? const Duration(hours: 1)
+            : currentDuration;
+        _endTime = _startTime.add(clampedDuration);
+      }
+    });
+  }
+
+  Future<void> _pickEndDateTime(BuildContext context) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _endTime,
+      firstDate: _startTime,
+      lastDate: _startTime.add(const Duration(hours: _maxHours)),
+    );
+    if (date == null) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_endTime),
+    );
+    if (time == null) return;
+
+    final newEnd = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+
+    if (newEnd.isBefore(_startTime) || newEnd.isAtSameMomentAs(_startTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Završetak mora biti nakon početka.')),
+      );
+      return;
     }
+
+    final diff = newEnd.difference(_startTime);
+    if (diff.inMinutes > _maxHours * 60) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maksimalno trajanje rezervacije je $_maxHours sati.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _endTime = newEnd;
+      _isDailyOption = false;
+    });
+  }
+
+  void _applyDailyOption() {
+    setState(() {
+      _isDailyOption = true;
+      _endTime = _startTime.add(const Duration(hours: 24));
+    });
   }
 
   Future<void> _makeReservation(BuildContext context) async {
-  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-  final reservationProvider = Provider.of<ReservationProvider>(context, listen: false);
-  final paymentProvider = Provider.of<PaymentProvider>(context, listen: false);
-  final walletProvider = Provider.of<WalletProvider>(context, listen: false);
-
-  try {
-    final reservationData = {
-      'userId': authProvider.user!.id,
-      'parkingZoneId': widget.parkingZone.id,
-      'parkingSpotId': widget.parkingSpot.id,
-      'reservationStart': _startTime.toIso8601String(),
-      'reservationEnd': _endTime.toIso8601String(),
-      'vehicleLicensePlate': context.read<VehicleProvider>().selectedVehicle?.licensePlate ?? '',
-    };
-
-    final reservation = await reservationProvider.createReservation(reservationData);
-
-    if (reservation.id == 0) {
-      throw Exception('Greška pri kreiranju rezervacije');
-    }
-
-    String finalCode = reservation.reservationCode;
-
-    if (reservation.finalPrice > 0) {
-      final payment = await paymentProvider.createPayment(
-        reservationId: reservation.id,
-        userId: authProvider.user!.id,
-        amount: reservation.finalPrice,
-      );
-
-      if (payment.id == 0) {
-        throw Exception('Greška pri kreiranju plaćanja');
-      }
-
-      final paymentSuccess = await paymentProvider.presentPaymentSheet(
-        clientSecret: payment.clientSecret,
-      );
-
-      if (!paymentSuccess) {
-        throw Exception('Plaćanje je otkazano');
-      }
-
-      final confirmed = await paymentProvider.confirmPayment(
-        paymentId: payment.id,
-      );
-
-      if (!confirmed) {
-        throw Exception('Plaćanje nije potvrđeno');
-      }
-      finalCode = payment.paymentCode;
-    }
-
-    await walletProvider.fetchUserWallet(authProvider.user!.id);
-
-    setState(() {
-      _reservationCode = finalCode;
-      _isConfirmed = true;
-    });
-
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Greška: ${e.toString()}'),
-        backgroundColor: Colors.red,
-      ),
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final reservationProvider = Provider.of<ReservationProvider>(
+      context,
+      listen: false,
     );
+    final paymentProvider = Provider.of<PaymentProvider>(
+      context,
+      listen: false,
+    );
+    final walletProvider = Provider.of<WalletProvider>(context, listen: false);
+
+    try {
+      final licensePlate = context
+          .read<VehicleProvider>()
+          .selectedVehicle
+          ?.licensePlate;
+      if (licensePlate == null || licensePlate.isEmpty) {
+        throw Exception('Molimo odaberite vozilo prije rezervacije.');
+      }
+
+      final reservationData = {
+        'userId': authProvider.user!.id,
+        'parkingZoneId': widget.parkingZone.id,
+        'parkingSpotId': widget.parkingSpot.id,
+        'reservationStart': _startTime.toIso8601String(),
+        'reservationEnd': _endTime.toIso8601String(),
+        'vehicleLicensePlate': licensePlate,
+      };
+
+      final reservation = await reservationProvider.createReservation(
+        reservationData,
+      );
+
+      if (reservation.id == 0) {
+        throw Exception('Greška pri kreiranju rezervacije');
+      }
+
+      String finalCode = reservation.reservationCode;
+
+      if (reservation.finalPrice > 0) {
+        final payment = await paymentProvider.createPayment(
+          reservationId: reservation.id,
+          userId: authProvider.user!.id,
+          amount: reservation.finalPrice,
+        );
+
+        if (payment.id == 0) {
+          throw Exception('Greška pri kreiranju plaćanja');
+        }
+
+        final paymentSuccess = await paymentProvider.presentPaymentSheet(
+          clientSecret: payment.clientSecret,
+        );
+
+        if (!paymentSuccess) {
+          throw Exception('Plaćanje je otkazano');
+        }
+
+        final confirmed = await paymentProvider.confirmPayment(
+          paymentId: payment.id,
+        );
+
+        if (!confirmed) {
+          throw Exception('Plaćanje nije potvrđeno');
+        }
+        finalCode = payment.paymentCode;
+      }
+
+      await walletProvider.fetchUserWallet(authProvider.user!.id);
+
+      setState(() {
+        _reservationCode = finalCode;
+        _isConfirmed = true;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Greška: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -164,110 +255,128 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                'Vrijeme početka',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+
+              const Text(
+                'Početak rezervacije',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
+              _DateTimePickerTile(
+                dateTime: _startTime,
+                onTap: () => _pickStartDateTime(context),
+              ),
+              const SizedBox(height: 16),
+
+              const Text(
+                'Završetak rezervacije',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              _DateTimePickerTile(
+                dateTime: _endTime,
+                onTap: () => _pickEndDateTime(context),
+                enabled: !_isDailyOption,
+              ),
+              const SizedBox(height: 12),
+
               GestureDetector(
-                onTap: () => _selectStartTime(context),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
+                onTap: _isDailyOption
+                    ? () => setState(() => _isDailyOption = false)
+                    : _applyDailyOption,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.border),
+                    color: _isDailyOption
+                        ? AppColors.primary
+                        : AppColors.primary.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary,
+                      width: _isDailyOption ? 0 : 1,
+                    ),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Icon(
+                        _isDailyOption
+                            ? Icons.check_circle
+                            : Icons.wb_sunny_outlined,
+                        color: _isDailyOption
+                            ? Colors.white
+                            : AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
                       Text(
-                        '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        'Dnevna opcija (24h)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _isDailyOption
+                              ? Colors.white
+                              : AppColors.primary,
                         ),
                       ),
-                      Icon(Icons.access_time, color: AppColors.primary),
+                      const Spacer(),
+                      if (_isDailyOption)
+                        Text(
+                          '24h',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                'Procjena trajanja',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
+
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${_durationHours.toStringAsFixed(1)}h',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '${_calculatedPrice.toStringAsFixed(2)}KM',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
+                    _buildDetailRow(
+                      'Trajanje',
+                      _durationHours >= 24
+                          ? '24h (dnevna)'
+                          : '${_durationHours.toStringAsFixed(1)}h',
                     ),
-                    const SizedBox(height: 16),
-                    Slider(
-                      value: _durationHours,
-                      onChanged: (value) {
-                        setState(() {
-                          _durationHours = value;
-                          _updateEndTime();
-                        });
-                      },
-                      min: 0.5,
-                      max: 24,
-                      divisions: 47,
-                      label: '${_durationHours.toStringAsFixed(1)}h',
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Završetak: ${_endTime.hour.toString().padLeft(2, '0')}:${_endTime.minute.toString().padLeft(2, '0')}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
+                    const Divider(height: 16),
+                    _buildDetailRow(
+                      'Ukupno',
+                      '${_calculatedPrice.toStringAsFixed(2)} KM',
+                      valueStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[700],
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 32),
+
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: Consumer2<ReservationProvider, PaymentProvider>(
                   builder: (context, reservationProvider, paymentProvider, _) {
                     final isLoading =
-                        reservationProvider.isLoading || paymentProvider.isLoading;
+                        reservationProvider.isLoading ||
+                        paymentProvider.isLoading;
                     return ElevatedButton(
-                      onPressed: isLoading ? null : () => _makeReservation(context),
+                      onPressed: isLoading
+                          ? null
+                          : () => _makeReservation(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                       ),
@@ -277,8 +386,9 @@ class _ReservationScreenState extends State<ReservationScreen> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation(Colors.white),
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(
@@ -321,11 +431,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 ),
                 child: const Column(
                   children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 48,
-                    ),
+                    Icon(Icons.check_circle, color: Colors.green, size: 48),
                     SizedBox(height: 8),
                     Text(
                       'Plaćanje uspješno!',
@@ -349,26 +455,24 @@ class _ReservationScreenState extends State<ReservationScreen> {
               const SizedBox(height: 32),
               _buildDetailRow('Parking', widget.parkingZone.name),
               _buildDetailRow('Mjesto', widget.parkingSpot.spotCode),
-              _buildDetailRow(
-                'Početak',
-                '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}',
-              ),
+              _buildDetailRow('Početak', _formatDateTime(_startTime)),
+              _buildDetailRow('Završetak', _formatDateTime(_endTime)),
               _buildDetailRow(
                 'Trajanje',
-                '${_durationHours.toStringAsFixed(1)}h',
+                _durationHours >= 24
+                    ? '24h (dnevna)'
+                    : '${_durationHours.toStringAsFixed(1)}h',
               ),
               _buildDetailRow(
                 'Cijena',
-                '${_calculatedPrice.toStringAsFixed(2)}KM',
+                '${_calculatedPrice.toStringAsFixed(2)} KM',
               ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    _startNavigation();
-                  },
+                  onPressed: _startNavigation,
                   icon: const Icon(Icons.navigation),
                   label: const Text(
                     'Kreni na parking',
@@ -387,9 +491,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 width: double.infinity,
                 height: 48,
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primary),
                   ),
@@ -416,15 +519,12 @@ class _ReservationScreenState extends State<ReservationScreen> {
       destinationName: widget.parkingZone.name,
     ).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Greška: $error'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Greška: $error'), backgroundColor: Colors.red),
       );
     });
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(String label, String value, {TextStyle? valueStyle}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -432,19 +532,70 @@ class _ReservationScreenState extends State<ReservationScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
+            style:
+                valueStyle ??
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DateTimePickerTile extends StatelessWidget {
+  final DateTime dateTime;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  const _DateTimePickerTile({
+    required this.dateTime,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  String get _formatted {
+    final date =
+        '${dateTime.day.toString().padLeft(2, '0')}.${dateTime.month.toString().padLeft(2, '0')}.${dateTime.year}';
+    final time =
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    return '$date  $time';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: enabled ? null : Colors.grey.withOpacity(0.05),
+          border: Border.all(
+            color: enabled ? AppColors.border : Colors.grey.withOpacity(0.3),
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _formatted,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: enabled ? null : Colors.grey,
+              ),
+            ),
+            Icon(
+              Icons.calendar_today,
+              size: 18,
+              color: enabled ? AppColors.primary : Colors.grey,
+            ),
+          ],
+        ),
       ),
     );
   }

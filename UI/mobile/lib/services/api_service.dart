@@ -67,6 +67,7 @@ class ApiService {
           .timeout(_timeout);
 
       final data = await _handleResponse(response);
+
       if (data.containsKey('token')) {
         setToken(data['token']);
       }
@@ -88,7 +89,12 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      final data = await _handleResponse(response);
+      
+      if (data.containsKey('token')) {
+        setToken(data['token']);
+      }
+      return data;
     } catch (e) {
       throw Exception('Registracija greška: $e');
     }

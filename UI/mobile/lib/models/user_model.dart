@@ -8,6 +8,7 @@ class User {
   final String? city;
   final String? phoneNumber;
   final bool isActive;
+  final bool isAdmin;
 
   User({
     required this.id,
@@ -19,6 +20,7 @@ class User {
     this.city,
     this.phoneNumber,
     this.isActive = true,
+    this.isAdmin = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class User {
       city: json['city'],
       phoneNumber: json['phoneNumber'],
       isActive: json['isActive'] ?? true,
+      isAdmin: json['isAdmin'] ?? false,
     );
   }
 

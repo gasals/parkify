@@ -183,11 +183,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            transaction.description.isNotEmpty
-                                                ? transaction.description
-                                                : (isPositive
-                                                      ? 'Uplata'
-                                                      : 'Plaćanje'),
+                                            transaction.type.label,
                                             style: const TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w500,

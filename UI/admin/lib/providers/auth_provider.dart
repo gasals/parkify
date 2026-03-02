@@ -20,6 +20,13 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final result = await ApiService.login(username, password);
+
+      if (result['isAdmin'] == false || result['isActive'] == false) {
+        _errorMessage = "Neuspješna prijava. Provjerite podatke ili kontaktirajte podršku.";
+        notifyListeners();
+        return false;
+      }
+
       if (result.containsKey('token')) {
         ApiService.setToken(result['token']);
       }

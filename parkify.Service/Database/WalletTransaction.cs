@@ -16,6 +16,8 @@ namespace parkify.Service.Database
     public enum WalletTransactionType
     {
         Reservation = 1,
-        TopUp = 2
+        TopUp = 2,
+        Cancellation = 3,
+        Extra = 4
     }
 }

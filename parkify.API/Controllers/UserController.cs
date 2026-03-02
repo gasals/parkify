@@ -56,7 +56,9 @@ namespace parkify.API.Controllers
             return Ok(new
             {
                 Token = tokenString,
-                user.Id
+                user.Id,
+                user.IsAdmin,
+                user.IsActive
             });
         }
 
@@ -96,7 +98,9 @@ namespace parkify.API.Controllers
             return Ok(new
             {
                 Token = tokenString,
-                user.Id
+                user.Id,
+                user.IsAdmin,
+                user.IsActive
             });
         }
 

@@ -303,7 +303,7 @@ class _MapsScreenState extends State<MapsScreen> {
 
               if (_searchQuery.isNotEmpty && _filteredZones.isNotEmpty)
                 Positioned(
-                  top: favoriteZone != null ? 170 : 160,
+                  top: favoriteZone != null ? 160 : 150,
                   left: 12,
                   right: 12,
                   child: Container(
@@ -335,7 +335,8 @@ class _MapsScreenState extends State<MapsScreen> {
                             style: const TextStyle(fontSize: 12),
                           ),
                           onTap: () {
-                            _searchController.text = zone.name;
+                            _searchController.clear();
+                            FocusScope.of(context).unfocus();
                             setState(() {
                               _selectedZone = zone;
                               _selectedZone!.isFavorite = _userPreference?.favoriteParkingZoneId == zone.id;

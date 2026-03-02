@@ -154,6 +154,7 @@ class ApiService {
               'lastName': lastName,
               'address': address ?? '',
               'city': city ?? '',
+              'isAdmin': true
             }),
           )
           .timeout(_timeout);

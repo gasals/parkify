@@ -35,7 +35,7 @@ class WalletTransaction {
   final int id;
   final int walletId;
   final double amount;
-  final String description;
+  final WalletTransactionType type;
   final DateTime created;
   final DateTime? modified;
 
@@ -43,7 +43,7 @@ class WalletTransaction {
     required this.id,
     required this.walletId,
     required this.amount,
-    required this.description,
+    required this.type,
     required this.created,
     this.modified,
   });
@@ -53,9 +53,33 @@ class WalletTransaction {
       id: json['id'],
       walletId: json['walletId'],
       amount: json['amount'].toDouble(),
-      description: json['description'] ?? '',
+      type: WalletTransactionType.fromValue(json['type']),
       created: DateTime.parse(json['created']),
       modified: json['modified'] != null ? DateTime.parse(json['modified']) : null,
     );
   }
 }
+
+enum WalletTransactionType {
+  reservation(1, 'Rezervacija'),
+  deposit(2, 'Uplata'),
+  cancellation(3, 'Otkazivanje');
+
+  final int value;
+  final String label;
+
+  const WalletTransactionType(this.value, this.label);
+
+  static WalletTransactionType fromValue(int value) {
+    return WalletTransactionType.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => WalletTransactionType.deposit,
+    );
+  }
+
+  static WalletTransactionType? fromValueNullable(int? value) {
+    if (value == null) return null;
+    return fromValue(value);
+  }
+}
+
