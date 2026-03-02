@@ -58,8 +58,47 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createUser({
+    required String username,
+    required String email,
+    required String password,
+    required String passwordConfirm,
+    required String firstName,
+    required String lastName,
+    String? address,
+    String? city,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final result = await ApiService.createUser(
+        username: username,
+        email: email,
+        password: password,
+        passwordConfirm: passwordConfirm,
+        firstName: firstName,
+        lastName: lastName,
+        address: address,
+        city: city,
+      );
+
+      final newUser = User.fromJson(result);
+      _users.insert(0, newUser);
 
       notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -136,43 +175,35 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> createUser({
-    required String username,
-    required String email,
-    required String password,
-    required String passwordConfirm,
-    required String firstName,
-    required String lastName,
-    String? address,
-    String? city,
-  }) async {
+  Future<List<User>> getAllUsersList({int pageSize = 1000}) async {
     try {
-      _isLoading = true;
-      notifyListeners();
+      final result = await ApiService.getAllUsers(pageSize: pageSize);
+      final resultsList = result['results'] as List? ?? [];
 
-      final result = await ApiService.createUser(
-        username: username,
-        email: email,
-        password: password,
-        passwordConfirm: passwordConfirm,
-        firstName: firstName,
-        lastName: lastName,
-        address: address,
-        city: city,
-      );
-
-      final newUser = User.fromJson(result);
-      _users.insert(0, newUser);
-
-      notifyListeners();
-      return true;
+      return resultsList
+          .map((user) => User.fromJson(user as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      return [];
+    }
+  }
+
+  Future<List<User>> searchUsersLive({String? username, String? email}) async {
+    try {
+      final result = await ApiService.searchUsers(
+        username: username,
+        email: email,
+        pageSize: 1000,
+      );
+      final resultsList = result['results'] as List? ?? [];
+
+      return resultsList
+          .map((user) => User.fromJson(user as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _errorMessage = e.toString();
+      return [];
     }
   }
 

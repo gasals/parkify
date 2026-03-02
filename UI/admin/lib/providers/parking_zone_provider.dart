@@ -1,5 +1,5 @@
-import 'package:admin/models/city_model.dart';
 import 'package:flutter/material.dart';
+import '../models/city_model.dart';
 import '../models/parking_zone_model.dart';
 import '../services/api_service.dart';
 
@@ -57,8 +57,47 @@ class ParkingZoneProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createParkingZone({
+    required String name,
+    required String description,
+    required String address,
+    required String city,
+    required double latitude,
+    required double longitude,
+    required double pricePerHour,
+    double? dailyRate,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final result = await ApiService.createParkingZone(
+        name: name,
+        description: description,
+        address: address,
+        city: city,
+        latitude: latitude,
+        longitude: longitude,
+        pricePerHour: pricePerHour,
+        dailyRate: dailyRate,
+      );
+
+      final newZone = ParkingZone.fromJson(result);
+      _parkingZones.insert(0, newZone);
 
       notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -131,16 +170,13 @@ class ParkingZoneProvider extends ChangeNotifier {
           pageSize: 1000,
         );
 
-        final zones =
-            (response['results'] as List?)
+        final zones = (response['results'] as List?)
                 ?.map((z) => ParkingZone.fromJson(z as Map<String, dynamic>))
                 .toList() ??
             [];
 
-        final updatedZone = zones.firstWhere(
-          (z) => z.id == parkingZoneId,
-          orElse: () => _parkingZones[index],
-        );
+        final updatedZone =
+            zones.firstWhere((z) => z.id == parkingZoneId, orElse: () => _parkingZones[index]);
 
         _parkingZones[index] = updatedZone;
       }
@@ -206,46 +242,6 @@ class ParkingZoneProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> createParkingZone({
-    required String name,
-    required String description,
-    required String address,
-    required String city,
-    required double latitude,
-    required double longitude,
-    required double pricePerHour,
-    double? dailyRate,
-  }) async {
-    try {
-      _isLoading = true;
-      notifyListeners();
-
-      final result = await ApiService.createParkingZone(
-        name: name,
-        description: description,
-        address: address,
-        city: city,
-        latitude: latitude,
-        longitude: longitude,
-        pricePerHour: pricePerHour,
-        dailyRate: dailyRate,
-      );
-
-      final newZone = ParkingZone.fromJson(result);
-      _parkingZones.insert(0, newZone);
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
   Future<bool> toggleParkingSpotActive({
     required int spotId,
     required bool isAvailable,
@@ -270,19 +266,29 @@ class ParkingZoneProvider extends ChangeNotifier {
     }
   }
 
-  Future<List<dynamic>> searchParkingZonesList({String? name}) async {
+  Future<List<ParkingZone>> searchParkingZonesLive({String? name}) async {
     try {
-      return await ApiService.searchParkingZonesList(name: name);
+      final result = await ApiService.searchParkingZones(
+        name: name,
+        pageSize: 1000,
+      );
+      final resultsList = result['results'] as List? ?? [];
+
+      return resultsList
+          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       _errorMessage = e.toString();
       return [];
     }
   }
 
-  Future<List<City>> searchCitiesList({String? name}) async {
+  Future<List<City>> searchCitiesLive({String? name}) async {
     try {
-      final result = await ApiService.searchCitiesList(name: name);
-      return result
+      final result = await ApiService.searchCities(name: name);
+      final resultsList = result['results'] as List? ?? [];
+
+      return resultsList
           .map((city) => City.fromJson(city as Map<String, dynamic>))
           .toList();
     } catch (e) {

@@ -38,4 +38,18 @@ class Preference {
           : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'prefersCovered': prefersCovered,
+      'prefersNearby': prefersNearby,
+      'preferredCityId': preferredCityId,
+      'favoriteParkingZoneId': favoriteParkingZoneId,
+      'notifyAboutOffers': notifyAboutOffers,
+      'created': created.toIso8601String(),
+      'modified': modified?.toIso8601String(),
+    };
+  }
 }

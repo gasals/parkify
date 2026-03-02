@@ -1,7 +1,7 @@
-import 'package:admin/models/parking_zone_model.dart';
-import 'package:admin/models/user_model.dart';
 import 'package:flutter/material.dart';
+import '../models/parking_zone_model.dart';
 import '../models/reservation_model.dart';
+import '../models/user_model.dart';
 import '../services/api_service.dart';
 
 class ReservationProvider extends ChangeNotifier {
@@ -58,7 +58,6 @@ class ReservationProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
-
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -112,7 +111,6 @@ class ReservationProvider extends ChangeNotifier {
   Future<bool> checkInReservation(int reservationId) async {
     try {
       final result = await ApiService.checkInReservation(reservationId);
-
       final updatedReservation = Reservation.fromJson(result);
 
       final index = _reservations.indexWhere((r) => r.id == reservationId);
@@ -132,7 +130,6 @@ class ReservationProvider extends ChangeNotifier {
   Future<bool> checkOutReservation(int reservationId) async {
     try {
       final result = await ApiService.checkOutReservation(reservationId);
-
       final updatedReservation = Reservation.fromJson(result);
 
       final index = _reservations.indexWhere((r) => r.id == reservationId);
@@ -149,61 +146,73 @@ class ReservationProvider extends ChangeNotifier {
     }
   }
 
+  Future<List<User>> getAllUsersList({int pageSize = 1000}) async {
+    try {
+      final result = await ApiService.getAllUsers(pageSize: pageSize);
+      final resultsList = result['results'] as List? ?? [];
+
+      return resultsList
+          .map((user) => User.fromJson(user as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _errorMessage = e.toString();
+      return [];
+    }
+  }
+
+  Future<List<User>> searchUsersLive({String? username, String? email}) async {
+    try {
+      final result = await ApiService.searchUsers(
+        username: username,
+        email: email,
+        pageSize: 1000,
+      );
+      final resultsList = result['results'] as List? ?? [];
+
+      return resultsList
+          .map((user) => User.fromJson(user as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _errorMessage = e.toString();
+      return [];
+    }
+  }
+
+  Future<List<ParkingZone>> getAllParkingZonesList({
+    int pageSize = 1000,
+  }) async {
+    try {
+      final result = await ApiService.searchParkingZones(pageSize: pageSize);
+      final resultsList = result['results'] as List? ?? [];
+
+      return resultsList
+          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _errorMessage = e.toString();
+      return [];
+    }
+  }
+
+  Future<List<ParkingZone>> searchParkingZonesLive({String? name}) async {
+    try {
+      final result = await ApiService.searchParkingZones(
+        name: name,
+        pageSize: 1000,
+      );
+      final resultsList = result['results'] as List? ?? [];
+
+      return resultsList
+          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _errorMessage = e.toString();
+      return [];
+    }
+  }
+
   void clearError() {
     _errorMessage = null;
     notifyListeners();
-  }
-
-  Future<List<User>> getAllUsersList() async {
-    try {
-      final result = await ApiService.getAllUsersList();
-      return result
-          .map((user) => User.fromJson(user as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      _errorMessage = e.toString();
-      return [];
-    }
-  }
-
-  Future<List<User>> searchUsersList({String? username, String? email}) async {
-    try {
-      final result = await ApiService.searchUsersList(
-        username: username,
-        email: email,
-      );
-      return result
-          .map((user) => User.fromJson(user as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      _errorMessage = e.toString();
-      return [];
-    }
-  }
-
-  Future<List<ParkingZone>> getAllParkingZonesList() async {
-    try {
-      final result = await ApiService.getAllParkingZonesList();
-      return result
-          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      _errorMessage = e.toString();
-      return [];
-    }
-  }
-
-  Future<List<ParkingZone>> searchParkingZonesList({String? name}) async {
-    try {
-      final result = await ApiService.searchParkingZonesListForReservation(
-        name: name,
-      );
-      return result
-          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      _errorMessage = e.toString();
-      return [];
-    }
   }
 }

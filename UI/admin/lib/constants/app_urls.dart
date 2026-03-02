@@ -7,6 +7,8 @@ class AppUrls {
   
   static const String parkingZones = '$baseUrl/parkingzones';
   
+  static const String parkingSpots = '$baseUrl/parkingspots';
+
   static const String reservations = '$baseUrl/reservation';
   
   static const String payments = '$baseUrl/payments';

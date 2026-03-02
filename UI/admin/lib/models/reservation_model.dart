@@ -52,7 +52,7 @@ class Reservation {
   factory Reservation.fromJson(Map<String, dynamic> json) {
     final start = DateTime.parse(json['reservationStart'] as String? ?? '');
     final end = DateTime.parse(json['reservationEnd'] as String? ?? '');
-    final duration = (json['durationInHours'] as int?) ?? 
+    final duration = (json['durationInHours'] as int?) ??
         (end.difference(start).inMinutes / 60).ceil();
 
     return Reservation(
@@ -88,25 +88,6 @@ class Reservation {
           ? DateTime.parse(json['checkOutTime'] as String)
           : null,
     );
-  }
-
-  String getStatusText() {
-    switch (status) {
-      case 1:
-        return 'Pending';
-      case 2:
-        return 'Confirmed';
-      case 3:
-        return 'Active';
-      case 4:
-        return 'Completed';
-      case 5:
-        return 'Cancelled';
-      case 6:
-        return 'NoShow';
-      default:
-        return 'Unknown';
-    }
   }
 
   Map<String, dynamic> toJson() {

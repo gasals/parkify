@@ -39,17 +39,6 @@ class ParkingSpot {
     );
   }
 
-  String getTypeText() {
-    switch (type) {
-      case 0:
-        return 'Regular';
-      case 1:
-        return 'Invalidsko';
-      default:
-        return 'Unknown';
-    }
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,

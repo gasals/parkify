@@ -55,7 +55,7 @@ class ParkingZone {
       pricePerHour: (json['pricePerHour'] as num?)?.toDouble() ?? 0.0,
       dailyRate: (json['dailyRate'] as num?)?.toDouble() ?? 0.0,
       isActive: json['isActive'] as bool? ?? true,
-      created: json['created'] != null 
+      created: json['created'] != null
           ? DateTime.parse(json['created'] as String)
           : DateTime.now(),
       modified: json['modified'] != null

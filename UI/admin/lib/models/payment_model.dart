@@ -1,18 +1,18 @@
 class Payment {
-  int id;
-  String paymentCode;
-  int reservationId;
-  int userId;
-  double amount;
-  String currency;
-  int status;
-  String stripePaymentIntentId;
-  String clientSecret;
-  String transactionId;
-  DateTime created;
-  DateTime? completed;
-  DateTime? refunded;
-  String refundReason;
+  final int id;
+  final String paymentCode;
+  final int reservationId;
+  final int userId;
+  final double amount;
+  final String currency;
+  final int status;
+  final String stripePaymentIntentId;
+  final String clientSecret;
+  final String transactionId;
+  final DateTime created;
+  final DateTime? completed;
+  final DateTime? refunded;
+  final String refundReason;
 
   Payment({
     required this.id,
@@ -44,9 +44,29 @@ class Payment {
       clientSecret: json['clientSecret'] ?? '',
       transactionId: json['transactionId'] ?? '',
       created: json['created'] != null ? DateTime.parse(json['created']) : DateTime.now(),
-      completed: json['completed'] != null ? DateTime.parse(json['completed']) : null,
+      completed:
+          json['completed'] != null ? DateTime.parse(json['completed']) : null,
       refunded: json['refunded'] != null ? DateTime.parse(json['refunded']) : null,
       refundReason: json['refundReason'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'paymentCode': paymentCode,
+      'reservationId': reservationId,
+      'userId': userId,
+      'amount': amount,
+      'currency': currency,
+      'status': status,
+      'stripePaymentIntentId': stripePaymentIntentId,
+      'clientSecret': clientSecret,
+      'transactionId': transactionId,
+      'created': created.toIso8601String(),
+      'completed': completed?.toIso8601String(),
+      'refunded': refunded?.toIso8601String(),
+      'refundReason': refundReason,
+    };
   }
 }

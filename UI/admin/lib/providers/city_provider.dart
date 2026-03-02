@@ -20,19 +20,33 @@ class CityProvider extends ChangeNotifier {
 
     try {
       final result = await ApiService.getAllCities(page: page, pageSize: pageSize);
-      
       final resultsList = result['results'] as List? ?? [];
-      final citiesList = resultsList
+
+      _cities = resultsList
           .map((city) => City.fromJson(city as Map<String, dynamic>))
           .toList();
-      
-      _cities = citiesList;
+
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<List<City>> searchCities({String? name}) async {
+    try {
+      final result = await ApiService.searchCities(name: name);
+      final resultsList = result['results'] as List? ?? [];
+
+      return resultsList
+          .map((city) => City.fromJson(city as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _errorMessage = e.toString();
+      return [];
     }
   }
 
@@ -61,11 +75,8 @@ class CityProvider extends ChangeNotifier {
     }
   }
 
-  City? findCityByName(String name) {
-    try {
-      return _cities.firstWhere((city) => city.name.toLowerCase() == name.toLowerCase());
-    } catch (e) {
-      return null;
-    }
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 }
