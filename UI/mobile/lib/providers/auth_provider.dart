@@ -19,14 +19,24 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final result = await ApiService.login(username, password);
-      _user = User.fromJson(result);
+      await fetchAndSetUser(result['id']);
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = "Neuspješna prijava. Provjerite podatke.";
       return false;
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> fetchAndSetUser(int userId) async {
+    try {
+      final userData = await ApiService.getUserById(userId);
+      _user = User.fromJson(userData);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = "Greška pri učitavanju podataka korisnika.";
     }
   }
 

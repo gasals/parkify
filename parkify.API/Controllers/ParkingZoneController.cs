@@ -14,15 +14,29 @@ namespace parkify.API.Controllers
         {
         }
 
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public override ParkingZone Insert(ParkingZoneInsertRequest request)
+        {
+            return base.Insert(request);
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public override ParkingZone Update(int id, ParkingZoneUpdateRequest request)
+        {
+            return base.Update(id, request);
+        }
+
         [HttpGet]
-        [AllowAnonymous]
+        [Authorize]
         public override PagedResult<ParkingZone> GetList([FromQuery] ParkingZoneSearch searchObject)
         {
             return base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
+        [Authorize]
         public override ParkingZone GetById(int id)
         {
             return base.GetById(id);

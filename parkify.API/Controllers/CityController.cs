@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using parkify.Model.Models;
 using parkify.Model.Requests;
@@ -8,6 +9,7 @@ namespace parkify.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CityController : BaseController<City, CitySearch>
     {
 

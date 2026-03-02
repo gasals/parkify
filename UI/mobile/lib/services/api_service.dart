@@ -3,54 +3,59 @@ import 'dart:convert';
 import '../constants/app_urls.dart';
 
 class ApiService {
-  static String? _username;
-  static String? _password;
+  static String? _token;
 
   static Map<String, String> _getHeaders() {
     final headers = {'Content-Type': 'application/json'};
-    
-    if (_username != null && _password != null) {
-      final credentials = '$_username:$_password';
-      final encoded = base64Encode(utf8.encode(credentials));
-      headers['Authorization'] = 'Basic $encoded';
+
+    if (_token != null) {
+      headers['Authorization'] = 'Bearer $_token';
     }
-    
+
     return headers;
   }
 
-  static Future<Map<String, dynamic>> login(String username, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String username,
+    String password,
+  ) async {
     try {
-      final credentials = '$username:$password';
-      final encoded = base64Encode(utf8.encode(credentials));
-      
-      final response = await http.post(
-        Uri.parse('${AppUrls.login}?username=$username&password=$password'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic $encoded',
-        },
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('${AppUrls.login}?username=$username&password=$password'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _username = username;
-        _password = password;
+
+        _token = data['token'];
+
         return data;
       } else {
-        throw Exception('Prijava nije uspjela: ${response.statusCode}');
+        throw Exception('Prijava nije uspjela: Pogrešan username ili lozinka');
       }
     } catch (e) {
       throw Exception('Greška: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> register(Map<String, dynamic> userData) async {
+  static void logout() {
+    _token = null;
+  }
+
+  static Future<Map<String, dynamic>> register(
+    Map<String, dynamic> userData,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse(AppUrls.register),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(userData),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse(AppUrls.register),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(userData),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -62,26 +67,27 @@ class ApiService {
     }
   }
 
-  static void logout() {
-    _username = null;
-    _password = null;
-  }
-
   static Future<Map<String, dynamic>> getParkingZones({
     int page = 1,
     int pageSize = 10,
     bool includeSpots = true,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.parkingZones}?page=$page&pageSize=$pageSize&includeSpots=$includeSpots'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.parkingZones}?page=$page&pageSize=$pageSize&includeSpots=$includeSpots',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Greška pri učitavanju parking zona: ${response.statusCode}');
+        throw Exception(
+          'Greška pri učitavanju parking zona: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Greška: $e');
@@ -90,10 +96,9 @@ class ApiService {
 
   static Future<Map<String, dynamic>> getParkingZoneById(int id) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.parkingZones}/$id'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(Uri.parse('${AppUrls.parkingZones}/$id'), headers: _getHeaders())
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -105,13 +110,17 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> createReservation(Map<String, dynamic> reservationData) async {
+  static Future<Map<String, dynamic>> createReservation(
+    Map<String, dynamic> reservationData,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse(AppUrls.reservations),
-        headers: _getHeaders(),
-        body: jsonEncode(reservationData),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse(AppUrls.reservations),
+            headers: _getHeaders(),
+            body: jsonEncode(reservationData),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -129,10 +138,14 @@ class ApiService {
     int pageSize = 10,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.reservations}?userId=$userId&page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.reservations}?userId=$userId&page=$page&pageSize=$pageSize',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -144,13 +157,17 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> cancelReservation(int reservationId) async {
+  static Future<Map<String, dynamic>> cancelReservation(
+    int reservationId,
+  ) async {
     try {
-      final response = await http.put(
-        Uri.parse('${AppUrls.reservations}/$reservationId'),
-        headers: _getHeaders(),
-        body: jsonEncode({'status': 5}),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .put(
+            Uri.parse('${AppUrls.reservations}/$reservationId'),
+            headers: _getHeaders(),
+            body: jsonEncode({'status': 5}),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -168,10 +185,14 @@ class ApiService {
     int pageSize = 10,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.notifications}?userId=$userId&page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.notifications}?userId=$userId&page=$page&pageSize=$pageSize',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -183,13 +204,17 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> createReview(Map<String, dynamic> reviewData) async {
+  static Future<Map<String, dynamic>> createReview(
+    Map<String, dynamic> reviewData,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse(AppUrls.reviews),
-        headers: _getHeaders(),
-        body: jsonEncode(reviewData),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse(AppUrls.reviews),
+            headers: _getHeaders(),
+            body: jsonEncode(reviewData),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -207,10 +232,14 @@ class ApiService {
     int pageSize = 10,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppUrls.reviews}?parkingZoneId=$parkingZoneId&page=$page&pageSize=$pageSize'),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.reviews}?parkingZoneId=$parkingZoneId&page=$page&pageSize=$pageSize',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -221,7 +250,6 @@ class ApiService {
       throw Exception('Greška: $e');
     }
   }
-
 
   static Future<Map<String, dynamic>> createPayment({
     required int reservationId,
@@ -241,7 +269,8 @@ class ApiService {
       };
 
       var jsonRequest = jsonEncode(data);
-      var response = await http.post(uri, headers: headers, body: jsonRequest)
+      var response = await http
+          .post(uri, headers: headers, body: jsonRequest)
           .timeout(Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -262,7 +291,8 @@ class ApiService {
       var uri = Uri.parse(url);
       var headers = _getHeaders();
 
-      var response = await http.put(uri, headers: headers)
+      var response = await http
+          .put(uri, headers: headers)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -281,11 +311,13 @@ class ApiService {
     int pageSize = 10,
   }) async {
     try {
-      var url = '${AppUrls.payments}?userId=$userId&page=$page&pageSize=$pageSize';
+      var url =
+          '${AppUrls.payments}?userId=$userId&page=$page&pageSize=$pageSize';
       var uri = Uri.parse(url);
       var headers = _getHeaders();
 
-      var response = await http.get(uri, headers: headers)
+      var response = await http
+          .get(uri, headers: headers)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -307,12 +339,11 @@ class ApiService {
       var uri = Uri.parse(url);
       var headers = _getHeaders();
 
-      var data = {
-        'reason': reason,
-      };
+      var data = {'reason': reason};
 
       var jsonRequest = jsonEncode(data);
-      var response = await http.put(uri, headers: headers, body: jsonRequest)
+      var response = await http
+          .put(uri, headers: headers, body: jsonRequest)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -333,7 +364,8 @@ class ApiService {
       var uri = Uri.parse(url);
       var headers = _getHeaders();
 
-      var response = await http.get(uri, headers: headers)
+      var response = await http
+          .get(uri, headers: headers)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -356,7 +388,8 @@ class ApiService {
       var headers = _getHeaders();
 
       var jsonRequest = jsonEncode(preferences);
-      var response = await http.put(uri, headers: headers, body: jsonRequest)
+      var response = await http
+          .put(uri, headers: headers, body: jsonRequest)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -369,7 +402,7 @@ class ApiService {
     }
   }
 
-   static Future<Map<String, dynamic>> getAllCities({
+  static Future<Map<String, dynamic>> getAllCities({
     int page = 1,
     int pageSize = 100,
   }) async {
@@ -378,28 +411,30 @@ class ApiService {
       var uri = Uri.parse(url);
       var headers = _getHeaders();
 
-      var response = await http.get(uri, headers: headers)
+      var response = await http
+          .get(uri, headers: headers)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Greška pri učitavanju gradova: ${response.statusCode}');
+        throw Exception(
+          'Greška pri učitavanju gradova: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Greška: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> getCityById({
-    required int cityId,
-  }) async {
+  static Future<Map<String, dynamic>> getCityById({required int cityId}) async {
     try {
       var url = '${AppUrls.cities}/$cityId';
       var uri = Uri.parse(url);
       var headers = _getHeaders();
 
-      var response = await http.get(uri, headers: headers)
+      var response = await http
+          .get(uri, headers: headers)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -412,7 +447,26 @@ class ApiService {
     }
   }
 
-   static Future<Map<String, dynamic>> updateUser({
+  static Future<Map<String, dynamic>> getUserById(int userId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${AppUrls.baseUrl}/Users/$userId'),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Greška pri učitavanju korisnika: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Greška: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateUser({
     required int userId,
     required String email,
     required String firstName,
@@ -432,13 +486,16 @@ class ApiService {
       };
 
       var jsonRequest = jsonEncode(data);
-      var response = await http.put(uri, headers: headers, body: jsonRequest)
+      var response = await http
+          .put(uri, headers: headers, body: jsonRequest)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Greška pri ažuriranju korisnika: ${response.statusCode}');
+        throw Exception(
+          'Greška pri ažuriranju korisnika: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Greška: $e');
@@ -455,13 +512,11 @@ class ApiService {
       var uri = Uri.parse(url);
       var headers = _getHeaders();
 
-      var data = {
-        'password': password,
-        'passwordConfirm': passwordConfirm,
-      };
+      var data = {'password': password, 'passwordConfirm': passwordConfirm};
 
       var jsonRequest = jsonEncode(data);
-      var response = await http.put(uri, headers: headers, body: jsonRequest)
+      var response = await http
+          .put(uri, headers: headers, body: jsonRequest)
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {

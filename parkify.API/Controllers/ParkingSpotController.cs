@@ -14,6 +14,20 @@ namespace parkify.API.Controllers
         {
         }
 
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public override ParkingSpot Insert(ParkingSpotInsertRequest request)
+        {
+            return base.Insert(request);
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public override ParkingSpot Update(int id, ParkingSpotUpdateRequest request)
+        {
+            return base.Update(id, request);
+        }
+
         [HttpGet]
         [AllowAnonymous]
         public override PagedResult<ParkingSpot> GetList([FromQuery] ParkingSpotSearch searchObject)

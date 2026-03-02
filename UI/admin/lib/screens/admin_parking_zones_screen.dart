@@ -1102,8 +1102,7 @@ class _SpotsGridDialogState extends State<_SpotsGridDialog> {
                 isExpanded: true,
                 items: const [
                   DropdownMenuItem(value: 1, child: Text('Regular')),
-                  DropdownMenuItem(value: 2, child: Text('Invalidsko')),
-                  DropdownMenuItem(value: 3, child: Text('Pokriveno')),
+                  DropdownMenuItem(value: 2, child: Text('Invalidsko'))
                 ],
                 onChanged: (v) => setState(() => typeVal = v ?? 1),
               ),
@@ -1177,8 +1176,7 @@ class _SpotsGridDialogState extends State<_SpotsGridDialog> {
                 isExpanded: true,
                 items: const [
                   DropdownMenuItem(value: 1, child: Text('Regular')),
-                  DropdownMenuItem(value: 2, child: Text('Invalidsko')),
-                  DropdownMenuItem(value: 3, child: Text('Pokriveno')),
+                  DropdownMenuItem(value: 2, child: Text('Invalidsko'))
                 ],
                 onChanged: (v) => setState(() => typeVal = v ?? 1),
               ),

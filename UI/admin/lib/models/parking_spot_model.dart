@@ -45,8 +45,6 @@ class ParkingSpot {
         return 'Regular';
       case 1:
         return 'Invalidsko';
-      case 2:
-        return 'Pokriveno';
       default:
         return 'Unknown';
     }

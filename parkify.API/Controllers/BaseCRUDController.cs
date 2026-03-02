@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
 
@@ -6,6 +7,7 @@ namespace parkify.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class BaseCRUDController<TModel, TSearch, TInsert, TUpdate> : BaseController<TModel, TSearch> where TSearch : BaseSearchObject where TModel : class
     {
         protected new ICRUDService<TModel, TSearch, TInsert, TUpdate> _service;

@@ -186,20 +186,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-
-              _buildSwitchTile(
-                icon: Icons.roofing,
-                title: 'Preferiram pokrivena mjesta',
-                value: pref?.prefersCovered ?? false,
-                onChanged: (value) {
-                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                  prefProvider.updatePreference(
-                    userId: authProvider.user!.id,
-                    prefersCovered: value,
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
               
               _buildSwitchTile(
                 icon: Icons.near_me,

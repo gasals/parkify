@@ -15,14 +15,14 @@ namespace parkify.API.Controllers
         }
 
         [HttpGet]
-        [AllowAnonymous]
+        [Authorize]
         public override PagedResult<Notification> GetList([FromQuery] NotificationSearch searchObject)
         {
             return base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
+        [Authorize]
         public override Notification GetById(int id)
         {
             return base.GetById(id);

@@ -485,10 +485,6 @@ class _MapsScreenState extends State<MapsScreen> {
                 'Dostupna',
               ),
               _buildInfoChip(
-                '${_selectedZone!.coveredSpots}',
-                'Pokrivena',
-              ),
-              _buildInfoChip(
                 '${_selectedZone!.disabledSpots}',
                 'Invalidska',
               ),
