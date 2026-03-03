@@ -67,9 +67,9 @@ namespace parkify.Service.Database
                 CityId = sarajevo.Id,
                 Latitude = 43.8570,
                 Longitude = 18.4125,
-                TotalSpots = 5,
+                TotalSpots = 4,
                 DisabledSpots = 2,
-                AvailableSpots = 5,
+                AvailableSpots = 4,
                 PricePerHour = 2.50m,
                 DailyRate = 12.00m
             };
@@ -94,7 +94,7 @@ namespace parkify.Service.Database
 
             var spots = new List<ParkingSpot>();
 
-            for (int i = 1; i <= 5; i++)
+            for (int i = 1; i <= 4; i++)
             {
                 spots.Add(new ParkingSpot
                 {
