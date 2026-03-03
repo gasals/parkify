@@ -509,4 +509,83 @@ class ApiService {
       throw Exception('Greška pri check-out-u: $e');
     }
   }
+
+  static Future<Map<String, dynamic>> getNotifications({
+    int? userId,
+    bool? isRead,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final params = await _buildQueryParams(
+        page: page,
+        pageSize: pageSize,
+        filters: {
+          if (userId != null) 'userId': userId,
+          if (isRead != null) 'isRead': isRead,
+        },
+      );
+
+      final response = await http
+          .get(
+            _buildUri(AppUrls.notifications, params),
+            headers: _getHeaders(),
+          )
+          .timeout(_timeout);
+
+      return await _handleResponse(response);
+    } catch (e) {
+      throw Exception('Greška pri učitavanju notifikacija: $e');
+    }
+  }
+
+  static Future<void> sendNotification(Map<String, dynamic> body) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${AppUrls.notifications}/send'),
+            headers: _getHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+
+      await _handleResponse(response);
+    } catch (e) {
+      throw Exception('Greška pri slanju notifikacije: $e');
+    }
+  }
+
+  static Future<void> sendNotificationToAll(
+      Map<String, dynamic> body) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${AppUrls.notifications}/send-all'),
+            headers: _getHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+
+      await _handleResponse(response);
+    } catch (e) {
+      throw Exception('Greška pri slanju notifikacija svima: $e');
+    }
+  }
+
+  static Future<void> markNotificationRead(int id) async {
+    try {
+      final response = await http
+          .patch(
+            Uri.parse('${AppUrls.notifications}/$id/read'),
+            headers: _getHeaders(),
+          )
+          .timeout(_timeout);
+
+      await _handleResponse(response);
+    } catch (e) {
+      throw Exception('Greška pri označavanju notifikacije: $e');
+    }
+  }
+
+  
 }

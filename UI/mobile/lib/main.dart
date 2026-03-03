@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:mobile/constants/stripe_keys.dart';
 import 'package:mobile/providers/city_provider.dart';
+import 'package:mobile/providers/notification_provider.dart';
 import 'package:mobile/providers/payment_provider.dart';
 import 'package:mobile/providers/preference_provider.dart';
 import 'package:mobile/providers/review_provider.dart';
 import 'package:mobile/providers/vehicle_provider.dart';
 import 'package:mobile/providers/wallet_provider.dart';
+import 'package:mobile/screens/notifications_screen.dart';
 import 'package:mobile/screens/register_screen.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
@@ -47,6 +49,7 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => VehicleProvider()),
         ChangeNotifierProvider(create: (_) => WalletProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
@@ -59,6 +62,7 @@ class MyApp extends StatelessWidget {
           '/my-reservations': (_) => MyReservationsScreen(),
           '/settings': (_) => SettingsScreen(),
           '/register': (_) => RegisterScreen(),
+          '/notifications': (context) => const NotificationsScreen(),
         },
       ),
     );

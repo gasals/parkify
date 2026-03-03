@@ -4,7 +4,10 @@ using parkify.Model.SearchObject;
 
 namespace parkify.Service.Interfaces
 {
-    public interface INotificationService : ICRUDService<Notification, NotificationSearch, NotificationInsertRequest, NotificationUpdateRequest>
+    public interface INotificationService
+        : ICRUDService<Notification, NotificationSearch, NotificationInsertRequest, NotificationUpdateRequest>
     {
+        void SendToUser(NotificationInsertRequest request);
+        void SendToAll(NotificationInsertRequest request);
     }
 }

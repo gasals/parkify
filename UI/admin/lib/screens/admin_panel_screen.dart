@@ -1,3 +1,4 @@
+import 'package:admin/screens/admin_notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -30,6 +31,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       icon: Icons.people,
       label: 'Korisnici',
       index: 2,
+    ),
+    AdminMenuItem(
+      icon: Icons.notifications,
+      label: 'Notifikacije',
+      index: 3,
     )
   ];
 
@@ -182,6 +188,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return const AdminReservationsScreen();
       case 2:
         return const AdminUsersScreen();
+      case 3:
+        return const AdminNotificationsScreen();
       default:
         return const AdminParkingZonesScreen();
     }

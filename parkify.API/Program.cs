@@ -9,20 +9,19 @@ using parkify.API.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using parkify.RabbitMQ;
+using parkify.Service.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ==================== DATABASE ====================
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ParkifyContext>(options =>
     options.UseSqlServer(connectionString)
            .EnableDetailedErrors()
            .EnableSensitiveDataLogging());
 
-// ==================== MAPSTER ====================
 builder.Services.AddMapster();
 
-// ==================== SERVICES ====================
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IParkingZoneService, ParkingZoneService>();
 builder.Services.AddTransient<IParkingSpotService, ParkingSpotService>();
@@ -36,13 +35,11 @@ builder.Services.AddTransient<IVehicleService, VehicleService>();
 builder.Services.AddTransient<IWalletService, WalletService>();
 builder.Services.AddTransient<IWalletTransactionService, WalletTransactionService>();
 
-// ==================== CONTROLLERS ====================
 builder.Services.AddControllers(x =>
 {
     x.Filters.Add<ExceptionFilter>();
 });
 
-// ==================== SWAGGER ====================
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme()
@@ -70,7 +67,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ==================== CORS ====================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -81,7 +77,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ==================== AUTHENTICATION ====================
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secretKey = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
 
@@ -107,22 +102,23 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddRabbitMQ(builder.Configuration);
+builder.Services.AddHostedService<NotificationConsumerService>();
+builder.Services.AddHostedService<ReservationMonitorService>();
+
 var app = builder.Build();
 
-// ==================== PIPELINE ====================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// ==================== AUTO MIGRATE ====================
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ParkifyContext>();
