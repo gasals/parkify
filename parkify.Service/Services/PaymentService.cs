@@ -2,6 +2,8 @@
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
+using parkify.RabbitMQ;
+using parkify.RabbitMQ.Models;
 using parkify.Service.Interfaces;
 
 namespace parkify.Service.Services
@@ -12,13 +14,19 @@ namespace parkify.Service.Services
     {
         private readonly IReservationService _reservationService;
         private readonly IWalletService _walletService;
+        private readonly IMessagePublisher _publisher;
 
-        public PaymentService(Database.ParkifyContext context, IMapper mapper, IReservationService reservationService, IWalletService walletService)
+        public PaymentService(
+            Database.ParkifyContext context,
+            IMapper mapper,
+            IReservationService reservationService,
+            IWalletService walletService,
+            IMessagePublisher publisher)
             : base(context, mapper)
         {
             _reservationService = reservationService;
             _walletService = walletService;
-
+            _publisher = publisher;
         }
 
         public override IQueryable<Database.Payment> AddFilter(PaymentSearch search, IQueryable<Database.Payment> query)
@@ -26,24 +34,16 @@ namespace parkify.Service.Services
             query = base.AddFilter(search, query);
 
             if (search?.UserId.HasValue == true)
-            {
                 query = query.Where(x => x.UserId == search.UserId);
-            }
 
             if (search?.ReservationId.HasValue == true)
-            {
                 query = query.Where(x => x.ReservationId == search.ReservationId);
-            }
 
             if (search?.WalletId.HasValue == true)
-            {
                 query = query.Where(x => x.WalletId == search.WalletId);
-            }
 
             if (search?.Status.HasValue == true)
-            {
                 query = query.Where(x => (int)x.Status == search.Status);
-            }
 
             return query;
         }
@@ -55,25 +55,19 @@ namespace parkify.Service.Services
             entity.Created = DateTime.UtcNow;
 
             if (entity.Amount <= 0)
-            {
                 throw new Exception("Iznos dopune mora biti veći od 0");
-            }
 
             if (request.ReservationId.HasValue)
             {
                 var reservation = _reservationService.GetById(request.ReservationId.Value);
                 if (reservation == null)
-                {
                     throw new Exception("Rezervacija ne postoji");
-                }
             }
             else if (request.WalletId.HasValue)
             {
                 var wallet = _walletService.GetById(request.WalletId.Value);
                 if (wallet == null)
-                {
                     throw new Exception("Wallet ne postoji");
-                }
             }
             else
             {
@@ -83,26 +77,17 @@ namespace parkify.Service.Services
             base.BeforeInsert(request, entity);
         }
 
-
         public async Task<Payment> ConfirmPayment(int paymentId)
         {
             var payment = GetById(paymentId);
 
             if (payment == null)
-            {
                 throw new Exception("Plaćanje nije pronađeno");
-            }
 
-            var updateRequest = new PaymentUpdateRequest
-            {
-                Status = 3,
-            };
-
-            Update(paymentId, updateRequest);
+            Update(paymentId, new PaymentUpdateRequest { Status = 3 });
 
             payment.Status = (int)Database.PaymentStatus.Completed;
             payment.Completed = DateTime.UtcNow;
-
 
             if (payment.ReservationId.HasValue)
             {
@@ -125,6 +110,19 @@ namespace parkify.Service.Services
                         parkingSpot.IsAvailable = false;
                         Context.ParkingSpots.Update(parkingSpot);
                     }
+
+                    Context.SaveChanges();
+
+                                        _publisher.PublishNotification(new NotificationMessage
+                    {
+                        UserId = payment.UserId,
+                        Title = "Plaćanje uspješno",
+                        Message = $"Vaše plaćanje od {payment.Amount:F2} KM je uspješno obrađeno. " +
+                                  $"Rezervacija je potvrđena. Kod: {reservation.ReservationCode}",
+                        Type = (int)Database.NotificationType.PaymentSuccessful,
+                        Channel = NotificationChannel.Both,
+                        ReservationId = reservation.Id
+                    });
                 }
             }
             else if (payment.WalletId.HasValue)
@@ -136,18 +134,26 @@ namespace parkify.Service.Services
                     wallet.Modified = DateTime.UtcNow;
                     Context.Wallets.Update(wallet);
 
-                    var transaction = new Database.WalletTransaction
+                    Context.WalletTransactions.Add(new Database.WalletTransaction
                     {
                         WalletId = wallet.Id,
                         Amount = payment.Amount,
                         Type = Database.WalletTransactionType.TopUp,
                         Created = DateTime.UtcNow
-                    };
-                    Context.WalletTransactions.Add(transaction);
+                    });
+
+                    Context.SaveChanges();
+
+                                        _publisher.PublishNotification(new NotificationMessage
+                    {
+                        UserId = payment.UserId,
+                        Title = "Novčanik dopunjen",
+                        Message = $"Vaš novčanik je uspješno dopunjen sa {payment.Amount:F2} KM.",
+                        Type = (int)Database.NotificationType.PaymentSuccessful,
+                        Channel = NotificationChannel.Both
+                    });
                 }
             }
-
-            Context.SaveChanges();
 
             return payment;
         }

@@ -223,7 +223,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Greška: ${e.toString()}'),
+          content: Text('Neuspješno kreiranje rezervacije: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -519,7 +519,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
       destinationName: widget.parkingZone.name,
     ).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Greška: $error'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Greška prilikom pokretanja navigacije: $error'), backgroundColor: Colors.red),
       );
     });
   }

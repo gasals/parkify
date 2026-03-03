@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/parking_zone_model.dart';
 import '../services/api_service.dart';
 
@@ -44,7 +45,8 @@ class ParkingZoneProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ParkingZoneProvider.getParkingZones error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju parking zona.';
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -62,7 +64,8 @@ class ParkingZoneProvider extends ChangeNotifier {
       _selectedZone = ParkingZone.fromJson(result);
       await getParkingSpots();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ParkingZoneProvider.getParkingZoneById error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju parking zone.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -82,7 +85,8 @@ class ParkingZoneProvider extends ChangeNotifier {
           .map((spot) => ParkingSpot.fromJson(spot as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ParkingZoneProvider.getParkingSpots error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju parking mjesta.';
     } finally {
       _isLoading = false;
       notifyListeners();

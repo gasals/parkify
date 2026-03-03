@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import 'package:mobile/models/review_model.dart';
 import 'package:mobile/providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -55,7 +56,8 @@ class ReviewProvider extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ReviewProvider.getZoneReviews error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju recenzija.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -84,7 +86,8 @@ class ReviewProvider extends ChangeNotifier {
       _calculateAverageRating();
       return review;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ReviewProvider.createReview error: $e');
+      _errorMessage = 'Došlo je do greške pri spremanju recenzije.';
       rethrow;
     } finally {
       _isLoading = false;
@@ -127,7 +130,8 @@ class ReviewProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ReviewProvider.updateReview error: $e');
+      _errorMessage = 'Došlo je do greške pri ažuriranju recenzije.';
       notifyListeners();
       return false;
     } finally {

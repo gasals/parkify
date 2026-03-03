@@ -1,3 +1,4 @@
+import 'package:admin/widgets/admin_dialog_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/parking_zone_model.dart';
@@ -16,8 +17,8 @@ class AdminReservationsScreen extends StatefulWidget {
 
 class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _userSearchController = TextEditingController();
-  final TextEditingController _zoneSearchController = TextEditingController();
+  final _userSearchCtrl = TextEditingController();
+  final _zoneSearchCtrl = TextEditingController();
 
   List<User> _allUsers = [];
   List<ParkingZone> _allZones = [];
@@ -33,69 +34,61 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     _loadDropdownData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Provider.of<ReservationProvider>(
-          context,
-          listen: false,
-        ).searchReservations();
+        Provider.of<ReservationProvider>(context, listen: false)
+            .searchReservations();
       }
     });
   }
 
   Future<void> _loadDropdownData() async {
-    final provider = Provider.of<ReservationProvider>(context, listen: false);
-    final users = await provider.getAllUsersList();
-    final zones = await provider.getAllParkingZonesList();
-
-    if (mounted) {
-      setState(() {
-        _allUsers = users;
-        _allZones = zones;
-      });
-    }
+    final p = Provider.of<ReservationProvider>(context, listen: false);
+    final users = await p.getAllUsersList();
+    final zones = await p.getAllParkingZonesList();
+    if (mounted) setState(() { _allUsers = users; _allZones = zones; });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _userSearchController.dispose();
-    _zoneSearchController.dispose();
+    _userSearchCtrl.dispose();
+    _zoneSearchCtrl.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    final provider = Provider.of<ReservationProvider>(context, listen: false);
+    final p = Provider.of<ReservationProvider>(context, listen: false);
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      if (provider.currentPage < provider.totalPages && !_isSearching) {
-        provider.searchReservations(
+      if (p.currentPage < p.totalPages && !_isSearching) {
+        p.searchReservations(
           userId: _selectedUser?.id,
           parkingZoneId: _selectedZone?.id,
           status: _selectedStatus?.value,
-          page: provider.currentPage + 1,
+          page: p.currentPage + 1,
         );
       }
     }
   }
 
   Future<void> _performSearch() async {
-    final provider = Provider.of<ReservationProvider>(context, listen: false);
     setState(() => _isSearching = true);
-
-    await provider.searchReservations(
+    await Provider.of<ReservationProvider>(context, listen: false)
+        .searchReservations(
       userId: _selectedUser?.id,
       parkingZoneId: _selectedZone?.id,
       status: _selectedStatus?.value,
     );
-
     setState(() => _isSearching = false);
   }
 
   void _clearSearch() {
-    _selectedUser = null;
-    _selectedZone = null;
-    _selectedStatus = null;
-    _userSearchController.clear();
-    _zoneSearchController.clear();
+    setState(() {
+      _selectedUser = null;
+      _selectedZone = null;
+      _selectedStatus = null;
+    });
+    _userSearchCtrl.clear();
+    _zoneSearchCtrl.clear();
     _performSearch();
   }
 
@@ -131,31 +124,41 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               const SizedBox(width: 12),
               Expanded(child: _buildZoneAutocomplete()),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatusDropdown()),
+              // Status — styled dropdown
+              Expanded(
+                child: AdminDropdownField<ReservationStatus>(
+                  value: _selectedStatus,
+                  label: 'Status',
+                  icon: Icons.flag_outlined,
+                  items: ReservationStatus.values,
+                  labelBuilder: (s) => s.label,
+                  onChanged: (s) => setState(() => _selectedStatus = s),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           Row(
             children: [
+              // Legenda statusa
               Expanded(
                 child: Wrap(
                   spacing: 12,
+                  runSpacing: 4,
                   children: [
-                    _buildStatusLegend('Na čekanju', Colors.orange),
-                    _buildStatusLegend('Potvrđena', Colors.blue),
-                    _buildStatusLegend('Aktivna', Colors.green),
-                    _buildStatusLegend('Završena', Colors.grey),
-                    _buildStatusLegend('Otkazana', Colors.red),
-                    _buildStatusLegend('No show', Colors.purple),
+                    _legendItem('Na čekanju', Colors.orange),
+                    _legendItem('Potvrđena', Colors.blue),
+                    _legendItem('Aktivna', Colors.green),
+                    _legendItem('Završena', Colors.grey),
+                    _legendItem('Otkazana', Colors.red),
+                    _legendItem('No show', Colors.purple),
                   ],
                 ),
               ),
               CommonButtons.buildClearButton(onPressed: _clearSearch),
               const SizedBox(width: 12),
               CommonButtons.buildSearchButton(
-                onPressed: _performSearch,
-                isLoading: _isSearching,
-              ),
+                  onPressed: _performSearch, isLoading: _isSearching),
             ],
           ),
         ],
@@ -163,132 +166,71 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     );
   }
 
+  Widget _legendItem(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+            width: 8, height: 8,
+            decoration:
+                BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 4),
+        Text(label,
+            style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+      ],
+    );
+  }
+
   Widget _buildUserAutocomplete() {
     return Autocomplete<User>(
-      optionsBuilder: (TextEditingValue value) {
-        if (value.text.isEmpty) return [];
-        return _allUsers
-            .where(
-              (user) =>
-                  user.username.toLowerCase().contains(
-                    value.text.toLowerCase(),
-                  ) ||
-                  user.email.toLowerCase().contains(value.text.toLowerCase()),
-            )
-            .toList();
+      optionsBuilder: (val) {
+        if (val.text.isEmpty) return [];
+        return _allUsers.where((u) =>
+            u.username.toLowerCase().contains(val.text.toLowerCase()) ||
+            u.email.toLowerCase().contains(val.text.toLowerCase()));
       },
-      onSelected: (User selection) {
-        setState(() {
-          _selectedUser = selection;
-          _userSearchController.text = selection.username;
-        });
-      },
-      displayStringForOption: (User option) =>
-          '${option.username} (${option.email})',
-      fieldViewBuilder:
-          (context, fieldController, focusNode, onEditingComplete) {
-            return TextField(
-              controller: fieldController,
-              focusNode: focusNode,
-              onEditingComplete: onEditingComplete,
-              onChanged: (value) async {
-                if (value.isNotEmpty) {
-                  final provider = Provider.of<ReservationProvider>(
-                    context,
-                    listen: false,
-                  );
-                  final results = await provider.searchUsersLive(
-                    username: value,
-                  );
-                  setState(() => _allUsers = results);
-                }
-              },
-              decoration: SearchFieldDecoration.buildInputDecoration(
-                labelText: 'Korisnik',
-                icon: Icons.person_outline,
-              ),
-            );
-          },
+      onSelected: (u) => setState(() => _selectedUser = u),
+      displayStringForOption: (u) => '${u.username} (${u.email})',
+      fieldViewBuilder: (ctx, fc, fn, oec) => TextField(
+        controller: fc,
+        focusNode: fn,
+        onEditingComplete: oec,
+        onChanged: (v) async {
+          if (v.isNotEmpty) {
+            final r = await Provider.of<ReservationProvider>(ctx, listen: false)
+                .searchUsersLive(username: v);
+            setState(() => _allUsers = r);
+          }
+        },
+        decoration: SearchFieldDecoration.buildInputDecoration(
+            labelText: 'Korisnik', icon: Icons.person_outline),
+      ),
     );
   }
 
   Widget _buildZoneAutocomplete() {
     return Autocomplete<ParkingZone>(
-      optionsBuilder: (TextEditingValue value) {
-        if (value.text.isEmpty) return [];
-        return _allZones
-            .where(
-              (zone) =>
-                  zone.name.toLowerCase().contains(value.text.toLowerCase()),
-            )
-            .toList();
+      optionsBuilder: (val) {
+        if (val.text.isEmpty) return [];
+        return _allZones.where((z) =>
+            z.name.toLowerCase().contains(val.text.toLowerCase()));
       },
-      onSelected: (ParkingZone selection) {
-        setState(() {
-          _selectedZone = selection;
-          _zoneSearchController.text = selection.name;
-        });
-      },
-      displayStringForOption: (option) => option.name,
-      fieldViewBuilder:
-          (context, fieldController, focusNode, onEditingComplete) {
-            return TextField(
-              controller: fieldController,
-              focusNode: focusNode,
-              onEditingComplete: onEditingComplete,
-              onChanged: (value) async {
-                if (value.isNotEmpty) {
-                  final provider = Provider.of<ReservationProvider>(
-                    context,
-                    listen: false,
-                  );
-                  final results = await provider.searchParkingZonesLive(
-                    name: value,
-                  );
-                  setState(() => _allZones = results);
-                }
-              },
-              decoration: SearchFieldDecoration.buildInputDecoration(
-                labelText: 'Parking zona',
-                icon: Icons.map_outlined,
-              ),
-            );
-          },
-    );
-  }
-
-  Widget _buildStatusDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[200]!),
-        borderRadius: BorderRadius.circular(10),
+      onSelected: (z) => setState(() => _selectedZone = z),
+      displayStringForOption: (z) => z.name,
+      fieldViewBuilder: (ctx, fc, fn, oec) => TextField(
+        controller: fc,
+        focusNode: fn,
+        onEditingComplete: oec,
+        onChanged: (v) async {
+          if (v.isNotEmpty) {
+            final r = await Provider.of<ReservationProvider>(ctx, listen: false)
+                .searchParkingZonesLive(name: v);
+            setState(() => _allZones = r);
+          }
+        },
+        decoration: SearchFieldDecoration.buildInputDecoration(
+            labelText: 'Parking zona', icon: Icons.map_outlined),
       ),
-      child: DropdownButton<ReservationStatus>(
-        isExpanded: true,
-        underline: const SizedBox(),
-        hint: const Text('Status'),
-        value: _selectedStatus,
-        items: ReservationStatus.values.map((status) {
-          return DropdownMenuItem(value: status, child: Text(status.label));
-        }).toList(),
-        onChanged: (status) => setState(() => _selectedStatus = status),
-      ),
-    );
-  }
-
-  Widget _buildStatusLegend(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-      ],
     );
   }
 
@@ -299,11 +241,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (provider.reservations.isEmpty) {
-          return const Center(
-            child: Text('Nema rezervacija koje odgovaraju pretrazi.'),
-          );
+          return const Center(child: Text('Nema rezervacija koje odgovaraju pretrazi.'));
         }
-
         return GridView.builder(
           controller: _scrollController,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -312,16 +251,13 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
             mainAxisSpacing: 20,
             childAspectRatio: 1.5,
           ),
-          itemCount:
-              provider.reservations.length + (provider.isLoading ? 1 : 0),
+          itemCount: provider.reservations.length + (provider.isLoading ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == provider.reservations.length) {
               return const Center(child: CircularProgressIndicator());
             }
             return _buildReservationTile(
-              provider.reservations[index],
-              provider,
-            );
+                provider.reservations[index], provider);
           },
         );
       },
@@ -329,11 +265,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
   }
 
   Widget _buildReservationTile(
-    Reservation reservation,
-    ReservationProvider provider,
-  ) {
-    final statusColor = ReservationStatus.fromValue(reservation.status);
+      Reservation reservation, ReservationProvider provider) {
     final statusEnum = ReservationStatus.fromValue(reservation.status);
+    final statusColor = _statusColor(statusEnum);
 
     return Card(
       elevation: 0,
@@ -346,272 +280,222 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildReservationHeader(reservation, statusEnum),
-            const Divider(height: 32),
-            _buildReservationInfo(reservation),
+            // ── Header s badge-om kao na users/zones ──────────────────────
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: kPrimary.withOpacity(0.1),
+                  child: const Icon(Icons.confirmation_number_outlined,
+                      size: 18, color: kPrimary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    reservation.reservationCode,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // ── Status badge — isti stil kao users/zones ────────────
+                AdminStatusBadge(
+                  label: statusEnum.label,
+                  color: statusColor,
+                ),
+              ],
+            ),
+            const Divider(height: 28),
+            // ── Info rows ──────────────────────────────────────────────────
+            _infoRow(Icons.local_parking, 'Zona ID',
+                reservation.parkingZoneId.toString()),
+            _infoRow(Icons.calendar_today, 'Datum',
+                '${reservation.reservationStart.day.toString().padLeft(2, '0')}.'
+                '${reservation.reservationStart.month.toString().padLeft(2, '0')}.'
+                '${reservation.reservationStart.year}'),
+            _infoRow(Icons.access_time, 'Vrijeme',
+                '${reservation.reservationStart.hour.toString().padLeft(2, '0')}:'
+                '${reservation.reservationStart.minute.toString().padLeft(2, '0')}'),
+            _infoRow(Icons.monetization_on, 'Cijena',
+                '${reservation.finalPrice} BAM'),
             const Spacer(),
-            _buildReservationActions(reservation, provider),
+            // ── Actions ─────────────────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        _showChangeStatusDialog(reservation, provider),
+                    icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                    label: const Text('STATUS',
+                        style: TextStyle(color: Colors.white, fontSize: 11)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                if ((!reservation.isCheckedIn || !reservation.isCheckedOut) &&
+                    reservation.status == 2) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: Icon(
+                        !reservation.isCheckedIn
+                            ? Icons.login
+                            : Icons.logout,
+                        size: 16,
+                        color: !reservation.isCheckedIn
+                            ? Colors.green
+                            : Colors.orange,
+                      ),
+                      onPressed: !reservation.isCheckedIn
+                          ? () => _checkIn(reservation, provider)
+                          : () => _checkOut(reservation, provider),
+                      label: Text(
+                        !reservation.isCheckedIn ? 'CHECK-IN' : 'CHECK-OUT',
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: !reservation.isCheckedIn
+                            ? Colors.green
+                            : Colors.orange,
+                        side: BorderSide(
+                            color: !reservation.isCheckedIn
+                                ? Colors.green
+                                : Colors.orange),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildReservationHeader(
-    Reservation reservation,
-    ReservationStatus status,
-  ) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: const Color(0xFF6366F1).withOpacity(0.1),
-          child: const Icon(
-            Icons.confirmation_number_outlined,
-            size: 18,
-            color: Color(0xFF6366F1),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            reservation.reservationCode,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: _getStatusColor(status.value),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            status.label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReservationInfo(Reservation reservation) {
-    return Column(
-      children: [
-        _buildInfoRow(
-          Icons.local_parking,
-          'Zona ID',
-          reservation.parkingZoneId.toString(),
-        ),
-        _buildInfoRow(
-          Icons.calendar_today,
-          'Datum',
-          '${reservation.reservationStart.day}/${reservation.reservationStart.month}/${reservation.reservationStart.year}',
-        ),
-        _buildInfoRow(
-          Icons.access_time,
-          'Vrijeme',
-          '${reservation.reservationStart.hour}:${reservation.reservationStart.minute.toString().padLeft(2, '0')}',
-        ),
-        _buildInfoRow(
-          Icons.monetization_on,
-          'Cijena',
-          '${reservation.finalPrice} BAM',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _infoRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF6366F1)),
+          Icon(icon, size: 15, color: kPrimary),
           const SizedBox(width: 8),
           Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           const Spacer(),
-          Text(
-            value.trim().isEmpty ? '-' : value,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-          ),
+          Text(value.trim().isEmpty ? '-' : value,
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  Widget _buildReservationActions(
-    Reservation reservation,
-    ReservationProvider provider,
-  ) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _showChangeStatusDialog(reservation, provider),
-            icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            label: const Text(
-              'STATUS',
-              style: TextStyle(color: Colors.white, fontSize: 11),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        if ((!reservation.isCheckedIn || !reservation.isCheckedOut) &&
-            reservation.status == 2)
-          Expanded(
-            child: OutlinedButton.icon(
-              icon: Icon(
-                !reservation.isCheckedIn ? Icons.login : Icons.logout,
-                size: 16,
-                color: !reservation.isCheckedIn ? Colors.green : Colors.orange,
-              ),
-              onPressed: !reservation.isCheckedIn
-                  ? () => _performCheckIn(reservation, provider)
-                  : () => _performCheckOut(reservation, provider),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: !reservation.isCheckedIn
-                    ? Colors.green
-                    : Colors.orange,
-                side: BorderSide(
-                  color: !reservation.isCheckedIn
-                      ? Colors.green
-                      : Colors.orange,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              label: Text(
-                !reservation.isCheckedIn ? 'CHECK-IN' : 'CHECK-OUT',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
+  Color _statusColor(ReservationStatus s) => switch (s) {
+        ReservationStatus.pending   => Colors.orange,
+        ReservationStatus.confirmed => Colors.blue,
+        ReservationStatus.active    => Colors.green,
+        ReservationStatus.completed => Colors.grey,
+        ReservationStatus.cancelled => Colors.red,
+        ReservationStatus.noShow    => Colors.purple,
+      };
+
+  Future<void> _checkIn(Reservation r, ReservationProvider p) async {
+    final ok = await p.checkInReservation(r.id);
+    if (mounted) AdminSnackBar.show(context, ok ? 'Check-in uspješan' : 'Check-in nije uspio', ok);
   }
 
-  Future<void> _performCheckIn(
-    Reservation reservation,
-    ReservationProvider provider,
-  ) async {
-    final success = await provider.checkInReservation(reservation.id);
-    if (mounted) {
-      if (success) {
-        SnackBarHelper.showSuccess(context, 'Check-in uspješan');
-      } else {
-        SnackBarHelper.showError(context, 'Check-in nije uspio');
-      }
-    }
-  }
-
-  Future<void> _performCheckOut(
-    Reservation reservation,
-    ReservationProvider provider,
-  ) async {
-    final success = await provider.checkOutReservation(reservation.id);
-    if (mounted) {
-      if (success) {
-        SnackBarHelper.showSuccess(context, 'Check-out uspješan');
-      } else {
-        SnackBarHelper.showError(context, 'Check-out nije uspio');
-      }
-    }
+  Future<void> _checkOut(Reservation r, ReservationProvider p) async {
+    final ok = await p.checkOutReservation(r.id);
+    if (mounted) AdminSnackBar.show(context, ok ? 'Check-out uspješan' : 'Check-out nije uspio', ok);
   }
 
   void _showChangeStatusDialog(
-    Reservation reservation,
-    ReservationProvider provider,
-  ) {
+      Reservation reservation, ReservationProvider provider) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Promijeni status rezervacije'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ReservationStatus.values.map((status) {
-            return _buildStatusButton(status, reservation, provider);
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusButton(
-    ReservationStatus status,
-    Reservation reservation,
-    ReservationProvider provider,
-  ) {
-    bool isSelected = reservation.status == status.value;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: isSelected
-              ? null
-              : () async {
-                  Navigator.pop(context);
-                  final success = await provider.updateReservationStatus(
-                    reservation.id,
-                    status.value,
-                  );
-                  if (mounted) {
-                    SnackBarHelper.showMessage(
-                      context,
-                      'Status ažuriran',
-                      success,
+      builder: (_) => Dialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const AdminDialogHeader(
+                  icon: Icons.swap_horiz_outlined,
+                  title: 'Promijeni status rezervacije'),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: ReservationStatus.values.map((status) {
+                    final isSelected = reservation.status == status.value;
+                    final color = _statusColor(status);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: isSelected
+                              ? null
+                              : () async {
+                                  Navigator.pop(context);
+                                  final ok =
+                                      await provider.updateReservationStatus(
+                                    reservation.id,
+                                    status.value,
+                                  );
+                                  if (mounted) {
+                                    AdminSnackBar.show(
+                                        context, 'Status ažuriran', ok);
+                                  }
+                                },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: isSelected
+                                ? color.withOpacity(0.1)
+                                : null,
+                            side: BorderSide(
+                                color: isSelected ? color : Colors.grey[300]!),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 8, height: 8,
+                                decoration: BoxDecoration(
+                                    color: color, shape: BoxShape.circle),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(status.label,
+                                  style: TextStyle(
+                                      color: isSelected ? color : Colors.black87,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal)),
+                            ],
+                          ),
+                        ),
+                      ),
                     );
-                  }
-                },
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(
-              color: isSelected ? Colors.transparent : Colors.grey[300]!,
-            ),
-            backgroundColor: isSelected
-                ? const Color(0xFF6366F1).withOpacity(0.1)
-                : null,
-          ),
-          child: Text(
-            status.label,
-            style: TextStyle(
-              color: isSelected ? const Color(0xFF6366F1) : Colors.black87,
-            ),
+                  }).toList(),
+                ),
+              ),
+              AdminDialogFooter(
+                  children: [const AdminCancelButton(label: 'Zatvori')]),
+            ],
           ),
         ),
       ),
     );
-  }
-
-  Color _getStatusColor(int value) {
-    switch (ReservationStatus.fromValue(value)) {
-      case ReservationStatus.pending:
-        return Colors.orange;
-      case ReservationStatus.confirmed:
-        return Colors.blue;
-      case ReservationStatus.active:
-        return Colors.green;
-      case ReservationStatus.completed:
-        return Colors.grey;
-      case ReservationStatus.cancelled:
-        return Colors.red;
-      case ReservationStatus.noShow:
-        return Colors.purple;
-    }
   }
 }

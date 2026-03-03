@@ -2,6 +2,7 @@
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
+using parkify.RabbitMQ;
 using parkify.Service.Interfaces;
 
 namespace parkify.Service.Services
@@ -12,16 +13,19 @@ namespace parkify.Service.Services
     {
         private readonly IParkingZoneService _parkingZoneService;
         private readonly IParkingSpotService _parkingSpotService;
+        private readonly IMessagePublisher _publisher;
 
         public ReservationService(
             Database.ParkifyContext context,
             IMapper mapper,
             IParkingZoneService parkingZoneService,
-            IParkingSpotService parkingSpotService)
+            IParkingSpotService parkingSpotService,
+            IMessagePublisher publisher)
             : base(context, mapper)
         {
             _parkingZoneService = parkingZoneService;
             _parkingSpotService = parkingSpotService;
+            _publisher = publisher;
         }
 
         public override IQueryable<Database.Reservation> AddFilter(
@@ -45,16 +49,13 @@ namespace parkify.Service.Services
 
         public override void BeforeInsert(ReservationInsertRequest request, Database.Reservation entity)
         {
-            entity.DurationInHours = (int)Math.Ceiling(
-(entity.ReservationEnd - entity.ReservationStart).TotalHours);
+            entity.DurationInHours = (int)Math.Ceiling((entity.ReservationEnd - entity.ReservationStart).TotalHours);
 
             var parkingZone = _parkingZoneService.GetById(entity.ParkingZoneId);
             if (parkingZone == null)
                 throw new Exception("Parking zona nije pronađena.");
 
-            entity.CalculatedPrice = entity.DurationInHours == 24
-? parkingZone.DailyRate
-: parkingZone.PricePerHour * entity.DurationInHours;
+            entity.CalculatedPrice = entity.DurationInHours == 24 ? parkingZone.DailyRate : parkingZone.PricePerHour * entity.DurationInHours;
 
             var wallet = Context.Wallets.FirstOrDefault(w => w.UserId == entity.UserId);
 
@@ -92,13 +93,26 @@ namespace parkify.Service.Services
 
             entity.ReservationCode = GenerateReservationCode(request);
 
+            if (entity.Status == Database.ReservationStatus.Confirmed)
+            {
+                _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
+                {
+                    UserId = entity.UserId,
+                    Title = "Rezervacija potvrđena",
+                    Message = $"Vaša rezervacija je uspješno kreirana i potvrđena. Kod rezervacije: {entity.ReservationCode}",
+                    Type = (int)Database.NotificationType.ReservationConfirmed,
+                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
+                    ReservationId = entity.Id
+                });
+            }
+
             base.BeforeInsert(request, entity);
         }
 
         public override void BeforeUpdate(ReservationUpdateRequest request, Database.Reservation entity)
         {
             if (request.Status.HasValue &&
-    request.Status.Value == (int)Database.ReservationStatus.Cancelled)
+                request.Status.Value == (int)Database.ReservationStatus.Cancelled)
             {
                 if (entity.CalculatedPrice > 0)
                 {
@@ -132,6 +146,15 @@ namespace parkify.Service.Services
 
                 _parkingSpotService.SetAvailable(entity.ParkingSpotId, true);
                 entity.Status = Database.ReservationStatus.Cancelled;
+                _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
+                {
+                    UserId = entity.UserId,
+                    Title = "Rezervacija otkazana",
+                    Message = $"Vaša rezervacija je uspješno otkazana. Iznos od {entity.CalculatedPrice:F2} KM je vraćen na vaš novčanik.",
+                    Type = (int)Database.NotificationType.ReservationCancelled,
+                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
+                    ReservationId = entity.Id
+                });
             }
 
             if (request.IsCheckedIn.HasValue && request.IsCheckedIn.Value)

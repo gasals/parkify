@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 
@@ -57,7 +58,8 @@ class UserProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin UserProvider.searchUsers error: $e');
+      _errorMessage = 'Došlo je do greške pri pretrazi korisnika.';
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -96,7 +98,8 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin UserProvider.createUser error: $e');
+      _errorMessage = 'Došlo je do greške pri kreiranju korisnika.';
       notifyListeners();
       return false;
     } finally {
@@ -135,7 +138,8 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin UserProvider.updateUser error: $e');
+      _errorMessage = 'Došlo je do greške pri ažuriranju korisnika.';
       notifyListeners();
       return false;
     } finally {
@@ -166,7 +170,8 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin UserProvider.toggleUserActive error: $e');
+      _errorMessage = 'Došlo je do greške pri promjeni statusa korisnika.';
       notifyListeners();
       return false;
     } finally {
@@ -184,7 +189,8 @@ class UserProvider extends ChangeNotifier {
           .map((user) => User.fromJson(user as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin UserProvider.getAllUsersList error: $e');
+      _errorMessage = 'Došlo je do greške pri preuzimanju korisnika.';
       return [];
     }
   }
@@ -202,7 +208,8 @@ class UserProvider extends ChangeNotifier {
           .map((user) => User.fromJson(user as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin UserProvider.searchUsersLive error: $e');
+      _errorMessage = 'Došlo je do greške pri pretrazi korisnika.';
       return [];
     }
   }

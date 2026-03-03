@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/reservation_model.dart';
 import '../services/api_service.dart';
 
@@ -28,7 +29,8 @@ class ReservationProvider extends ChangeNotifier {
       notifyListeners();
       return reservation;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ReservationProvider.createReservation error: $e');
+      _errorMessage = 'Došlo je do greške pri kreiranju rezervacije.';
       notifyListeners();
       rethrow;
     } finally {
@@ -66,7 +68,8 @@ class ReservationProvider extends ChangeNotifier {
       _hasMore = _reservations.length < _totalCount;
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ReservationProvider.getUserReservations error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju rezervacija.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -84,7 +87,8 @@ class ReservationProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('ReservationProvider.cancelReservation error: $e');
+      _errorMessage = 'Došlo je do greške pri otkazivanju rezervacije.';
       notifyListeners();
       return false;
     } finally {

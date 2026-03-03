@@ -167,7 +167,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
         _lastNameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Popuni sva polja osim telefona'),
+          content: Text('Popuni sva polja.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -199,7 +199,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Greška: ${authProvider.errorMessage}'),
+            content: Text('Neuspješno ažuriranje profila.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -207,7 +207,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Greška prilikom ažuriranja profila.'), backgroundColor: Colors.red),
         );
       }
     } finally {

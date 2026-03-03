@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import '../models/payment_model.dart';
 import '../services/api_service.dart';
@@ -37,7 +38,8 @@ class PaymentProvider extends ChangeNotifier {
       notifyListeners();
       return payment;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PaymentProvider.createPayment error: $e');
+      _errorMessage = 'Došlo je do greške pri kreiranju plaćanja.';
       notifyListeners();
       rethrow;
     } finally {
@@ -63,11 +65,13 @@ class PaymentProvider extends ChangeNotifier {
       await Stripe.instance.presentPaymentSheet();
       return true;
     } on StripeException catch (e) {
-      _errorMessage = 'Stripe greška: ${e.error.message}';
+      log('PaymentProvider.presentPaymentSheet StripeException: ${e.error.message}');
+      _errorMessage = 'Došlo je do greške pri plaćanju.';
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PaymentProvider.presentPaymentSheet error: $e');
+      _errorMessage = 'Došlo je do greške pri plaćanju.';
       notifyListeners();
       return false;
     } finally {
@@ -90,7 +94,8 @@ class PaymentProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PaymentProvider.confirmPayment error: $e');
+      _errorMessage = 'Došlo je do greške pri potvrdi plaćanja.';
       notifyListeners();
       return false;
     } finally {
@@ -111,7 +116,8 @@ class PaymentProvider extends ChangeNotifier {
           .toList();
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PaymentProvider.getUserPayments error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju plaćanja.';
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -136,7 +142,8 @@ class PaymentProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PaymentProvider.refundPayment error: $e');
+      _errorMessage = 'Došlo je do greške pri vraćanju plaćanja.';
       notifyListeners();
       return false;
     } finally {
@@ -159,7 +166,8 @@ class PaymentProvider extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PaymentProvider.getWalletPayments error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju transakcija novčanika.';
       debugPrint('Greška pri učitavanju transakcija novčanika: $e');
     } finally {
       _isLoading = false;

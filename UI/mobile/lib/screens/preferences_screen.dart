@@ -185,7 +185,7 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Greška prilikom ažuriranja preferentnog grada.'), backgroundColor: Colors.red),
         );
       }
     } finally {

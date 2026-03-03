@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/preference_model.dart';
 import '../services/api_service.dart';
 
@@ -21,7 +22,8 @@ class PreferenceProvider extends ChangeNotifier {
       _userPreference = Preference.fromJson(result);
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PreferenceProvider.loadUserPreference error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju postavki.';
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -48,7 +50,8 @@ class PreferenceProvider extends ChangeNotifier {
       _userPreference = Preference.fromJson(result);
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PreferenceProvider.updateFavoriteParking error: $e');
+      _errorMessage = 'Došlo je do greške pri ažuriranju postavki.';
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -75,7 +78,8 @@ class PreferenceProvider extends ChangeNotifier {
       _userPreference = Preference.fromJson(result);
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PreferenceProvider.updatePreferredCity error: $e');
+      _errorMessage = 'Došlo je do greške pri ažuriranju postavki.';
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -115,7 +119,8 @@ class PreferenceProvider extends ChangeNotifier {
       _userPreference = Preference.fromJson(result);
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('PreferenceProvider.updatePreference error: $e');
+      _errorMessage = 'Došlo je do greške pri ažuriranju postavki.';
       notifyListeners();
     } finally {
       _isLoading = false;

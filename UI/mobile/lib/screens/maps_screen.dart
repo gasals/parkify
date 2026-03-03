@@ -181,7 +181,7 @@ class _MapsScreenState extends State<MapsScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Greška: ${e.toString()}'),
+          content: Text('Greška prilikom ažuriranja favorita.'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 3),
         ),

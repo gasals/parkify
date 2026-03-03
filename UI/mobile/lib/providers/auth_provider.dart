@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 
@@ -60,7 +61,8 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('AuthProvider.register error: $e');
+      _errorMessage = 'Neuspješna registracija. Pokušajte ponovno.';
       return false;
     } finally {
       _isLoading = false;
@@ -99,7 +101,8 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('AuthProvider.updateUser error: $e');
+      _errorMessage = 'Došlo je do greške pri ažuriranju korisnika.';
       notifyListeners();
       return false;
     } finally {
@@ -127,7 +130,8 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return success;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('AuthProvider.changePassword error: $e');
+      _errorMessage = 'Došlo je do greške pri promjeni lozinke.';
       notifyListeners();
       return false;
     } finally {

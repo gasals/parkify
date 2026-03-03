@@ -7,7 +7,7 @@ using parkify.RabbitMQ.Models;
 
 namespace parkify.Service.Services
 {
-    public class ReservationMonitorService : BackgroundService
+                        public class ReservationMonitorService : BackgroundService
     {
         private readonly ILogger<ReservationMonitorService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
@@ -30,8 +30,10 @@ namespace parkify.Service.Services
             while (!stoppingToken.IsCancellationRequested)
             {
                 try { await CheckReservationsAsync(); }
-                catch (Exception ex) { _logger.LogError(ex, "Greška u ReservationMonitorService"); }
-
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Greška u ReservationMonitorService");
+                }
                 await Task.Delay(Interval, stoppingToken);
             }
         }
@@ -39,59 +41,60 @@ namespace parkify.Service.Services
         private async Task CheckReservationsAsync()
         {
             using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<Database.ParkifyContext>();
+            var db = scope.ServiceProvider
+                .GetRequiredService<Database.ParkifyContext>();
             var now = DateTime.UtcNow;
 
-            var upcoming = await db.Reservations
-    .Where(r =>
-        r.Status == Database.ReservationStatus.Confirmed &&
-        !r.IsCheckedIn &&
-        r.ReservationStart > now &&
-        r.ReservationStart <= now.AddMinutes(31))
-    .ToListAsync();
+                        var upcoming = await db.Reservations
+                .Where(r =>
+                    r.Status == Database.ReservationStatus.Confirmed &&
+                    !r.IsCheckedIn &&
+                    r.ReservationStart > now.AddMinutes(9) &&
+                    r.ReservationStart <= now.AddMinutes(11))
+                .ToListAsync();
 
             foreach (var r in upcoming)
             {
-                var mins = (r.ReservationStart - now).TotalMinutes;
-
-                if (mins is >= 29 and <= 31)
-                    await PublishIfNotSentAsync(db, r.UserId, r.Id,
-                        Database.NotificationType.CheckInReminder,
-                        "Podsjetnik za rezervaciju",
-                        "Vaša rezervacija počinje za 30 minuta.");
-
-                if (mins is >= 14 and <= 16)
-                    await PublishIfNotSentAsync(db, r.UserId, r.Id,
-                        Database.NotificationType.ReservationReminder,
-                        "Rezervacija uskoro!",
-                        "Vaša rezervacija počinje za 15 minuta.");
+                await PublishIfNotSentAsync(
+                    db, r.UserId, r.Id,
+                    Database.NotificationType.ReservationReminder,
+                    "Rezervacija za 10 minuta",
+                    "Vaša rezervacija počinje za 10 minuta. Budite na vrijeme!",
+                    NotificationChannel.Both);
             }
 
-            var late = await db.Reservations
-    .Where(r =>
-        r.Status == Database.ReservationStatus.Confirmed &&
-        !r.IsCheckedIn &&
-        r.ReservationStart <= now.AddMinutes(-15) &&
-        r.ReservationStart >= now.AddMinutes(-16))
-    .ToListAsync();
+                        var lateCheckIn = await db.Reservations
+                .Where(r =>
+                    r.Status == Database.ReservationStatus.Confirmed &&
+                    !r.IsCheckedIn &&
+                    r.ReservationStart <= now.AddMinutes(-9) &&
+                    r.ReservationStart >= now.AddMinutes(-11))
+                .ToListAsync();
 
-            foreach (var r in late)
-                await PublishIfNotSentAsync(db, r.UserId, r.Id,
+            foreach (var r in lateCheckIn)
+            {
+                await PublishIfNotSentAsync(
+                    db, r.UserId, r.Id,
                     Database.NotificationType.CheckInReminder,
-                    "Kasni check-in",
-                    "Vaša rezervacija je počela ali još niste odradili check-in. Molimo prijavite se što prije.");
+                    "Zaboravili ste check-in",
+                    "Vaša rezervacija je počela prije 10 minuta, a još niste odradili check-in.",
+                    NotificationChannel.InApp);
+            }
         }
 
         private async Task PublishIfNotSentAsync(
             Database.ParkifyContext db,
-            int userId, int reservationId,
+            int userId,
+            int reservationId,
             Database.NotificationType type,
-            string title, string message)
+            string title,
+            string message,
+            NotificationChannel channel)
         {
-            var alreadySent = await db.Notifications.AnyAsync(n =>
-    n.UserId == userId &&
-    n.ReservationId == reservationId &&
-    n.Type == type);
+                        var alreadySent = await db.Notifications.AnyAsync(n =>
+                n.UserId == userId &&
+                n.ReservationId == reservationId &&
+                n.Type == type);
 
             if (alreadySent) return;
 
@@ -101,9 +104,13 @@ namespace parkify.Service.Services
                 Title = title,
                 Message = message,
                 Type = (int)type,
-                Channel = NotificationChannel.Both,
+                Channel = channel,
                 ReservationId = reservationId
             });
+
+            _logger.LogInformation(
+                "Objavljena {Type} notifikacija za rezervaciju {ReservationId}",
+                type, reservationId);
         }
     }
 }

@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:mobile/models/vehicle_model.dart';
 import 'dart:convert';
+import 'dart:developer';
 import '../constants/app_urls.dart';
 
 class ApiService {
@@ -73,7 +74,8 @@ class ApiService {
       }
       return data;
     } catch (e) {
-      throw Exception('Login greška: $e');
+      log('ApiService.login error: $e');
+      throw Exception('Login greška');
     }
   }
 
@@ -96,7 +98,8 @@ class ApiService {
       }
       return data;
     } catch (e) {
-      throw Exception('Registracija greška: $e');
+      log('ApiService.register error: $e');
+      throw Exception('Registracija greška');
     }
   }
 
@@ -111,7 +114,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri preuzimanju korisnika: $e');
+      log('ApiService.getUserById error: $e');
+      throw Exception('Greška pri preuzimanju korisnika');
     }
   }
 
@@ -140,7 +144,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri ažuriranju korisnika: $e');
+      log('ApiService.updateUser error: $e');
+      throw Exception('Greška pri ažuriranju korisnika');
     }
   }
 
@@ -163,7 +168,8 @@ class ApiService {
       await _handleResponse(response);
       return true;
     } catch (e) {
-      throw Exception('Greška pri promjeni lozinke: $e');
+      log('ApiService.changePassword error: $e');
+      throw Exception('Greška pri promjeni lozinke');
     }
   }
 
@@ -179,7 +185,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju gradova: $e');
+      log('ApiService.getAllCities error: $e');
+      throw Exception('Greška pri učitavanju gradova');
     }
   }
 
@@ -191,7 +198,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju grada: $e');
+      log('ApiService.getCityById error: $e');
+      throw Exception('Greška pri učitavanju grada');
     }
   }
 
@@ -213,7 +221,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju parking zona: $e');
+      log('ApiService.getParkingZones error: $e');
+      throw Exception('Greška pri učitavanju parking zona');
     }
   }
 
@@ -225,7 +234,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju parking zone: $e');
+      log('ApiService.getParkingZoneById error: $e');
+      throw Exception('Greška pri učitavanju parking zone');
     }
   }
 
@@ -240,7 +250,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju parking mjesta: $e');
+      log('ApiService.getParkingSpotsByZoneId error: $e');
+      throw Exception('Greška pri učitavanju parking mjesta');
     }
   }
 
@@ -258,7 +269,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri kreiranju rezervacije: $e');
+      log('ApiService.createReservation error: $e');
+      throw Exception('Greška pri kreiranju rezervacije');
     }
   }
 
@@ -280,7 +292,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju rezervacija: $e');
+      log('ApiService.getUserReservations error: $e');
+      throw Exception('Greška pri učitavanju rezervacija');
     }
   }
 
@@ -298,7 +311,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri otkazivanju rezervacije: $e');
+      log('ApiService.cancelReservation error: $e');
+      throw Exception('Greška pri otkazivanju rezervacije');
     }
   }
 
@@ -327,7 +341,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri kreiranju plaćanja: $e');
+      log('ApiService.createPayment error: $e');
+      throw Exception('Greška pri kreiranju plaćanja');
     }
   }
 
@@ -344,7 +359,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri potvrdi plaćanja: $e');
+      log('ApiService.confirmPayment error: $e');
+      throw Exception('Greška pri potvrdi plaćanja');
     }
   }
 
@@ -367,7 +383,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju plaćanja: $e');
+      log('ApiService.getPayments error: $e');
+      throw Exception('Greška pri učitavanju plaćanja');
     }
   }
 
@@ -388,7 +405,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri vraćanju plaćanja: $e');
+      log('ApiService.refundPayment error: $e');
+      throw Exception('Greška pri vraćanju plaćanja');
     }
   }
 
@@ -405,7 +423,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju preference: $e');
+      log('ApiService.getUserPreference error: $e');
+      throw Exception('Greška pri učitavanju preference');
     }
   }
 
@@ -424,7 +443,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri ažuriranju preference: $e');
+      log('ApiService.updateUserPreferences error: $e');
+      throw Exception('Greška pri ažuriranju preference');
     }
   }
 
@@ -442,7 +462,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri kreiranju recenzije: $e');
+      log('ApiService.createReview error: $e');
+      throw Exception('Greška pri kreiranju recenzije');
     }
   }
 
@@ -464,7 +485,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju recenzija: $e');
+      log('ApiService.getZoneReviews error: $e');
+      throw Exception('Greška pri učitavanju recenzija');
     }
   }
 
@@ -486,7 +508,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju notifikacija: $e');
+      log('ApiService.getUserNotifications error: $e');
+      throw Exception('Greška pri učitavanju notifikacija');
     }
   }
 
@@ -508,7 +531,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri ažuriranju reviewsa: $e');
+      log('ApiService.updateReview error: $e');
+      throw Exception('Greška pri ažuriranju recenzije');
     }
   }
 
@@ -523,7 +547,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju vozila: $e');
+      log('ApiService.getUserVehicles error: $e');
+      throw Exception('Greška pri učitavanju vozila');
     }
   }
 
@@ -539,7 +564,8 @@ class ApiService {
 
       return Vehicle.fromJson(jsonDecode(response.body));
     } catch (e) {
-      throw Exception('Greška pri dodavanju vozila: $e');
+      log('ApiService.addVehicle error: $e');
+      throw Exception('Greška pri dodavanju vozila');
     }
   }
 
@@ -568,7 +594,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri ažuriranju vozila: $e');
+      log('ApiService.updateVehicle error: $e');
+      throw Exception('Greška pri ažuriranju vozila');
     }
   }
 
@@ -583,7 +610,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju novčanika: $e');
+      log('ApiService.getUserWallet error: $e');
+      throw Exception('Greška pri učitavanju novčanika');
     }
   }
 
@@ -598,7 +626,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju novčanika: $e');
+      log('ApiService.getWalletHistory error: $e');
+      throw Exception('Greška pri učitavanju novčanika');
     }
   }
 
@@ -624,7 +653,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju notifikacija: $e');
+      log('ApiService.getNotifications error: $e');
+      throw Exception('Greška pri učitavanju notifikacija');
     }
   }
 
@@ -640,7 +670,8 @@ class ApiService {
 
       await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri slanju notifikacije: $e');
+      log('ApiService.sendNotification error: $e');
+      throw Exception('Greška pri slanju notifikacije');
     }
   }
 
@@ -656,7 +687,8 @@ class ApiService {
 
       await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri slanju notifikacija: $e');
+      log('ApiService.sendNotificationToAll error: $e');
+      throw Exception('Greška pri slanju notifikacija');
     }
   }
 
@@ -673,7 +705,8 @@ class ApiService {
         return;
       }
     } catch (e) {
-      throw Exception('Greška pri označavanju notifikacije: $e');
+      log('ApiService.markNotificationRead error: $e');
+      throw Exception('Greška pri označavanju notifikacije');
     }
   }
 }

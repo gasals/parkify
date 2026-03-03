@@ -202,16 +202,17 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
         Navigator.of(context).pop();
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Greška: ${authProvider.errorMessage}'),
+          const SnackBar(
+            content: Text('Došlo je do greške. Pokušajte ponovno.'),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
+      debugPrint('ChangePasswordScreen._submit error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Došlo je do greške. Pokušajte ponovno.'), backgroundColor: Colors.red),
         );
       }
     } finally {

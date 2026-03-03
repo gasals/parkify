@@ -1,5 +1,6 @@
 import 'package:mobile/constants/app_urls.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:developer';
 
 class NavigationService {
   static Future<void> startNavigation({
@@ -18,7 +19,8 @@ class NavigationService {
         throw 'Greška: Ne mogu otvoriti Google Maps';
       }
     } catch (e) {
-      throw Exception('Greška pri otvaranju navigacije: $e');
+      log('NavigationService.startNavigation error: $e');
+      throw Exception('Greška pri otvaranju navigacije');
     }
   }
 }

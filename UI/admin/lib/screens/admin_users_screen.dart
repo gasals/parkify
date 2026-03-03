@@ -1,3 +1,4 @@
+import 'package:admin/widgets/admin_dialog_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
@@ -13,11 +14,10 @@ class AdminUsersScreen extends StatefulWidget {
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-
+  final _usernameCtrl   = TextEditingController();
+  final _emailCtrl      = TextEditingController();
+  final _firstNameCtrl  = TextEditingController();
+  final _lastNameCtrl   = TextEditingController();
   bool _isSearching = false;
 
   @override
@@ -25,61 +25,48 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        Provider.of<UserProvider>(context, listen: false).searchUsers();
-      }
+      if (mounted) Provider.of<UserProvider>(context, listen: false).searchUsers();
     });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _usernameController.dispose();
-    _emailController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _usernameCtrl.dispose(); _emailCtrl.dispose();
+    _firstNameCtrl.dispose(); _lastNameCtrl.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    final provider = Provider.of<UserProvider>(context, listen: false);
+    final p = Provider.of<UserProvider>(context, listen: false);
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      if (provider.currentPage < provider.totalPages && !_isSearching) {
-        provider.searchUsers(
-          username: _getTextOrNull(_usernameController),
-          email: _getTextOrNull(_emailController),
-          firstName: _getTextOrNull(_firstNameController),
-          lastName: _getTextOrNull(_lastNameController),
-          page: provider.currentPage + 1,
+      if (p.currentPage < p.totalPages && !_isSearching) {
+        p.searchUsers(
+          username: _v(_usernameCtrl), email: _v(_emailCtrl),
+          firstName: _v(_firstNameCtrl), lastName: _v(_lastNameCtrl),
+          page: p.currentPage + 1,
         );
       }
     }
   }
 
   Future<void> _performSearch() async {
-    final provider = Provider.of<UserProvider>(context, listen: false);
     setState(() => _isSearching = true);
-    await provider.searchUsers(
-      username: _getTextOrNull(_usernameController),
-      email: _getTextOrNull(_emailController),
-      firstName: _getTextOrNull(_firstNameController),
-      lastName: _getTextOrNull(_lastNameController),
+    await Provider.of<UserProvider>(context, listen: false).searchUsers(
+      username: _v(_usernameCtrl), email: _v(_emailCtrl),
+      firstName: _v(_firstNameCtrl), lastName: _v(_lastNameCtrl),
     );
     setState(() => _isSearching = false);
   }
 
   void _clearSearch() {
-    _usernameController.clear();
-    _emailController.clear();
-    _firstNameController.clear();
-    _lastNameController.clear();
+    _usernameCtrl.clear(); _emailCtrl.clear();
+    _firstNameCtrl.clear(); _lastNameCtrl.clear();
     _performSearch();
   }
 
-  String? _getTextOrNull(TextEditingController controller) {
-    return controller.text.isEmpty ? null : controller.text;
-  }
+  String? _v(TextEditingController c) => c.text.isEmpty ? null : c.text;
 
   @override
   Widget build(BuildContext context) {
@@ -109,37 +96,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: _buildSearchField(
-                  _usernameController,
-                  'Username',
-                  Icons.alternate_email,
-                ),
-              ),
+              Expanded(child: TextField(controller: _usernameCtrl, decoration: SearchFieldDecoration.buildInputDecoration(labelText: 'Username', icon: Icons.alternate_email))),
               const SizedBox(width: 12),
-              Expanded(
-                child: _buildSearchField(
-                  _emailController,
-                  'Email',
-                  Icons.email_outlined,
-                ),
-              ),
+              Expanded(child: TextField(controller: _emailCtrl, decoration: SearchFieldDecoration.buildInputDecoration(labelText: 'Email', icon: Icons.email_outlined))),
               const SizedBox(width: 12),
-              Expanded(
-                child: _buildSearchField(
-                  _firstNameController,
-                  'Ime',
-                  Icons.person_outline,
-                ),
-              ),
+              Expanded(child: TextField(controller: _firstNameCtrl, decoration: SearchFieldDecoration.buildInputDecoration(labelText: 'Ime', icon: Icons.person_outline))),
               const SizedBox(width: 12),
-              Expanded(
-                child: _buildSearchField(
-                  _lastNameController,
-                  'Prezime',
-                  Icons.person_outline,
-                ),
-              ),
+              Expanded(child: TextField(controller: _lastNameCtrl, decoration: SearchFieldDecoration.buildInputDecoration(labelText: 'Prezime', icon: Icons.person_outline))),
             ],
           ),
           const SizedBox(height: 16),
@@ -148,32 +111,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             children: [
               CommonButtons.buildClearButton(onPressed: _clearSearch),
               const SizedBox(width: 12),
-              CommonButtons.buildSearchButton(
-                onPressed: _performSearch,
-                isLoading: _isSearching,
-              ),
+              CommonButtons.buildSearchButton(onPressed: _performSearch, isLoading: _isSearching),
               const SizedBox(width: 12),
-              CommonButtons.buildAddButton(
-                onPressed: _showAddUserDialog,
-                label: 'Dodaj korisnika',
-              ),
+              CommonButtons.buildAddButton(onPressed: _showAddUserDialog, label: 'Dodaj korisnika'),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSearchField(
-    TextEditingController controller,
-    String label,
-    IconData icon,
-  ) {
-    return TextField(
-      controller: controller,
-      decoration: SearchFieldDecoration.buildInputDecoration(
-        labelText: label,
-        icon: icon,
       ),
     );
   }
@@ -187,7 +130,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         if (provider.users.isEmpty) {
           return const Center(child: Text('Nema pronađenih korisnika.'));
         }
-
         return GridView.builder(
           controller: _scrollController,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -220,292 +162,256 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildUserHeader(user),
+            // Header
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: kPrimary.withOpacity(0.1),
+                  child: Text(
+                    _initials(user),
+                    style: const TextStyle(
+                        color: kPrimary, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(user.username,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(user.email,
+                          style: TextStyle(
+                              color: Colors.grey[500], fontSize: 13),
+                          overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                AdminStatusBadge(
+                  label: user.isActive ? 'Aktivan' : 'Neaktivan',
+                  color: user.isActive ? Colors.green : Colors.red,
+                  icon: user.isActive
+                      ? Icons.check_circle
+                      : Icons.cancel_outlined,
+                ),
+              ],
+            ),
             const Divider(height: 32),
-            _buildUserInfo(user),
+            // Info
+            _infoRow(Icons.person_outline, 'Ime',
+                '${user.firstName ?? ''} ${user.lastName ?? ''}'),
+            _infoRow(Icons.email, 'Email', user.email),
+            _infoRow(Icons.location_on_outlined, 'Adresa',
+                '${user.address ?? 'N/A'} ${user.city ?? ''}'),
             const Spacer(),
-            _buildUserActions(user, provider),
+            // Actions
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showEditUserDialog(user, provider),
+                    icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                    label: const Text('UREDI',
+                        style: TextStyle(color: Colors.white, fontSize: 11)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () =>
+                        provider.toggleUserActive(userId: user.id, isActive: !user.isActive),
+                    icon: Icon(
+                        user.isActive ? Icons.lock_outline : Icons.lock_open,
+                        size: 16),
+                    label: Text(user.isActive ? 'BLOKIRAJ' : 'AKTIVIRAJ',
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor:
+                          user.isActive ? Colors.red : Colors.green,
+                      side: BorderSide(
+                          color: user.isActive ? Colors.red : Colors.green),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildUserHeader(User user) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: const Color(0xFF6366F1).withOpacity(0.1),
-          child: Text(
-            _getInitials(user),
-            style: const TextStyle(
-              color: Color(0xFF6366F1),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                user.username,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                user.email,
-                style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        _buildStatusBadge(user.isActive),
-      ],
-    );
-  }
-
-  Widget _buildUserInfo(User user) {
-    return Column(
-      children: [
-        _buildInfoRow(
-          Icons.person_outline,
-          'Ime',
-          '${user.firstName ?? ''} ${user.lastName ?? ''}',
-        ),
-        _buildInfoRow(Icons.email, 'Email', user.email),
-        _buildInfoRow(
-          Icons.location_on_outlined,
-          'Adresa',
-          '${user.address ?? 'N/A'} ${user.city ?? 'N/A'}',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _infoRow(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF6366F1)),
+          Icon(icon, size: 16, color: kPrimary),
           const SizedBox(width: 8),
           Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           const Spacer(),
-          Text(
-            value.trim().isEmpty ? '-' : value,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-          ),
+          Text(value.trim().isEmpty ? '-' : value,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  Widget _buildStatusBadge(bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isActive ? Colors.green[50] : Colors.red[50],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        isActive ? 'Aktivan' : 'Neaktivan',
-        style: TextStyle(
-          color: isActive ? Colors.green[700] : Colors.red[700],
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserActions(User user, UserProvider provider) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _showEditUserDialog(user, provider),
-            icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-            label: const Text(
-              'UREDI',
-              style: TextStyle(color: Colors.white, fontSize: 11),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => _toggleUserActive(user, provider),
-            icon: Icon(
-              user.isActive ? Icons.lock_outline : Icons.lock_open,
-              size: 16,
-            ),
-            label: Text(
-              user.isActive ? 'BLOKIRAJ' : 'AKTIVIRAJ',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: user.isActive ? Colors.red : Colors.green,
-              side: BorderSide(
-                color: user.isActive ? Colors.red : Colors.green,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _getInitials(User user) {
-    final first = user.firstName?.isNotEmpty == true ? user.firstName![0] : '';
-    final last = user.lastName?.isNotEmpty == true ? user.lastName![0] : '';
-    return (first + last).toUpperCase();
+  String _initials(User user) {
+    final f = user.firstName?.isNotEmpty == true ? user.firstName![0] : '';
+    final l = user.lastName?.isNotEmpty == true ? user.lastName![0] : '';
+    return (f + l).toUpperCase();
   }
 
   void _showEditUserDialog(User user, UserProvider provider) {
     showDialog(
-      context: context,
-      builder: (context) => _EditUserDialog(user: user, provider: provider),
-    );
-  }
-
-  void _toggleUserActive(User user, UserProvider provider) {
-    provider.toggleUserActive(userId: user.id, isActive: !user.isActive);
+        context: context,
+        builder: (_) => _EditUserDialog(user: user, provider: provider));
   }
 
   void _showAddUserDialog() {
-    final controllers = <String, TextEditingController>{
-      'username': TextEditingController(),
-      'email': TextEditingController(),
-      'password': TextEditingController(),
-      'passwordConfirm': TextEditingController(),
-      'firstName': TextEditingController(),
-      'lastName': TextEditingController(),
-      'address': TextEditingController(),
-      'city': TextEditingController(),
-    };
-
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Dodaj novog korisnika'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDialogTextField(controllers['username']!, 'Korisničko ime'),
-              _buildDialogTextField(
-                controllers['email']!,
-                'Email',
-                TextInputType.emailAddress,
-              ),
-              _buildDialogTextField(
-                controllers['password']!,
-                'Lozinka',
-                TextInputType.text,
-                true,
-              ),
-              _buildDialogTextField(
-                controllers['passwordConfirm']!,
-                'Potvrdi lozinku',
-                TextInputType.text,
-                true,
-              ),
-              _buildDialogTextField(controllers['firstName']!, 'Ime'),
-              _buildDialogTextField(controllers['lastName']!, 'Prezime'),
-              _buildDialogTextField(
-                controllers['address']!,
-                'Adresa (opcionalno)',
-              ),
-              _buildDialogTextField(controllers['city']!, 'Grad (opcionalno)'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Otkaži'),
-          ),
-          ElevatedButton(
-            onPressed: () => _submitCreateUser(controllers),
-            child: const Text('Kreiraj'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDialogTextField(
-    TextEditingController controller,
-    String label, [
-    TextInputType keyboardType = TextInputType.text,
-    bool obscure = false,
-  ]) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscure,
-        decoration: InputDecoration(labelText: label),
-      ),
-    );
-  }
-
-  void _submitCreateUser(Map<String, TextEditingController> controllers) {
-    final password = controllers['password']!.text;
-    final confirmPassword = controllers['passwordConfirm']!.text;
-
-    if (password != confirmPassword) {
-      SnackBarHelper.showError(context, 'Lozinke se ne poklapaju');
-      return;
-    }
-
-    Navigator.pop(context);
-    final provider = Provider.of<UserProvider>(context, listen: false);
-
-    provider
-        .createUser(
-          username: controllers['username']!.text,
-          email: controllers['email']!.text,
-          password: password,
-          passwordConfirm: confirmPassword,
-          firstName: controllers['firstName']!.text,
-          lastName: controllers['lastName']!.text,
-          address: controllers['address']!.text.isEmpty
-              ? null
-              : controllers['address']!.text,
-          city: controllers['city']!.text.isEmpty
-              ? null
-              : controllers['city']!.text,
-        )
-        .then((success) {
-          if (mounted) {
-            SnackBarHelper.showMessage(context, 'Korisnik je kreiran', success);
-          }
-        });
+        context: context,
+        builder: (_) => _AddUserDialog(
+              onConfirm: (data) async {
+                final ok = await Provider.of<UserProvider>(context, listen: false)
+                    .createUser(
+                  username: data['username'],
+                  email: data['email'],
+                  password: data['password'],
+                  passwordConfirm: data['passwordConfirm'],
+                  firstName: data['firstName'],
+                  lastName: data['lastName'],
+                  address: data['address'],
+                  city: data['city'],
+                );
+                if (mounted) AdminSnackBar.show(context, 'Korisnik je kreiran', ok);
+              },
+            ));
   }
 }
+
+// ─── Add User Dialog ───────────────────────────────────────────────────────────
+
+class _AddUserDialog extends StatefulWidget {
+  final Future<void> Function(Map<String, dynamic>) onConfirm;
+  const _AddUserDialog({required this.onConfirm});
+
+  @override
+  State<_AddUserDialog> createState() => _AddUserDialogState();
+}
+
+class _AddUserDialogState extends State<_AddUserDialog> {
+  final _c = <String, TextEditingController>{
+    for (final k in ['username', 'email', 'password', 'passwordConfirm',
+        'firstName', 'lastName', 'address', 'city'])
+      k: TextEditingController()
+  };
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    for (final c in _c.values) c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: SizedBox(
+        width: 560,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AdminDialogHeader(
+                icon: Icons.person_add_outlined,
+                title: 'Dodaj novog korisnika'),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(children: [
+                  Row(children: [
+                    Expanded(child: AdminFormField(controller: _c['username']!, label: 'Korisničko ime', icon: Icons.alternate_email)),
+                    const SizedBox(width: 12),
+                    Expanded(child: AdminFormField(controller: _c['email']!, label: 'Email', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress)),
+                  ]),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(child: AdminFormField(controller: _c['password']!, label: 'Lozinka', icon: Icons.lock_outline, obscureText: true)),
+                    const SizedBox(width: 12),
+                    Expanded(child: AdminFormField(controller: _c['passwordConfirm']!, label: 'Potvrdi lozinku', icon: Icons.lock_outline, obscureText: true)),
+                  ]),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(child: AdminFormField(controller: _c['firstName']!, label: 'Ime', icon: Icons.person_outline)),
+                    const SizedBox(width: 12),
+                    Expanded(child: AdminFormField(controller: _c['lastName']!, label: 'Prezime', icon: Icons.person_outline)),
+                  ]),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(child: AdminFormField(controller: _c['address']!, label: 'Adresa (opcionalno)', icon: Icons.location_on_outlined)),
+                    const SizedBox(width: 12),
+                    Expanded(child: AdminFormField(controller: _c['city']!, label: 'Grad (opcionalno)', icon: Icons.location_city)),
+                  ]),
+                ]),
+              ),
+            ),
+            AdminDialogFooter(children: [
+              const AdminCancelButton(),
+              const SizedBox(width: 12),
+              AdminPrimaryButton(
+                label: _isLoading ? 'Kreiranje...' : 'Kreiraj korisnika',
+                icon: Icons.person_add,
+                isLoading: _isLoading,
+                onPressed: _submit,
+              ),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    final pass = _c['password']!.text;
+    final confirm = _c['passwordConfirm']!.text;
+    if (_c['username']!.text.trim().isEmpty) { AdminSnackBar.error(context, 'Username je obavezan.'); return; }
+    if (_c['email']!.text.trim().isEmpty) { AdminSnackBar.error(context, 'Email je obavezan.'); return; }
+    if (pass.isEmpty) { AdminSnackBar.error(context, 'Lozinka je obavezna.'); return; }
+    if (pass != confirm) { AdminSnackBar.error(context, 'Lozinke se ne poklapaju.'); return; }
+
+    setState(() => _isLoading = true);
+    Navigator.pop(context);
+    await widget.onConfirm({
+      'username': _c['username']!.text.trim(),
+      'email': _c['email']!.text.trim(),
+      'password': pass,
+      'passwordConfirm': confirm,
+      'firstName': _c['firstName']!.text.trim(),
+      'lastName': _c['lastName']!.text.trim(),
+      'address': _c['address']!.text.isEmpty ? null : _c['address']!.text.trim(),
+      'city': _c['city']!.text.isEmpty ? null : _c['city']!.text.trim(),
+    });
+  }
+}
+
+// ─── Edit User Dialog ──────────────────────────────────────────────────────────
 
 class _EditUserDialog extends StatefulWidget {
   final User user;
   final UserProvider provider;
-
   const _EditUserDialog({required this.user, required this.provider});
 
   @override
@@ -513,107 +419,79 @@ class _EditUserDialog extends StatefulWidget {
 }
 
 class _EditUserDialogState extends State<_EditUserDialog> {
-  late TextEditingController _emailController;
-  late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
-  late TextEditingController _addressController;
-  late TextEditingController _cityController;
+  late final _emailCtrl = TextEditingController(text: widget.user.email);
+  late final _firstCtrl = TextEditingController(text: widget.user.firstName ?? '');
+  late final _lastCtrl  = TextEditingController(text: widget.user.lastName ?? '');
+  late final _addrCtrl  = TextEditingController(text: widget.user.address ?? '');
+  late final _cityCtrl  = TextEditingController(text: widget.user.city ?? '');
   bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    _emailController = TextEditingController(text: widget.user.email);
-    _firstNameController = TextEditingController(
-      text: widget.user.firstName ?? '',
-    );
-    _lastNameController = TextEditingController(
-      text: widget.user.lastName ?? '',
-    );
-    _addressController = TextEditingController(text: widget.user.address ?? '');
-    _cityController = TextEditingController(text: widget.user.city ?? '');
-  }
-
-  @override
   void dispose() {
-    _emailController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _addressController.dispose();
-    _cityController.dispose();
+    _emailCtrl.dispose(); _firstCtrl.dispose(); _lastCtrl.dispose();
+    _addrCtrl.dispose(); _cityCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Uredi korisnika'),
-      content: SingleChildScrollView(
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: SizedBox(
+        width: 520,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildTextField(_emailController, 'Email'),
-            _buildTextField(_firstNameController, 'Ime'),
-            _buildTextField(_lastNameController, 'Prezime'),
-            _buildTextField(_addressController, 'Adresa'),
-            _buildTextField(_cityController, 'Grad'),
+            const AdminDialogHeader(
+                icon: Icons.edit_outlined, title: 'Uredi korisnika'),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(children: [
+                AdminFormField(controller: _emailCtrl, label: 'Email', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(child: AdminFormField(controller: _firstCtrl, label: 'Ime', icon: Icons.person_outline)),
+                  const SizedBox(width: 12),
+                  Expanded(child: AdminFormField(controller: _lastCtrl, label: 'Prezime', icon: Icons.person_outline)),
+                ]),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(child: AdminFormField(controller: _addrCtrl, label: 'Adresa', icon: Icons.location_on_outlined)),
+                  const SizedBox(width: 12),
+                  Expanded(child: AdminFormField(controller: _cityCtrl, label: 'Grad', icon: Icons.location_city)),
+                ]),
+              ]),
+            ),
+            AdminDialogFooter(children: [
+              const AdminCancelButton(),
+              const SizedBox(width: 12),
+              AdminPrimaryButton(
+                label: _isLoading ? 'Sprema...' : 'Spremi izmjene',
+                icon: Icons.save_outlined,
+                isLoading: _isLoading,
+                onPressed: _save,
+              ),
+            ]),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Otkaži'),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _saveUser,
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Spremi'),
-        ),
-      ],
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _saveUser() async {
+  Future<void> _save() async {
     setState(() => _isLoading = true);
-    try {
-      final success = await widget.provider.updateUser(
-        userId: widget.user.id,
-        email: _emailController.text,
-        firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
-        address: _addressController.text,
-        city: _cityController.text,
-      );
-
-      if (mounted) {
-        SnackBarHelper.showMessage(context, 'Korisnik je ažuriran', success);
-        if (success) {
-          Navigator.pop(context);
-        }
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    final ok = await widget.provider.updateUser(
+      userId: widget.user.id,
+      email: _emailCtrl.text,
+      firstName: _firstCtrl.text,
+      lastName: _lastCtrl.text,
+      address: _addrCtrl.text,
+      city: _cityCtrl.text,
+    );
+    if (mounted) {
+      setState(() => _isLoading = false);
+      AdminSnackBar.show(context, 'Korisnik je ažuriran', ok);
+      if (ok) Navigator.pop(context);
     }
   }
 }

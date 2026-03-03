@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/wallet_model.dart';
 import '../services/api_service.dart';
 
@@ -27,7 +28,8 @@ class WalletProvider extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('WalletProvider.fetchUserWallet error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju novčanika.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -50,7 +52,8 @@ class WalletProvider extends ChangeNotifier {
 
       _walletTransactions.sort((a, b) => b.created.compareTo(a.created));
     } catch (e) {
-      _errorMessage = e.toString();
+      log('WalletProvider.getWalletHistory error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju povijesti novčanika.';
     } finally {
       _isLoading = false;
       notifyListeners();

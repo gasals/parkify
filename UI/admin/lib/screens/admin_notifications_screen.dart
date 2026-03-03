@@ -1,7 +1,7 @@
+import 'package:admin/widgets/admin_dialog_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/notification_model.dart';
-import '../models/user_model.dart';
 import '../providers/notification_provider.dart';
 import '../providers/user_provider.dart';
 import '../widgets/common_widgets.dart';
@@ -14,9 +14,9 @@ class AdminNotificationsScreen extends StatefulWidget {
       _AdminNotificationsScreenState();
 }
 
-class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
+class _AdminNotificationsScreenState
+    extends State<AdminNotificationsScreen> {
   final ScrollController _scrollController = ScrollController();
-
   bool? _filterRead;
 
   @override
@@ -25,11 +25,8 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Provider.of<NotificationProvider>(
-          context,
-          listen: false,
-        ).fetchNotifications();
-
+        Provider.of<NotificationProvider>(context, listen: false)
+            .fetchNotifications();
         Provider.of<UserProvider>(context, listen: false).searchUsers();
       }
     });
@@ -42,19 +39,17 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   }
 
   void _onScroll() {
-    final provider = Provider.of<NotificationProvider>(context, listen: false);
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      provider.fetchNextPage();
+      Provider.of<NotificationProvider>(context, listen: false)
+          .fetchNextPage();
     }
   }
 
   void _applyFilter(bool? isRead) {
     setState(() => _filterRead = isRead);
-    Provider.of<NotificationProvider>(
-      context,
-      listen: false,
-    ).fetchNotifications(isRead: isRead);
+    Provider.of<NotificationProvider>(context, listen: false)
+        .fetchNotifications(isRead: isRead);
   }
 
   @override
@@ -83,27 +78,12 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       decoration: SearchContainerStyle.buildDecoration(),
       child: Row(
         children: [
-          _FilterChip(
-            label: 'Sve',
-            selected: _filterRead == null,
-            onTap: () => _applyFilter(null),
-          ),
+          _FilterPill(label: 'Sve', selected: _filterRead == null, onTap: () => _applyFilter(null)),
           const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Nepročitane',
-            selected: _filterRead == false,
-            onTap: () => _applyFilter(false),
-            color: const Color(0xFFEF4444),
-          ),
+          _FilterPill(label: 'Nepročitane', selected: _filterRead == false, onTap: () => _applyFilter(false), color: kDanger),
           const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Pročitane',
-            selected: _filterRead == true,
-            onTap: () => _applyFilter(true),
-            color: const Color(0xFF10B981),
-          ),
+          _FilterPill(label: 'Pročitane', selected: _filterRead == true, onTap: () => _applyFilter(true), color: kSuccess),
           const Spacer(),
-
           CommonButtons.buildAddButton(
             onPressed: () => _showSendDialog(toAll: false),
             label: 'Pošalji korisniku',
@@ -111,22 +91,14 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           const SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: () => _showSendDialog(toAll: true),
-            icon: const Icon(
-              Icons.campaign_outlined,
-              size: 18,
-              color: Colors.white,
-            ),
-            label: const Text(
-              'Pošalji svima',
-              style: TextStyle(color: Colors.white, fontSize: 13),
-            ),
+            icon: const Icon(Icons.campaign_outlined, size: 18, color: Colors.white),
+            label: const Text('Pošalji svima',
+                style: TextStyle(color: Colors.white, fontSize: 13)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: kSuccess,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
         ],
@@ -145,21 +117,14 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.notifications_none,
-                  size: 64,
-                  color: Colors.grey[300],
-                ),
+                Icon(Icons.notifications_none, size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 16),
-                Text(
-                  'Nema notifikacija',
-                  style: TextStyle(color: Colors.grey[400], fontSize: 16),
-                ),
+                Text('Nema notifikacija',
+                    style: TextStyle(color: Colors.grey[400], fontSize: 16)),
               ],
             ),
           );
         }
-
         return GridView.builder(
           controller: _scrollController,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -174,9 +139,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             if (index == provider.notifications.length) {
               return const Center(child: CircularProgressIndicator());
             }
-            return _NotificationCard(
-              notification: provider.notifications[index],
-            );
+            return _NotificationCard(notification: provider.notifications[index]);
           },
         );
       },
@@ -184,20 +147,36 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   }
 
   void _showSendDialog({required bool toAll}) {
-    showDialog(
-      context: context,
-      builder: (_) => _SendNotificationDialog(toAll: toAll),
-    );
+    showDialog(context: context,
+        builder: (_) => _SendNotificationDialog(toAll: toAll));
   }
 }
+
+// ─── Notification Card ────────────────────────────────────────────────────────
 
 class _NotificationCard extends StatelessWidget {
   final AppNotification notification;
   const _NotificationCard({required this.notification});
 
+  static const _typeData = {
+    1: (Icons.check_circle_outline, Color(0xFF10B981)),
+    2: (Icons.alarm_outlined, Color(0xFFF59E0B)),
+    3: (Icons.payment_outlined, Color(0xFF3B82F6)),
+    4: (Icons.error_outline, Color(0xFFEF4444)),
+    5: (Icons.local_parking, Color(0xFF6366F1)),
+    6: (Icons.local_offer_outlined, Color(0xFFF59E0B)),
+    7: (Icons.cancel_outlined, Color(0xFFEF4444)),
+    8: (Icons.login_outlined, Color(0xFF14B8A6)),
+    9: (Icons.block_outlined, Colors.grey),
+  };
+
   @override
   Widget build(BuildContext context) {
-    final type = _typeInfo(notification.type);
+    final td = _typeData[notification.type] ??
+        (Icons.notifications_outlined, Colors.grey);
+    final tIcon = (td as dynamic).$1 as IconData;
+    final tColor = (td as dynamic).$2 as Color;
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -205,7 +184,7 @@ class _NotificationCard extends StatelessWidget {
         side: BorderSide(
           color: notification.isRead
               ? Colors.grey[200]!
-              : type.color.withOpacity(0.3),
+              : tColor.withOpacity(0.3),
           width: notification.isRead ? 1 : 1.5,
         ),
       ),
@@ -219,10 +198,10 @@ class _NotificationCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: type.color.withOpacity(0.1),
+                    color: tColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(type.icon, color: type.color, size: 16),
+                  child: Icon(tIcon, color: tColor, size: 16),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -242,7 +221,6 @@ class _NotificationCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-
             Expanded(
               child: Text(
                 notification.message,
@@ -252,43 +230,29 @@ class _NotificationCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: 12,
-                      color: Colors.grey[400],
+                Row(children: [
+                  Icon(Icons.person_outline, size: 12, color: Colors.grey[400]),
+                  const SizedBox(width: 4),
+                  Text('Korisnik #${notification.userId}',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                ]),
+                Row(children: [
+                  Container(
+                    width: 7, height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: notification.isRead
+                          ? Colors.grey[300]
+                          : kDanger,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Korisnik #${notification.userId}',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[400]),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: notification.isRead
-                            ? Colors.grey[300]
-                            : const Color(0xFFEF4444),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatDate(notification.created),
-                      style: TextStyle(fontSize: 11, color: Colors.grey[400]),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(_fmtDate(notification.created),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                ]),
               ],
             ),
           ],
@@ -297,22 +261,8 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime dt) {
-    return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
-  }
-
-  _TypeInfo _typeInfo(int type) => switch (type) {
-    1 => _TypeInfo(Icons.check_circle_outline, const Color(0xFF10B981)),
-    2 => _TypeInfo(Icons.alarm_outlined, const Color(0xFFF59E0B)),
-    3 => _TypeInfo(Icons.payment_outlined, const Color(0xFF3B82F6)),
-    4 => _TypeInfo(Icons.error_outline, const Color(0xFFEF4444)),
-    5 => _TypeInfo(Icons.local_parking, const Color(0xFF6366F1)),
-    6 => _TypeInfo(Icons.local_offer_outlined, const Color(0xFFF59E0B)),
-    7 => _TypeInfo(Icons.cancel_outlined, const Color(0xFFEF4444)),
-    8 => _TypeInfo(Icons.login_outlined, const Color(0xFF14B8A6)),
-    9 => _TypeInfo(Icons.block_outlined, Colors.grey),
-    _ => _TypeInfo(Icons.notifications_outlined, Colors.grey),
-  };
+  String _fmtDate(DateTime dt) =>
+      '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
 }
 
 class _ChannelBadge extends StatelessWidget {
@@ -324,7 +274,7 @@ class _ChannelBadge extends StatelessWidget {
     final (label, color) = switch (channel) {
       2 => ('Email', const Color(0xFF3B82F6)),
       3 => ('Oboje', const Color(0xFF8B5CF6)),
-      _ => ('In-App', const Color(0xFF6366F1)),
+      _ => ('In-App', kPrimary),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -332,29 +282,24 @@ class _ChannelBadge extends StatelessWidget {
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      child: Text(label,
+          style: TextStyle(
+              fontSize: 10, color: color, fontWeight: FontWeight.bold)),
     );
   }
 }
 
-class _FilterChip extends StatelessWidget {
+class _FilterPill extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
   final Color color;
 
-  const _FilterChip({
+  const _FilterPill({
     required this.label,
     required this.selected,
     required this.onTap,
-    this.color = const Color(0xFF6366F1),
+    this.color = kPrimary,
   });
 
   @override
@@ -369,18 +314,17 @@ class _FilterChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: color, width: selected ? 0 : 1),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : color,
-          ),
-        ),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : color)),
       ),
     );
   }
 }
+
+// ─── Send Notification Dialog ─────────────────────────────────────────────────
 
 class _SendNotificationDialog extends StatefulWidget {
   final bool toAll;
@@ -391,36 +335,40 @@ class _SendNotificationDialog extends StatefulWidget {
       _SendNotificationDialogState();
 }
 
-class _SendNotificationDialogState extends State<_SendNotificationDialog> {
-  final _titleController = TextEditingController();
-  final _messageController = TextEditingController();
+class _SendNotificationDialogState
+    extends State<_SendNotificationDialog> {
+  final _titleCtrl   = TextEditingController();
+  final _messageCtrl = TextEditingController();
 
-  int _selectedType = 1;
+  int _selectedType    = 1;
   int _selectedChannel = 1;
   int? _selectedUserId;
   bool _isLoading = false;
 
   static const _types = [
-    (1, 'Potvrda rezervacije', Icons.check_circle_outline),
+    (1, 'Potvrda rezervacije',     Icons.check_circle_outline),
     (2, 'Podsjetnik za rezervaciju', Icons.alarm_outlined),
-    (3, 'Plaćanje uspješno', Icons.payment_outlined),
-    (4, 'Plaćanje neuspješno', Icons.error_outline),
+    (3, 'Plaćanje uspješno',       Icons.payment_outlined),
+    (4, 'Plaćanje neuspješno',     Icons.error_outline),
     (5, 'Obavijest o dostupnosti', Icons.local_parking),
-    (6, 'Posebna ponuda', Icons.local_offer_outlined),
-    (7, 'Otkazana rezervacija', Icons.cancel_outlined),
-    (8, 'Check-in podsjetnik', Icons.login_outlined),
-    (9, 'Parking pun', Icons.block_outlined),
+    (6, 'Posebna ponuda',          Icons.local_offer_outlined),
+    (7, 'Otkazana rezervacija',    Icons.cancel_outlined),
+    (8, 'Check-in podsjetnik',     Icons.login_outlined),
+    (9, 'Parking pun',             Icons.block_outlined),
   ];
 
   @override
   void dispose() {
-    _titleController.dispose();
-    _messageController.dispose();
+    _titleCtrl.dispose();
+    _messageCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final headerColor =
+        widget.toAll ? kSuccess : kPrimary;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: SizedBox(
@@ -428,40 +376,15 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: widget.toAll
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFF6366F1),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    widget.toAll
-                        ? Icons.campaign_outlined
-                        : Icons.send_outlined,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    widget.toAll
-                        ? 'Pošalji svim korisnicima'
-                        : 'Pošalji korisniku',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+            AdminDialogHeader(
+              icon: widget.toAll
+                  ? Icons.campaign_outlined
+                  : Icons.send_outlined,
+              title: widget.toAll
+                  ? 'Pošalji svim korisnicima'
+                  : 'Pošalji korisniku',
+              color: headerColor,
             ),
-
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -469,35 +392,33 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (!widget.toAll) ...[
-                      _buildLabel('Korisnik'),
+                      _label('Korisnik'),
                       const SizedBox(height: 8),
                       _buildUserDropdown(),
                       const SizedBox(height: 20),
                     ],
-
-                    _buildLabel('Naslov'),
+                    _label('Naslov'),
                     const SizedBox(height: 8),
-                    _buildTextField(_titleController, 'Unesite naslov...'),
+                    AdminFormField(
+                        controller: _titleCtrl,
+                        label: 'Naslov notifikacije',
+                        icon: Icons.title),
                     const SizedBox(height: 20),
-
-                    _buildLabel('Poruka'),
+                    _label('Poruka'),
                     const SizedBox(height: 8),
-                    _buildTextField(
-                      _messageController,
-                      'Unesite poruku...',
-                      maxLines: 4,
-                    ),
+                    AdminFormField(
+                        controller: _messageCtrl,
+                        label: 'Tekst poruke',
+                        icon: Icons.message_outlined,
+                        maxLines: 4),
                     const SizedBox(height: 20),
-
-                    _buildLabel('Tip notifikacije'),
+                    _label('Tip notifikacije'),
                     const SizedBox(height: 8),
                     _buildTypeGrid(),
                     const SizedBox(height: 20),
-
-                    _buildLabel('Kanal slanja'),
+                    _label('Kanal slanja'),
                     const SizedBox(height: 8),
                     _buildChannelSelector(),
-
                     if (_selectedChannel != 1) ...[
                       const SizedBox(height: 12),
                       _buildEmailNote(),
@@ -506,145 +427,42 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
                 ),
               ),
             ),
-
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(20),
-                ),
-                border: Border(top: BorderSide(color: Colors.grey[200]!)),
+            AdminDialogFooter(children: [
+              const AdminCancelButton(),
+              const SizedBox(width: 12),
+              AdminPrimaryButton(
+                label: _isLoading ? 'Slanje...' : 'Pošalji',
+                icon: Icons.send,
+                isLoading: _isLoading,
+                color: headerColor,
+                onPressed: _submit,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Otkaži'),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    onPressed: _isLoading ? null : _submit,
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.send, size: 16, color: Colors.white),
-                    label: Text(
-                      _isLoading ? 'Slanje...' : 'Pošalji',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: widget.toAll
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFF6366F1),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ]),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLabel(String text) => Text(
-    text,
-    style: const TextStyle(
-      fontSize: 13,
-      fontWeight: FontWeight.w600,
-      color: Color(0xFF374151),
-    ),
-  );
-
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hint, {
-    int maxLines = 1,
-  }) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[200]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[200]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
-        ),
-        contentPadding: const EdgeInsets.all(12),
-      ),
-    );
-  }
+  Widget _label(String text) => Text(text,
+      style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF374151)));
 
   Widget _buildUserDropdown() {
     return Consumer<UserProvider>(
-      builder: (context, provider, _) {
-        return DropdownButtonFormField<int>(
-          value: _selectedUserId,
-          hint: Text(
-            'Odaberi korisnika',
-            style: TextStyle(color: Colors.grey[400]),
-          ),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[200]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[200]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 14,
-            ),
-          ),
-          items: provider.users
-              .map(
-                (u) => DropdownMenuItem(
-                  value: u.id,
-                  child: Text(
-                    '${u.firstName ?? ''} ${u.lastName ?? ''} · ${u.email}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: (v) => setState(() => _selectedUserId = v),
-        );
-      },
+      builder: (context, provider, _) => AdminDropdownField<int>(
+        value: _selectedUserId,
+        label: 'Odaberi korisnika',
+        icon: Icons.person_outline,
+        items: provider.users.map((u) => u.id).toList(),
+        labelBuilder: (id) {
+          final u = provider.users.firstWhere((u) => u.id == id);
+          return '${u.firstName ?? ''} ${u.lastName ?? ''} · ${u.email}';
+        },
+        onChanged: (v) => setState(() => _selectedUserId = v),
+      ),
     );
   }
 
@@ -653,39 +471,28 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
       spacing: 8,
       runSpacing: 8,
       children: _types.map((t) {
-        final selected = _selectedType == t.$1;
+        final sel = _selectedType == t.$1;
         return GestureDetector(
           onTap: () => setState(() => _selectedType = t.$1),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: selected
-                  ? const Color(0xFF6366F1)
-                  : const Color(0xFF6366F1).withOpacity(0.06),
+              color: sel ? kPrimary : kPrimary.withOpacity(0.06),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: const Color(0xFF6366F1),
-                width: selected ? 0 : 1,
-              ),
+              border: Border.all(color: kPrimary, width: sel ? 0 : 1),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  t.$3,
-                  size: 14,
-                  color: selected ? Colors.white : const Color(0xFF6366F1),
-                ),
+                Icon(t.$3, size: 14,
+                    color: sel ? Colors.white : kPrimary),
                 const SizedBox(width: 6),
-                Text(
-                  t.$2,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: selected ? Colors.white : const Color(0xFF6366F1),
-                  ),
-                ),
+                Text(t.$2,
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: sel ? Colors.white : kPrimary)),
               ],
             ),
           ),
@@ -697,29 +504,11 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
   Widget _buildChannelSelector() {
     return Row(
       children: [
-        _ChannelOption(
-          value: 1,
-          label: 'In-App',
-          icon: Icons.phone_android,
-          selected: _selectedChannel == 1,
-          onTap: () => setState(() => _selectedChannel = 1),
-        ),
+        _ChannelOption(value: 1, label: 'In-App', icon: Icons.phone_android, selected: _selectedChannel == 1, onTap: () => setState(() => _selectedChannel = 1)),
         const SizedBox(width: 8),
-        _ChannelOption(
-          value: 2,
-          label: 'Email',
-          icon: Icons.email_outlined,
-          selected: _selectedChannel == 2,
-          onTap: () => setState(() => _selectedChannel = 2),
-        ),
+        _ChannelOption(value: 2, label: 'Email', icon: Icons.email_outlined, selected: _selectedChannel == 2, onTap: () => setState(() => _selectedChannel = 2)),
         const SizedBox(width: 8),
-        _ChannelOption(
-          value: 3,
-          label: 'Oboje',
-          icon: Icons.all_inclusive,
-          selected: _selectedChannel == 3,
-          onTap: () => setState(() => _selectedChannel = 3),
-        ),
+        _ChannelOption(value: 3, label: 'Oboje', icon: Icons.all_inclusive, selected: _selectedChannel == 3, onTap: () => setState(() => _selectedChannel = 3)),
       ],
     );
   }
@@ -734,7 +523,7 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, size: 16, color: Color(0xFFF59E0B)),
+          const Icon(Icons.info_outline, size: 16, color: kWarning),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -749,78 +538,44 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
   }
 
   Future<void> _submit() async {
-    if (_titleController.text.trim().isEmpty) {
-      _showError('Naslov je obavezan.');
-      return;
-    }
-    if (_messageController.text.trim().isEmpty) {
-      _showError('Poruka je obavezna.');
-      return;
-    }
-    if (!widget.toAll && _selectedUserId == null) {
-      _showError('Odaberi korisnika.');
-      return;
-    }
+    if (_titleCtrl.text.trim().isEmpty) { AdminSnackBar.error(context, 'Naslov je obavezan.'); return; }
+    if (_messageCtrl.text.trim().isEmpty) { AdminSnackBar.error(context, 'Poruka je obavezna.'); return; }
+    if (!widget.toAll && _selectedUserId == null) { AdminSnackBar.error(context, 'Odaberi korisnika.'); return; }
 
     setState(() => _isLoading = true);
     final provider = Provider.of<NotificationProvider>(context, listen: false);
 
-    final success = widget.toAll
+    final ok = widget.toAll
         ? await provider.sendToAll(
-            title: _titleController.text.trim(),
-            message: _messageController.text.trim(),
+            title: _titleCtrl.text.trim(),
+            message: _messageCtrl.text.trim(),
             type: _selectedType,
             channel: _selectedChannel,
           )
         : await provider.sendToUser(
             userId: _selectedUserId!,
-            title: _titleController.text.trim(),
-            message: _messageController.text.trim(),
+            title: _titleCtrl.text.trim(),
+            message: _messageCtrl.text.trim(),
             type: _selectedType,
             channel: _selectedChannel,
           );
 
     if (mounted) {
       setState(() => _isLoading = false);
-      if (success) {
+      if (ok) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Text(
-                  widget.toAll
-                      ? 'Notifikacija poslana svim korisnicima!'
-                      : 'Notifikacija poslana!',
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF10B981),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
+        AdminSnackBar.show(
+          context,
+          widget.toAll
+              ? 'Notifikacija poslana svim korisnicima!'
+              : 'Notifikacija poslana!',
+          true,
         );
-
         provider.fetchNotifications();
       } else {
-        _showError('Greška pri slanju. Pokušaj ponovo.');
+        AdminSnackBar.error(context, 'Greška pri slanju. Pokušaj ponovo.');
       }
     }
-  }
-
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: const Color(0xFFEF4444),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
   }
 }
 
@@ -848,41 +603,24 @@ class _ChannelOption extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFF6366F1)
-                : const Color(0xFF6366F1).withOpacity(0.06),
+            color: selected ? kPrimary : kPrimary.withOpacity(0.06),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: const Color(0xFF6366F1),
-              width: selected ? 0 : 1,
-            ),
+            border: Border.all(color: kPrimary, width: selected ? 0 : 1),
           ),
           child: Column(
             children: [
-              Icon(
-                icon,
-                size: 20,
-                color: selected ? Colors.white : const Color(0xFF6366F1),
-              ),
+              Icon(icon, size: 20,
+                  color: selected ? Colors.white : kPrimary),
               const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : const Color(0xFF6366F1),
-                ),
-              ),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? Colors.white : kPrimary)),
             ],
           ),
         ),
       ),
     );
   }
-}
-
-class _TypeInfo {
-  final IconData icon;
-  final Color color;
-  const _TypeInfo(this.icon, this.color);
 }

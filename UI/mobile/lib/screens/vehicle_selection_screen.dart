@@ -66,7 +66,8 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
           }
 
           if (provider.errorMessage != null && provider.vehicles.isEmpty) {
-            return Center(child: Text("Greška: ${provider.errorMessage}"));
+            debugPrint('VehicleSelectionScreen error: ${provider.errorMessage}');
+            return const Center(child: Text("Došlo je do greške pri učitavanju vozila."));
           }
 
           if (provider.vehicles.isEmpty) {
@@ -374,9 +375,13 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
         );
       }
     } catch (e) {
+      debugPrint('VehicleSelectionScreen._submitForm error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Došlo je do greške. Pokušajte ponovno.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/city_model.dart';
 import '../services/api_service.dart';
 
@@ -32,7 +33,8 @@ class CityProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('CityProvider.getAllCities error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju gradova.';
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -47,7 +49,8 @@ class CityProvider extends ChangeNotifier {
       notifyListeners();
       return _selectedCity;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('CityProvider.getCityById error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju grada.';
       return null;
     }
   }

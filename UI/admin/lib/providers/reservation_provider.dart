@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/parking_zone_model.dart';
 import '../models/reservation_model.dart';
 import '../models/user_model.dart';
@@ -57,7 +58,8 @@ class ReservationProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin ReservationProvider.searchReservations error: $e');
+      _errorMessage = 'Došlo je do greške pri pretrazi rezervacija.';
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -101,7 +103,8 @@ class ReservationProvider extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin ReservationProvider.updateReservationStatus error: $e');
+      _errorMessage = 'Došlo je do greške pri ažuriranju statusa rezervacije.';
       notifyListeners();
       return false;
     }
@@ -120,7 +123,8 @@ class ReservationProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin ReservationProvider.checkInReservation error: $e');
+      _errorMessage = 'Došlo je do greške pri check-in-u rezervacije.';
       notifyListeners();
       return false;
     }
@@ -139,7 +143,8 @@ class ReservationProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin ReservationProvider.checkOutReservation error: $e');
+      _errorMessage = 'Došlo je do greške pri check-out-u rezervacije.';
       notifyListeners();
       return false;
     }
@@ -154,7 +159,8 @@ class ReservationProvider extends ChangeNotifier {
           .map((user) => User.fromJson(user as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin ReservationProvider.getAllUsersList error: $e');
+      _errorMessage = 'Došlo je do greške pri preuzimanju korisnika.';
       return [];
     }
   }
@@ -172,7 +178,8 @@ class ReservationProvider extends ChangeNotifier {
           .map((user) => User.fromJson(user as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin ReservationProvider.searchUsersLive error: $e');
+      _errorMessage = 'Došlo je do greške pri pretrazi korisnika.';
       return [];
     }
   }
@@ -188,7 +195,8 @@ class ReservationProvider extends ChangeNotifier {
           .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin ReservationProvider.getAllParkingZonesList error: $e');
+      _errorMessage = 'Došlo je do greške pri preuzimanju parking zona.';
       return [];
     }
   }
@@ -205,7 +213,8 @@ class ReservationProvider extends ChangeNotifier {
           .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('Admin ReservationProvider.searchParkingZonesLive error: $e');
+      _errorMessage = 'Došlo je do greške pri pretrazi parking zona.';
       return [];
     }
   }

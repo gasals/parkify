@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import '../models/vehicle_model.dart';
 import '../services/api_service.dart';
 
@@ -32,7 +33,8 @@ class VehicleProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      log('VehicleProvider.fetchUserVehicles error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju vozila.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -63,7 +65,8 @@ class VehicleProvider extends ChangeNotifier {
       await fetchUserVehicles(userId);
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('VehicleProvider.addVehicle error: $e');
+      _errorMessage = 'Došlo je do greške pri dodavanju vozila.';
       notifyListeners();
       return false;
     } finally {
@@ -105,7 +108,8 @@ class VehicleProvider extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      log('VehicleProvider.updateVehicle error: $e');
+      _errorMessage = 'Došlo je do greške pri ažuriranju vozila.';
       return false;
     } finally {
       _isLoading = false;

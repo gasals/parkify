@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:admin/constants/app_urls.dart';
 import 'package:http/http.dart' as http;
 
@@ -68,7 +69,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Login greška: $e');
+      log('Admin ApiService.login error: $e');
+      throw Exception('Login greška');
     }
   }
 
@@ -79,7 +81,8 @@ class ApiService {
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri preuzimanju korisnika: $e');
+      log('Admin ApiService.getUserById error: $e');
+      throw Exception('Greška pri preuzimanju korisnika');
     }
   }
 
@@ -102,7 +105,8 @@ class ApiService {
 
       await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri promjeni lozinke: $e');
+      log('Admin ApiService.changePassword error: $e');
+      throw Exception('Greška pri promjeni lozinke');
     }
   }
 
@@ -131,7 +135,8 @@ class ApiService {
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri pretrazi korisnika: $e');
+      log('Admin ApiService.searchUsers error: $e');
+      throw Exception('Greška pri pretrazi korisnika');
     }
   }
 
@@ -146,7 +151,8 @@ class ApiService {
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri preuzimanju korisnika: $e');
+      log('Admin ApiService.getAllUsers error: $e');
+      throw Exception('Greška pri preuzimanju korisnika');
     }
   }
 
@@ -181,7 +187,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri kreiranju korisnika: $e');
+      log('Admin ApiService.createUser error: $e');
+      throw Exception('Greška pri kreiranju korisnika');
     }
   }
 
@@ -211,7 +218,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri ažuriranju korisnika: $e');
+      log('Admin ApiService.updateUser error: $e');
+      throw Exception('Greška pri ažuriranju korisnika');
     }
   }
 
@@ -230,7 +238,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri promjeni statusa: $e');
+      log('Admin ApiService.toggleUserActive error: $e');
+      throw Exception('Greška pri promjeni statusa');
     }
   }
 
@@ -245,7 +254,8 @@ class ApiService {
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri preuzimanju gradova: $e');
+      log('Admin ApiService.getAllCities error: $e');
+      throw Exception('Greška pri preuzimanju gradova');
     }
   }
 
@@ -256,7 +266,8 @@ class ApiService {
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri preuzimanju grada: $e');
+      log('Admin ApiService.getCityById error: $e');
+      throw Exception('Greška pri preuzimanju grada');
     }
   }
 
@@ -271,7 +282,8 @@ class ApiService {
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri pretrazi gradova: $e');
+      log('Admin ApiService.searchCities error: $e');
+      throw Exception('Greška pri pretrazi gradova');
     }
   }
 
@@ -294,7 +306,8 @@ class ApiService {
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri pretrazi parking zona: $e');
+      log('Admin ApiService.searchZones error: $e');
+      throw Exception('Greška pri pretrazi parking zona');
     }
   }
 
@@ -329,7 +342,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri kreiranju zone: $e');
+      log('Admin ApiService.createZone error: $e');
+      throw Exception('Greška pri kreiranju zone');
     }
   }
 
@@ -361,7 +375,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri ažuriranju zone: $e');
+      log('Admin ApiService.updateZone error: $e');
+      throw Exception('Greška pri ažuriranju zone');
     }
   }
 
@@ -389,7 +404,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri dodavanju spota: $e');
+      log('Admin ApiService.addSpot error: $e');
+      throw Exception('Greška pri dodavanju spota');
     }
   }
 
@@ -419,7 +435,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri ažuriranju spota: $e');
+      log('Admin ApiService.updateSpot error: $e');
+      throw Exception('Greška pri ažuriranju spota');
     }
   }
 
@@ -434,7 +451,8 @@ class ApiService {
 
       await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri brisanju spota: $e');
+      log('Admin ApiService.deleteSpot error: $e');
+      throw Exception('Greška pri brisanju spota');
     }
   }
 
@@ -453,7 +471,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri promjeni statusa spota: $e');
+      log('Admin ApiService.toggleSpotActive error: $e');
+      throw Exception('Greška pri promjeni statusa spota');
     }
   }
 
@@ -480,7 +499,8 @@ class ApiService {
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri pretrazi rezervacija: $e');
+      log('Admin ApiService.searchReservations error: $e');
+      throw Exception('Greška pri pretrazi rezervacija');
     }
   }
 
@@ -500,7 +520,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri ažuriranju statusa: $e');
+      log('Admin ApiService.updateReservationStatus error: $e');
+      throw Exception('Greška pri ažuriranju statusa');
     }
   }
 
@@ -522,7 +543,8 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri check-in-u: $e');
+      log('Admin ApiService.checkIn error: $e');
+      throw Exception('Greška pri check-in-u');
     }
   }
 

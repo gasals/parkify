@@ -335,10 +335,13 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
         );
       }
     } catch (e) {
+      debugPrint('ReviewsScreen._submitReview error: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
+        ).showSnackBar(
+          const SnackBar(content: Text('Došlo je do greške. Pokušajte ponovno.')),
+        );
       }
     } finally {
       if (mounted) {
