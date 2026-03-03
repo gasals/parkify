@@ -16,7 +16,7 @@ Docker će automatski buildati aplikaciju, seedati bazu sa test podacima i pokre
 ### 2. Export Aplikacija
 
 ```bash
-Export: fit-build-2025-03-02.zip
+Export: Parkify Apps.zip
 ```
 
 Zip sadrži dva foldera:
