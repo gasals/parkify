@@ -30,7 +30,10 @@ class NotificationProvider extends ChangeNotifier {
       final resultsList = result['results'] as List? ?? [];
 
       _notifications = resultsList
-          .map((notification) => AppNotification.fromJson(notification as Map<String, dynamic>))
+          .map(
+            (notification) =>
+                AppNotification.fromJson(notification as Map<String, dynamic>),
+          )
           .toList();
     } catch (e) {
       debugPrint('fetchNotifications error: $e');

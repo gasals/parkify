@@ -23,9 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login(BuildContext context) async {
     if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.fillAllFields)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.fillAllFields)));
       return;
     }
 
@@ -39,7 +39,9 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.errorMessage ?? AppStrings.loginFailed)),
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? AppStrings.loginFailed),
+        ),
       );
     }
   }
@@ -58,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(height: 48),
-                    
+
                     Text(
                       AppStrings.appName,
                       style: TextStyle(
@@ -73,13 +75,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: usernameController,
                       decoration: InputDecoration(
                         labelText: AppStrings.username,
-                        prefixIcon: Icon(Icons.person, color: AppColors.primary),
+                        prefixIcon: Icon(
+                          Icons.person,
+                          color: AppColors.primary,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -93,11 +101,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icon(Icons.lock, color: AppColors.primary),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: AppColors.primary,
                           ),
                           onPressed: () {
-                            setState(() => _obscurePassword = !_obscurePassword);
+                            setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            );
                           },
                         ),
                         border: OutlineInputBorder(
@@ -105,7 +117,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -126,7 +141,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               child: Text(
                                 AppStrings.login,
-                                style: TextStyle(fontSize: 16, color: Colors.white),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                     ),
@@ -137,7 +155,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Text(AppStrings.dontHaveAccount),
                         GestureDetector(
-                          onTap: () => Navigator.of(context).pushNamed('/register'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/register'),
                           child: Text(
                             AppStrings.register,
                             style: TextStyle(

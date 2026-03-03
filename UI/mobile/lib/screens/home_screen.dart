@@ -41,14 +41,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final userId = authProvider.user?.id ?? 0;
 
     if (mounted) {
-      Provider.of<ReservationProvider>(context, listen: false)
-          .getUserReservations(userId: userId);
-      Provider.of<PreferenceProvider>(context, listen: false)
-          .loadUserPreference(userId: userId);
+      Provider.of<ReservationProvider>(
+        context,
+        listen: false,
+      ).getUserReservations(userId: userId);
+      Provider.of<PreferenceProvider>(
+        context,
+        listen: false,
+      ).loadUserPreference(userId: userId);
       Provider.of<CityProvider>(context, listen: false).getAllCities();
-      
-      Provider.of<NotificationProvider>(context, listen: false)
-          .fetchUnreadCount(userId);
+
+      Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      ).fetchUnreadCount(userId);
     }
   }
 
@@ -58,8 +64,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _notificationTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
-        Provider.of<NotificationProvider>(context, listen: false)
-            .fetchUnreadCount(userId);
+        Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        ).fetchUnreadCount(userId);
       }
     });
   }
@@ -126,9 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildNavItem(index: 0, icon: Icons.directions_car, label: 'Vozila'),
           _buildNavItem(
-              index: 1,
-              icon: Icons.account_balance_wallet,
-              label: 'Novčanik'),
+            index: 1,
+            icon: Icons.account_balance_wallet,
+            label: 'Novčanik',
+          ),
           GestureDetector(
             onTap: () => _onItemTapped(2),
             child: Container(
@@ -154,11 +163,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           _buildNavItem(
-              index: 3,
-              icon: Icons.calendar_today,
-              label: 'Rezervacije'),
-          _buildNavItem(
-              index: 4, icon: Icons.settings, label: 'Postavke'),
+            index: 3,
+            icon: Icons.calendar_today,
+            label: 'Rezervacije',
+          ),
+          _buildNavItem(index: 4, icon: Icons.settings, label: 'Postavke'),
         ],
       ),
     );
@@ -177,8 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Icon(
             icon,
-            color:
-                isSelected ? AppColors.primary : AppColors.textSecondary,
+            color: isSelected ? AppColors.primary : AppColors.textSecondary,
             size: 24,
           ),
           const SizedBox(height: 4),
@@ -186,11 +194,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label,
             style: TextStyle(
               fontSize: 10,
-              color: isSelected
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
-              fontWeight:
-                  isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
         ],
@@ -241,7 +246,9 @@ class _NotificationBell extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       constraints: const BoxConstraints(
-                          minWidth: 16, minHeight: 16),
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
                       child: Text(
                         count > 99 ? '99+' : '$count',
                         style: const TextStyle(

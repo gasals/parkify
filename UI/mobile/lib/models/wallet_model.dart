@@ -19,15 +19,14 @@ class Wallet {
       userId: json['userId'],
       balance: (json['balance'] as num).toDouble(),
       created: DateTime.parse(json['created']),
-      modified: json['modified'] != null ? DateTime.parse(json['modified']) : null,
+      modified: json['modified'] != null
+          ? DateTime.parse(json['modified'])
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'balance': balance,
-    };
+    return {'userId': userId, 'balance': balance};
   }
 }
 
@@ -55,7 +54,9 @@ class WalletTransaction {
       amount: json['amount'].toDouble(),
       type: WalletTransactionType.fromValue(json['type']),
       created: DateTime.parse(json['created']),
-      modified: json['modified'] != null ? DateTime.parse(json['modified']) : null,
+      modified: json['modified'] != null
+          ? DateTime.parse(json['modified'])
+          : null,
     );
   }
 }
@@ -82,4 +83,3 @@ enum WalletTransactionType {
     return fromValue(value);
   }
 }
-

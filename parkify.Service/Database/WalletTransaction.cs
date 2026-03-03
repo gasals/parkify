@@ -1,7 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace parkify.Service.Database
+﻿namespace parkify.Service.Database
 {
     public class WalletTransaction
     {

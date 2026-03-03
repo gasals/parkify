@@ -87,7 +87,7 @@ class UserProvider extends ChangeNotifier {
         firstName: firstName,
         lastName: lastName,
         address: address,
-        city: city
+        city: city,
       );
 
       final newUser = User.fromJson(result);

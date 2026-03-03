@@ -50,7 +50,8 @@ class Reservation {
   factory Reservation.fromJson(Map<String, dynamic> json) {
     final start = DateTime.parse(json['reservationStart'] as String? ?? '');
     final end = DateTime.parse(json['reservationEnd'] as String? ?? '');
-    final duration = (json['durationInHours'] as int?) ??
+    final duration =
+        (json['durationInHours'] as int?) ??
         (end.difference(start).inMinutes / 60).ceil();
 
     return Reservation(

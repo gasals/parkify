@@ -19,8 +19,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final prefProvider = Provider.of<PreferenceProvider>(context, listen: false);
-      
+      final prefProvider = Provider.of<PreferenceProvider>(
+        context,
+        listen: false,
+      );
+
       if (authProvider.user != null) {
         prefProvider.loadUserPreference(userId: authProvider.user!.id);
       }
@@ -37,7 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           final user = authProvider.user;
-          
+
           if (user == null) {
             return const Center(child: Text('Korisnik nije pronađen'));
           }
@@ -69,10 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const Text(
             'Profil',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Container(
@@ -96,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 Text(
                   user.username,
                   style: const TextStyle(
@@ -105,11 +105,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.email, size: 16, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.email,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       user.email,
@@ -121,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 Row(
                   children: [
                     Expanded(
@@ -163,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final prefCity = pref?.preferredCityId != null
             ? cityProvider.findCityById(pref!.preferredCityId!)
             : null;
-        
+
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -171,14 +175,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const Text(
                 'Moje preference',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.location_city, color: AppColors.primary),
+                leading: const Icon(
+                  Icons.location_city,
+                  color: AppColors.primary,
+                ),
                 title: const Text('Grad'),
                 subtitle: Text(prefCity?.name ?? 'Nije odabran'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -189,13 +193,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               _buildSwitchTile(
                 icon: Icons.near_me,
                 title: 'Preferiram blizu mene',
                 value: pref?.prefersNearby ?? false,
                 onChanged: (value) {
-                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
                   prefProvider.updatePreference(
                     userId: authProvider.user!.id,
                     prefersNearby: value,
@@ -203,13 +210,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              
+
               _buildSwitchTile(
                 icon: Icons.notifications,
                 title: 'Obavijesti o ponudama',
                 value: pref?.notifyAboutOffers ?? false,
                 onChanged: (value) {
-                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
                   prefProvider.updatePreference(
                     userId: authProvider.user!.id,
                     notifyAboutOffers: value,
@@ -242,10 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Icon(icon, color: AppColors.primary),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: const TextStyle(fontSize: 14),
-              ),
+              Text(title, style: const TextStyle(fontSize: 14)),
             ],
           ),
           Switch(
@@ -266,10 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const Text(
             'Akcije',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -297,10 +301,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const Text(
             'Informacije',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           ListTile(
@@ -377,10 +378,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () {
               Navigator.of(context).pop();
               Provider.of<AuthProvider>(context, listen: false).logout();
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/login',
-                (route) => false,
-              );
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/login', (route) => false);
             },
             child: const Text('Odjavi se'),
           ),
@@ -409,10 +409,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text('3. Postavi vrijeme i trajanje'),
               Text('4. Plaćaj i rezerviši'),
               SizedBox(height: 16),
-              Text(
-                '⭐ Favorite',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              Text('⭐ Favorite', style: TextStyle(fontWeight: FontWeight.bold)),
               SizedBox(height: 8),
               Text('Klikni na zvjezdicu da označiš parking kao favorit'),
               SizedBox(height: 16),
@@ -447,10 +444,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 'Parkify',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
               Text('Verzija: 1.0.0'),

@@ -28,10 +28,6 @@ namespace parkify.API.Controllers
         public override Notification GetById(int id)
             => base.GetById(id);
 
-        /// <summary>
-        /// Admin šalje notifikaciju jednom korisniku.
-        /// POST /api/Notification/send
-        /// </summary>
         [HttpPost("send")]
         [Authorize(Roles = "Admin")]
         public IActionResult SendToUser([FromBody] NotificationInsertRequest request)
@@ -40,10 +36,6 @@ namespace parkify.API.Controllers
             return Ok(new { Message = "Notifikacija je poslana." });
         }
 
-        /// <summary>
-        /// Admin šalje notifikaciju svim korisnicima.
-        /// POST /api/Notification/send-all
-        /// </summary>
         [HttpPost("send-all")]
         [Authorize(Roles = "Admin")]
         public IActionResult SendToAll([FromBody] NotificationInsertRequest request)
@@ -52,10 +44,6 @@ namespace parkify.API.Controllers
             return Ok(new { Message = "Notifikacija je poslana svim korisnicima." });
         }
 
-        /// <summary>
-        /// Označi notifikaciju kao pročitanu.
-        /// PATCH /api/Notification/{id}/read
-        /// </summary>
         [HttpPatch("{id}/read")]
         [Authorize]
         public IActionResult MarkAsRead(int id)

@@ -21,7 +21,8 @@ class AuthProvider extends ChangeNotifier {
       final result = await ApiService.login(username, password);
 
       if (result['isAdmin'] == true || result['isActive'] == false) {
-        _errorMessage = "Neuspješna prijava. Provjerite podatke ili kontaktirajte podršku.";
+        _errorMessage =
+            "Neuspješna prijava. Provjerite podatke ili kontaktirajte podršku.";
         notifyListeners();
         return false;
       }

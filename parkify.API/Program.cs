@@ -1,16 +1,13 @@
 using Mapster;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using parkify.API.Filters;
+using parkify.RabbitMQ;
 using parkify.Service.Database;
 using parkify.Service.Interfaces;
 using parkify.Service.Services;
-using parkify.API.Filters;
-using Microsoft.AspNetCore.Authentication;
-using parkify.API.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using parkify.RabbitMQ;
-using parkify.Service.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

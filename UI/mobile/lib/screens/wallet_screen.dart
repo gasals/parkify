@@ -136,8 +136,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         : ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount:
-                                walletProvider.walletTransactions.length,
+                            itemCount: walletProvider.walletTransactions.length,
                             itemBuilder: (context, index) {
                               final transaction =
                                   walletProvider.walletTransactions[index];

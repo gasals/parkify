@@ -50,21 +50,33 @@ class Reservation {
       userId: json['userId'] ?? 0,
       parkingZoneId: json['parkingZoneId'] ?? 0,
       parkingSpotId: json['parkingSpotId'] ?? 0,
-      reservationStart: DateTime.parse(json['reservationStart'] ?? DateTime.now().toString()),
-      reservationEnd: DateTime.parse(json['reservationEnd'] ?? DateTime.now().toString()),
+      reservationStart: DateTime.parse(
+        json['reservationStart'] ?? DateTime.now().toString(),
+      ),
+      reservationEnd: DateTime.parse(
+        json['reservationEnd'] ?? DateTime.now().toString(),
+      ),
       durationInHours: json['durationInHours'] ?? 0,
       status: json['status'] ?? 1,
       isCheckedIn: json['isCheckedIn'] ?? false,
       isCheckedOut: json['isCheckedOut'] ?? false,
       calculatedPrice: (json['calculatedPrice'] ?? 0).toDouble(),
-      discountAmount: json['discountAmount'] != null ? (json['discountAmount']).toDouble() : null,
+      discountAmount: json['discountAmount'] != null
+          ? (json['discountAmount']).toDouble()
+          : null,
       finalPrice: (json['finalPrice'] ?? 0).toDouble(),
       requiresDisabledSpot: json['requiresDisabledSpot'] ?? false,
       notes: json['notes'] ?? '',
       created: DateTime.parse(json['created'] ?? DateTime.now().toString()),
-      modified: json['modified'] != null ? DateTime.parse(json['modified']) : null,
-      checkInTime: json['checkInTime'] != null ? DateTime.parse(json['checkInTime']) : null,
-      checkOutTime: json['checkOutTime'] != null ? DateTime.parse(json['checkOutTime']) : null,
+      modified: json['modified'] != null
+          ? DateTime.parse(json['modified'])
+          : null,
+      checkInTime: json['checkInTime'] != null
+          ? DateTime.parse(json['checkInTime'])
+          : null,
+      checkOutTime: json['checkOutTime'] != null
+          ? DateTime.parse(json['checkOutTime'])
+          : null,
     );
   }
 

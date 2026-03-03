@@ -19,12 +19,12 @@ class WalletProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final result = await ApiService.getUserWallet(userId);
-      
+
       final List<dynamic> results = result['results'] ?? [];
       if (results.isNotEmpty) {
         _userWallet = Wallet.fromJson(results.first as Map<String, dynamic>);
       }
-      
+
       _errorMessage = null;
     } catch (e) {
       _errorMessage = e.toString();
@@ -40,14 +40,15 @@ class WalletProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final result = await ApiService.getWalletHistory(walletId);
-      
+
       final List<dynamic> results = result['results'] ?? [];
       _walletTransactions = results
-          .map((data) => WalletTransaction.fromJson(data as Map<String, dynamic>))
+          .map(
+            (data) => WalletTransaction.fromJson(data as Map<String, dynamic>),
+          )
           .toList();
-      
+
       _walletTransactions.sort((a, b) => b.created.compareTo(a.created));
-      
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -55,5 +56,4 @@ class WalletProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
 }

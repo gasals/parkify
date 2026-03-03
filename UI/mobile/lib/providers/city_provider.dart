@@ -19,7 +19,10 @@ class CityProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.getAllCities(page: page, pageSize: pageSize);
+      final result = await ApiService.getAllCities(
+        page: page,
+        pageSize: pageSize,
+      );
       final resultsList = result['results'] as List? ?? [];
 
       _cities = resultsList
@@ -64,7 +67,9 @@ class CityProvider extends ChangeNotifier {
 
   City? findCityByName(String name) {
     try {
-      return _cities.firstWhere((city) => city.name.toLowerCase() == name.toLowerCase());
+      return _cities.firstWhere(
+        (city) => city.name.toLowerCase() == name.toLowerCase(),
+      );
     } catch (e) {
       return null;
     }

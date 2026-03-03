@@ -467,7 +467,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        if ((!reservation.isCheckedIn || !reservation.isCheckedOut) && reservation.status == 2)
+        if ((!reservation.isCheckedIn || !reservation.isCheckedOut) &&
+            reservation.status == 2)
           Expanded(
             child: OutlinedButton.icon(
               icon: Icon(
@@ -492,7 +493,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                 ),
               ),
               label: Text(
-                !reservation.isCheckedIn? 'CHECK-IN' : 'CHECK-OUT',
+                !reservation.isCheckedIn ? 'CHECK-IN' : 'CHECK-OUT',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -509,8 +510,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     ReservationProvider provider,
   ) async {
     final success = await provider.checkInReservation(reservation.id);
-    if(mounted) {
-      if(success) {
+    if (mounted) {
+      if (success) {
         SnackBarHelper.showSuccess(context, 'Check-in uspješan');
       } else {
         SnackBarHelper.showError(context, 'Check-in nije uspio');
@@ -523,8 +524,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     ReservationProvider provider,
   ) async {
     final success = await provider.checkOutReservation(reservation.id);
-    if(mounted) {
-      if(success) {
+    if (mounted) {
+      if (success) {
         SnackBarHelper.showSuccess(context, 'Check-out uspješan');
       } else {
         SnackBarHelper.showError(context, 'Check-out nije uspio');

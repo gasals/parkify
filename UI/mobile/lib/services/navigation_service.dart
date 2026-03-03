@@ -13,10 +13,7 @@ class NavigationService {
           .replaceFirst('{lng}', destinationLng.toString());
       final Uri uri = Uri.parse(googleMapsUrl);
       if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         throw 'Greška: Ne mogu otvoriti Google Maps';
       }

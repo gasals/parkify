@@ -42,14 +42,13 @@ namespace parkify.Service.Services
             var db = scope.ServiceProvider.GetRequiredService<Database.ParkifyContext>();
             var now = DateTime.UtcNow;
 
-            // Nadolazeće rezervacije u narednih 31 min
             var upcoming = await db.Reservations
-                .Where(r =>
-                    r.Status == Database.ReservationStatus.Confirmed &&
-                    !r.IsCheckedIn &&
-                    r.ReservationStart > now &&
-                    r.ReservationStart <= now.AddMinutes(31))
-                .ToListAsync();
+    .Where(r =>
+        r.Status == Database.ReservationStatus.Confirmed &&
+        !r.IsCheckedIn &&
+        r.ReservationStart > now &&
+        r.ReservationStart <= now.AddMinutes(31))
+    .ToListAsync();
 
             foreach (var r in upcoming)
             {
@@ -68,14 +67,13 @@ namespace parkify.Service.Services
                         "Vaša rezervacija počinje za 15 minuta.");
             }
 
-            // Kasni check-in: prošlo 15-16 min od starta, još nema check-in
             var late = await db.Reservations
-                .Where(r =>
-                    r.Status == Database.ReservationStatus.Confirmed &&
-                    !r.IsCheckedIn &&
-                    r.ReservationStart <= now.AddMinutes(-15) &&
-                    r.ReservationStart >= now.AddMinutes(-16))
-                .ToListAsync();
+    .Where(r =>
+        r.Status == Database.ReservationStatus.Confirmed &&
+        !r.IsCheckedIn &&
+        r.ReservationStart <= now.AddMinutes(-15) &&
+        r.ReservationStart >= now.AddMinutes(-16))
+    .ToListAsync();
 
             foreach (var r in late)
                 await PublishIfNotSentAsync(db, r.UserId, r.Id,
@@ -90,11 +88,10 @@ namespace parkify.Service.Services
             Database.NotificationType type,
             string title, string message)
         {
-            // Idempotency — ne šalji isti tip notifikacije za istu rezervaciju dvaput
             var alreadySent = await db.Notifications.AnyAsync(n =>
-                n.UserId == userId &&
-                n.ReservationId == reservationId &&
-                n.Type == type);
+    n.UserId == userId &&
+    n.ReservationId == reservationId &&
+    n.Type == type);
 
             if (alreadySent) return;
 

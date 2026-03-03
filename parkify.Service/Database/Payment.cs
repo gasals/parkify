@@ -1,4 +1,4 @@
-﻿namespace parkify.Service.Database  
+﻿namespace parkify.Service.Database
 {
     public class Payment
     {

@@ -17,26 +17,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   int _selectedIndex = 0;
 
   final List<AdminMenuItem> _menuItems = [
-    AdminMenuItem(
-      icon: Icons.local_parking,
-      label: 'Parking zone',
-      index: 0,
-    ),
-    AdminMenuItem(
-      icon: Icons.calendar_today,
-      label: 'Rezervacije',
-      index: 1,
-    ),
-    AdminMenuItem(
-      icon: Icons.people,
-      label: 'Korisnici',
-      index: 2,
-    ),
-    AdminMenuItem(
-      icon: Icons.notifications,
-      label: 'Notifikacije',
-      index: 3,
-    )
+    AdminMenuItem(icon: Icons.local_parking, label: 'Parking zone', index: 0),
+    AdminMenuItem(icon: Icons.calendar_today, label: 'Rezervacije', index: 1),
+    AdminMenuItem(icon: Icons.people, label: 'Korisnici', index: 2),
+    AdminMenuItem(icon: Icons.notifications, label: 'Notifikacije', index: 3),
   ];
 
   @override
@@ -46,9 +30,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       body: Row(
         children: [
           _buildSidebar(),
-          Expanded(
-            child: _buildContent(),
-          ),
+          Expanded(child: _buildContent()),
         ],
       ),
     );
@@ -149,8 +131,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       color: isSelected
                           ? const Color(0xFF6366F1)
                           : Colors.grey[700],
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                   selected: isSelected,
@@ -166,10 +149,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             padding: const EdgeInsets.all(20),
             child: ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text(
-                'Odjava',
-                style: TextStyle(color: Colors.red),
-              ),
+              title: const Text('Odjava', style: TextStyle(color: Colors.red)),
               onTap: () {
                 Provider.of<AuthProvider>(context, listen: false).logout();
               },
@@ -201,9 +181,5 @@ class AdminMenuItem {
   final String label;
   final int index;
 
-  AdminMenuItem({
-    required this.icon,
-    required this.label,
-    required this.index,
-  });
+  AdminMenuItem({required this.icon, required this.label, required this.index});
 }

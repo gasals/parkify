@@ -1,5 +1,4 @@
 using MapsterMapper;
-using Microsoft.EntityFrameworkCore;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -7,7 +6,7 @@ using parkify.Service.Interfaces;
 
 namespace parkify.Service.Services
 {
-    public class PreferenceService 
+    public class PreferenceService
         : BaseCRUDService<Preference, PreferenceSearch, Database.Preference, PreferenceInsertRequest, PreferenceUpdateRequest>,
           IPreferenceService
     {

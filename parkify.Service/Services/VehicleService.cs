@@ -3,7 +3,6 @@ using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
-using System.Linq;
 
 namespace parkify.Service.Services
 {

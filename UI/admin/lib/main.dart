@@ -32,9 +32,7 @@ class AdminDesktopApp extends StatelessWidget {
         title: 'Parkify Admin Panel',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF6366F1),
-          ),
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6366F1)),
         ),
         home: _buildHome(),
         debugShowCheckedModeBanner: false,

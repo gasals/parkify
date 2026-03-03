@@ -14,7 +14,9 @@ class ReservationProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get hasMore => _hasMore;
 
-  Future<Reservation> createReservation(Map<String, dynamic> reservationData) async {
+  Future<Reservation> createReservation(
+    Map<String, dynamic> reservationData,
+  ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -35,10 +37,7 @@ class ReservationProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> getUserReservations({
-    required int userId,
-    int page = 1,
-  }) async {
+  Future<void> getUserReservations({required int userId, int page = 1}) async {
     if (page == 1) {
       _isLoading = true;
       _reservations = [];

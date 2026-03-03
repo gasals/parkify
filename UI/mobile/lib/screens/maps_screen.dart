@@ -43,8 +43,14 @@ class _MapsScreenState extends State<MapsScreen> {
 
   Future<void> _loadPreferencesAndZones() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final zoneProvider = Provider.of<ParkingZoneProvider>(context, listen: false);
-    final preferenceProvider = Provider.of<PreferenceProvider>(context, listen: false);
+    final zoneProvider = Provider.of<ParkingZoneProvider>(
+      context,
+      listen: false,
+    );
+    final preferenceProvider = Provider.of<PreferenceProvider>(
+      context,
+      listen: false,
+    );
     final cityProvider = Provider.of<CityProvider>(context, listen: false);
 
     final userId = authProvider.user?.id;
@@ -68,8 +74,10 @@ class _MapsScreenState extends State<MapsScreen> {
 
   void _animateToPreferredCity(CityProvider cityProvider) {
     if (_userPreference?.preferredCityId != null && _mapController != null) {
-      final preferredCity = cityProvider.findCityById(_userPreference!.preferredCityId!);
-      
+      final preferredCity = cityProvider.findCityById(
+        _userPreference!.preferredCityId!,
+      );
+
       if (preferredCity != null) {
         _mapController?.animateCamera(
           CameraUpdate.newLatLng(
@@ -114,8 +122,10 @@ class _MapsScreenState extends State<MapsScreen> {
           snippet: '${zone.pricePerHour}KM/h',
         ),
         onTap: () async {
-          final reviewProvider =
-              Provider.of<ReviewProvider>(context, listen: false);
+          final reviewProvider = Provider.of<ReviewProvider>(
+            context,
+            listen: false,
+          );
           await reviewProvider.getZoneReviews(parkingZoneId: zone.id);
 
           setState(() {
@@ -131,7 +141,10 @@ class _MapsScreenState extends State<MapsScreen> {
 
   Future<void> _toggleFavorite(ParkingZone zone) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final preferenceProvider = Provider.of<PreferenceProvider>(context, listen: false);
+    final preferenceProvider = Provider.of<PreferenceProvider>(
+      context,
+      listen: false,
+    );
 
     try {
       final isFavorite = zone.isFavorite;
@@ -144,19 +157,24 @@ class _MapsScreenState extends State<MapsScreen> {
 
       setState(() {
         for (var z in _filteredZones) {
-          z.isFavorite = preferenceProvider.userPreference?.favoriteParkingZoneId == z.id;
+          z.isFavorite =
+              preferenceProvider.userPreference?.favoriteParkingZoneId == z.id;
         }
-        
+
         if (_selectedZone != null) {
-          _selectedZone!.isFavorite = preferenceProvider.userPreference?.favoriteParkingZoneId == _selectedZone!.id;
+          _selectedZone!.isFavorite =
+              preferenceProvider.userPreference?.favoriteParkingZoneId ==
+              _selectedZone!.id;
         }
-        
+
         _userPreference = preferenceProvider.userPreference;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(zone.isFavorite ? 'Dodano u favorite' : 'Uklonjeno iz favorite'),
+          content: Text(
+            zone.isFavorite ? 'Dodano u favorite' : 'Uklonjeno iz favorite',
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -189,7 +207,9 @@ class _MapsScreenState extends State<MapsScreen> {
           }
 
           final favoriteZone = _userPreference?.favoriteParkingZoneId != null
-              ? _filteredZones.firstWhereOrNull((zone) => zone.id == _userPreference?.favoriteParkingZoneId)
+              ? _filteredZones.firstWhereOrNull(
+                  (zone) => zone.id == _userPreference?.favoriteParkingZoneId,
+                )
               : null;
 
           return Stack(
@@ -226,15 +246,15 @@ class _MapsScreenState extends State<MapsScreen> {
                       );
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.amber,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                          ),
+                          BoxShadow(color: Colors.black12, blurRadius: 4),
                         ],
                       ),
                       child: Row(
@@ -268,17 +288,17 @@ class _MapsScreenState extends State<MapsScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4,
-                      ),
+                      BoxShadow(color: Colors.black12, blurRadius: 4),
                     ],
                   ),
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Upišite lokaciju...',
-                      prefixIcon: Icon(Icons.location_on, color: AppColors.primary),
+                      prefixIcon: Icon(
+                        Icons.location_on,
+                        color: AppColors.primary,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? GestureDetector(
                               onTap: () {
@@ -286,12 +306,17 @@ class _MapsScreenState extends State<MapsScreen> {
                                 setState(() => _searchQuery = '');
                                 _filterZones(provider.parkingZones);
                               },
-                              child: Icon(Icons.close, color: AppColors.textSecondary),
+                              child: Icon(
+                                Icons.close,
+                                color: AppColors.textSecondary,
+                              ),
                             )
                           : null,
                       border: InputBorder.none,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                     onChanged: (value) {
                       setState(() => _searchQuery = value);
@@ -311,21 +336,22 @@ class _MapsScreenState extends State<MapsScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 4,
-                        ),
+                        BoxShadow(color: Colors.black12, blurRadius: 4),
                       ],
                     ),
                     child: ListView.builder(
                       shrinkWrap: true,
-                      itemCount:
-                          _filteredZones.length > 5 ? 5 : _filteredZones.length,
+                      itemCount: _filteredZones.length > 5
+                          ? 5
+                          : _filteredZones.length,
                       itemBuilder: (context, index) {
                         final zone = _filteredZones[index];
                         return ListTile(
-                          leading: Icon(Icons.location_on,
-                              color: AppColors.primary, size: 18),
+                          leading: Icon(
+                            Icons.location_on,
+                            color: AppColors.primary,
+                            size: 18,
+                          ),
                           title: Text(
                             zone.name,
                             style: const TextStyle(fontSize: 14),
@@ -339,7 +365,9 @@ class _MapsScreenState extends State<MapsScreen> {
                             FocusScope.of(context).unfocus();
                             setState(() {
                               _selectedZone = zone;
-                              _selectedZone!.isFavorite = _userPreference?.favoriteParkingZoneId == zone.id;
+                              _selectedZone!.isFavorite =
+                                  _userPreference?.favoriteParkingZoneId ==
+                                  zone.id;
                               _sheetState = BottomSheetState.info;
                               _searchQuery = '';
                             });
@@ -372,9 +400,7 @@ class _MapsScreenState extends State<MapsScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(20),
-          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: [
             BoxShadow(
               color: Colors.black12,
@@ -462,133 +488,128 @@ class _MapsScreenState extends State<MapsScreen> {
   }
 
   Widget _buildInfoPanel(BuildContext context) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                '${_selectedZone!.address}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) =>
-                    ReviewsScreen(parkingZone: _selectedZone!),
-              ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.primary, width: 1),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.star, size: 18, color: Colors.amber),
-                const SizedBox(width: 8),
-                Text(
-                  _selectedZone!.averageRating.toStringAsFixed(1),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  '${_selectedZone!.address}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '(${_selectedZone!.reviewCount} ocjena)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-                Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.primary),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildInfoChip(
-              '${_selectedZone!.availableSpots}',
-              'Dostupna',
-            ),
-            _buildInfoChip(
-              '${_selectedZone!.disabledSpots}',
-              'Invalidska',
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton(
-            onPressed: () async {
-              final zoneProvider = Provider.of<ParkingZoneProvider>(context, listen: false);
-              await zoneProvider.getParkingZoneById(_selectedZone!.id);
-              await Navigator.of(context).push(
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) =>
-                      ParkingDetailsScreen(parkingZone: _selectedZone!),
+                      ReviewsScreen(parkingZone: _selectedZone!),
                 ),
               );
-              setState(() {
-                _sheetState = BottomSheetState.closed;
-                _selectedZone = null;
-              });
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
-            child: const Text(
-              'Odaberite mjesto',
-              style: TextStyle(color: Colors.white),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.primary, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.star, size: 18, color: Colors.amber),
+                  const SizedBox(width: 8),
+                  Text(
+                    _selectedZone!.averageRating.toStringAsFixed(1),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '(${_selectedZone!.reviewCount} ocjena)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildInfoChip('${_selectedZone!.availableSpots}', 'Dostupna'),
+              _buildInfoChip('${_selectedZone!.disabledSpots}', 'Invalidska'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () async {
+                final zoneProvider = Provider.of<ParkingZoneProvider>(
+                  context,
+                  listen: false,
+                );
+                await zoneProvider.getParkingZoneById(_selectedZone!.id);
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ParkingDetailsScreen(parkingZone: _selectedZone!),
+                  ),
+                );
+                setState(() {
+                  _sheetState = BottomSheetState.closed;
+                  _selectedZone = null;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text(
+                'Odaberite mjesto',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
 
   Widget _buildInfoChip(String value, String label) {
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
         ),
       ],
     );

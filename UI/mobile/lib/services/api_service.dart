@@ -90,7 +90,7 @@ class ApiService {
           .timeout(_timeout);
 
       final data = await _handleResponse(response);
-      
+
       if (data.containsKey('token')) {
         setToken(data['token']);
       }
@@ -232,7 +232,10 @@ class ApiService {
   static Future<Map<String, dynamic>> getParkingSpotsByZoneId(int id) async {
     try {
       final response = await http
-          .get(Uri.parse('${AppUrls.parkingSpots}?parkingZoneId=$id'), headers: _getHeaders())
+          .get(
+            Uri.parse('${AppUrls.parkingSpots}?parkingZoneId=$id'),
+            headers: _getHeaders(),
+          )
           .timeout(_timeout);
 
       return await _handleResponse(response);
@@ -539,7 +542,7 @@ class ApiService {
       throw Exception('Greška pri dodavanju vozila: $e');
     }
   }
-  
+
   static Future<Map<String, dynamic>> updateVehicle({
     required int vehicleId,
     required int userId,
@@ -586,17 +589,17 @@ class ApiService {
 
   static Future<dynamic> getWalletHistory(int walletId) async {
     try {
-        final response = await http
-            .get(
-              Uri.parse('${AppUrls.walletTransactions}?WalletId=$walletId'),
-              headers: _getHeaders(),
-            )
-            .timeout(_timeout);
+      final response = await http
+          .get(
+            Uri.parse('${AppUrls.walletTransactions}?WalletId=$walletId'),
+            headers: _getHeaders(),
+          )
+          .timeout(_timeout);
 
-        return await _handleResponse(response);
-      } catch (e) {
-        throw Exception('Greška pri učitavanju novčanika: $e');
-      }
+      return await _handleResponse(response);
+    } catch (e) {
+      throw Exception('Greška pri učitavanju novčanika: $e');
+    }
   }
 
   static Future<Map<String, dynamic>> getNotifications({
@@ -616,10 +619,7 @@ class ApiService {
       );
 
       final response = await http
-          .get(
-            _buildUri(AppUrls.notifications, params),
-            headers: _getHeaders(),
-          )
+          .get(_buildUri(AppUrls.notifications, params), headers: _getHeaders())
           .timeout(_timeout);
 
       return await _handleResponse(response);
@@ -644,8 +644,7 @@ class ApiService {
     }
   }
 
-  static Future<void> sendNotificationToAll(
-      Map<String, dynamic> body) async {
+  static Future<void> sendNotificationToAll(Map<String, dynamic> body) async {
     try {
       final response = await http
           .post(
@@ -677,5 +676,4 @@ class ApiService {
       throw Exception('Greška pri označavanju notifikacije: $e');
     }
   }
-
 }

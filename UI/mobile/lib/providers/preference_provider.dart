@@ -104,7 +104,8 @@ class PreferenceProvider extends ChangeNotifier {
       if (favoriteParkingZoneId != null) {
         data['favoriteParkingZoneId'] = favoriteParkingZoneId;
       }
-      if (notifyAboutOffers != null) data['notifyAboutOffers'] = notifyAboutOffers;
+      if (notifyAboutOffers != null)
+        data['notifyAboutOffers'] = notifyAboutOffers;
 
       final result = await ApiService.updateUserPreferences(
         userId: userId,

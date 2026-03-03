@@ -30,9 +30,7 @@ class Preference {
       preferredCityId: json['preferredCityId'],
       favoriteParkingZoneId: json['favoriteParkingZoneId'],
       notifyAboutOffers: json['notifyAboutOffers'] ?? true,
-      created: DateTime.parse(
-        json['created'] ?? DateTime.now().toString(),
-      ),
+      created: DateTime.parse(json['created'] ?? DateTime.now().toString()),
       modified: json['modified'] != null
           ? DateTime.parse(json['modified'])
           : null,

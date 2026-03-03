@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace parkify.Model.Requests
+﻿namespace parkify.Model.Requests
 {
     public class VehicleInsertRequest
     {

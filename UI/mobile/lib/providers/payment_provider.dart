@@ -152,11 +152,11 @@ class PaymentProvider extends ChangeNotifier {
 
     try {
       final result = await ApiService.getPayments(walletId: walletId);
-      
+
       _walletPayments = (result['results'] as List)
           .map((e) => Payment.fromJson(e as Map<String, dynamic>))
           .toList();
-      
+
       _errorMessage = null;
     } catch (e) {
       _errorMessage = e.toString();
@@ -165,7 +165,7 @@ class PaymentProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
-}
+  }
 
   void clearError() {
     _errorMessage = null;

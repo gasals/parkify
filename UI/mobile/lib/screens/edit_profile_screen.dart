@@ -22,11 +22,13 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     super.initState();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
-    
+
     _emailController = TextEditingController(text: user?.email ?? '');
     _firstNameController = TextEditingController(text: user?.firstName ?? '');
     _lastNameController = TextEditingController(text: user?.lastName ?? '');
-    _phoneNumberController = TextEditingController(text: user?.phoneNumber ?? '');
+    _phoneNumberController = TextEditingController(
+      text: user?.phoneNumber ?? '',
+    );
   }
 
   @override
@@ -57,10 +59,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               children: [
                 const Text(
                   'Uredi profil',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -69,7 +68,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               ],
             ),
             const SizedBox(height: 24),
-            
+
             TextField(
               controller: _emailController,
               decoration: InputDecoration(
@@ -82,7 +81,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             TextField(
               controller: _firstNameController,
               decoration: InputDecoration(
@@ -95,7 +94,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             TextField(
               controller: _lastNameController,
               decoration: InputDecoration(
@@ -108,7 +107,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             TextField(
               controller: _phoneNumberController,
               keyboardType: TextInputType.phone,
@@ -122,7 +121,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             Row(
               children: [
                 Expanded(
@@ -179,12 +178,14 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       final success = await authProvider.updateUser(
         email: _emailController.text,
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
-        phoneNumber: _phoneNumberController.text.isEmpty ? null : _phoneNumberController.text,
+        phoneNumber: _phoneNumberController.text.isEmpty
+            ? null
+            : _phoneNumberController.text,
       );
 
       if (success && mounted) {
@@ -206,10 +207,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Greška: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {

@@ -3,10 +3,10 @@ using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Globalization;
 
 namespace parkify.Service.Services
 {

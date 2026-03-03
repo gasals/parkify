@@ -19,7 +19,10 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
   @override
   void initState() {
     super.initState();
-    final prefProvider = Provider.of<PreferenceProvider>(context, listen: false);
+    final prefProvider = Provider.of<PreferenceProvider>(
+      context,
+      listen: false,
+    );
     _selectedCityId = prefProvider.userPreference?.preferredCityId;
   }
 
@@ -37,10 +40,7 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
               children: [
                 const Text(
                   'Odaberi preferentni grad',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -49,7 +49,7 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
               ],
             ),
             const SizedBox(height: 24),
-            
+
             Consumer<CityProvider>(
               builder: (context, cityProvider, _) {
                 if (cityProvider.isLoading) {
@@ -57,7 +57,7 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
                 }
 
                 final cities = cityProvider.cities;
-                
+
                 if (cities.isEmpty) {
                   return const Center(child: Text('Nema dostupnih gradova'));
                 }
@@ -69,7 +69,7 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
                   itemBuilder: (context, index) {
                     final city = cities[index];
                     final isSelected = _selectedCityId == city.id;
-                    
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: RadioListTile<int>(
@@ -80,8 +80,9 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
                         },
                         title: Row(
                           children: [
-                            const Icon(Icons.location_city, 
-                              color: AppColors.primary, 
+                            const Icon(
+                              Icons.location_city,
+                              color: AppColors.primary,
                               size: 20,
                             ),
                             const SizedBox(width: 12),
@@ -101,9 +102,9 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
                           ),
                         ),
                         activeColor: AppColors.primary,
-                        tileColor: isSelected 
-                          ? AppColors.primary.withOpacity(0.1) 
-                          : null,
+                        tileColor: isSelected
+                            ? AppColors.primary.withOpacity(0.1)
+                            : null,
                       ),
                     );
                   },
@@ -111,7 +112,7 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
               },
             ),
             const SizedBox(height: 24),
-            
+
             Row(
               children: [
                 Expanded(
@@ -165,8 +166,11 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final prefProvider = Provider.of<PreferenceProvider>(context, listen: false);
-      
+      final prefProvider = Provider.of<PreferenceProvider>(
+        context,
+        listen: false,
+      );
+
       await prefProvider.updatePreferredCity(
         userId: authProvider.user!.id,
         cityId: _selectedCityId!,
@@ -181,10 +185,7 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Greška: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {

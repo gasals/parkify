@@ -15,7 +15,9 @@ class ApiService {
     'ngrok-skip-browser-warning': 'true',
   };
 
-  static Future<Map<String, dynamic>> _handleResponse(http.Response response) async {
+  static Future<Map<String, dynamic>> _handleResponse(
+    http.Response response,
+  ) async {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else if (response.statusCode == 401) {
@@ -46,13 +48,20 @@ class ApiService {
   }
 
   static Uri _buildUri(String endpoint, Map<String, String> params) =>
-      Uri.parse(endpoint).replace(queryParameters: params.isNotEmpty ? params : null);
+      Uri.parse(
+        endpoint,
+      ).replace(queryParameters: params.isNotEmpty ? params : null);
 
-  static Future<Map<String, dynamic>> login(String username, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String username,
+    String password,
+  ) async {
     try {
       final response = await http
           .post(
-            Uri.parse('${AppUrls.users}/login?username=$username&password=$password'),
+            Uri.parse(
+              '${AppUrls.users}/login?username=$username&password=$password',
+            ),
             headers: _getHeaders(),
           )
           .timeout(_timeout);
@@ -66,10 +75,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getUserById(int userId) async {
     try {
       final response = await http
-          .get(
-            Uri.parse('${AppUrls.users}/$userId'),
-            headers: _getHeaders(),
-          )
+          .get(Uri.parse('${AppUrls.users}/$userId'), headers: _getHeaders())
           .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
@@ -87,7 +93,10 @@ class ApiService {
           .put(
             Uri.parse('${AppUrls.users}/$userId/change-password'),
             headers: _getHeaders(),
-            body: jsonEncode({'password': password, 'passwordConfirm': passwordConfirm}),
+            body: jsonEncode({
+              'password': password,
+              'passwordConfirm': passwordConfirm,
+            }),
           )
           .timeout(_timeout);
 
@@ -97,7 +106,6 @@ class ApiService {
     }
   }
 
-  // USERS
   static Future<Map<String, dynamic>> searchUsers({
     String? username,
     String? email,
@@ -110,20 +118,32 @@ class ApiService {
       final params = await _buildQueryParams(
         page: page,
         pageSize: pageSize,
-        filters: {'username': username, 'email': email, 'firstName': firstName, 'lastName': lastName},
+        filters: {
+          'username': username,
+          'email': email,
+          'firstName': firstName,
+          'lastName': lastName,
+        },
       );
 
-      final response = await http.get(_buildUri(AppUrls.users, params), headers: _getHeaders()).timeout(_timeout);
+      final response = await http
+          .get(_buildUri(AppUrls.users, params), headers: _getHeaders())
+          .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
       throw Exception('Greška pri pretrazi korisnika: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> getAllUsers({int page = 1, int pageSize = 1000}) async {
+  static Future<Map<String, dynamic>> getAllUsers({
+    int page = 1,
+    int pageSize = 1000,
+  }) async {
     try {
       final params = await _buildQueryParams(page: page, pageSize: pageSize);
-      final response = await http.get(_buildUri(AppUrls.users, params), headers: _getHeaders()).timeout(_timeout);
+      final response = await http
+          .get(_buildUri(AppUrls.users, params), headers: _getHeaders())
+          .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
       throw Exception('Greška pri preuzimanju korisnika: $e');
@@ -154,7 +174,7 @@ class ApiService {
               'lastName': lastName,
               'address': address ?? '',
               'city': city ?? '',
-              'isAdmin': true
+              'isAdmin': true,
             }),
           )
           .timeout(_timeout);
@@ -214,11 +234,15 @@ class ApiService {
     }
   }
 
-  // CITIES
-  static Future<Map<String, dynamic>> getAllCities({int page = 1, int pageSize = 100}) async {
+  static Future<Map<String, dynamic>> getAllCities({
+    int page = 1,
+    int pageSize = 100,
+  }) async {
     try {
       final params = await _buildQueryParams(page: page, pageSize: pageSize);
-      final response = await http.get(_buildUri(AppUrls.cities, params), headers: _getHeaders()).timeout(_timeout);
+      final response = await http
+          .get(_buildUri(AppUrls.cities, params), headers: _getHeaders())
+          .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
       throw Exception('Greška pri preuzimanju gradova: $e');
@@ -238,15 +262,19 @@ class ApiService {
 
   static Future<Map<String, dynamic>> searchCities({String? name}) async {
     try {
-      final params = await _buildQueryParams(pageSize: 1000, filters: {'name': name});
-      final response = await http.get(_buildUri(AppUrls.cities, params), headers: _getHeaders()).timeout(_timeout);
+      final params = await _buildQueryParams(
+        pageSize: 1000,
+        filters: {'name': name},
+      );
+      final response = await http
+          .get(_buildUri(AppUrls.cities, params), headers: _getHeaders())
+          .timeout(_timeout);
       return await _handleResponse(response);
     } catch (e) {
       throw Exception('Greška pri pretrazi gradova: $e');
     }
   }
 
-  // PARKING ZONES
   static Future<Map<String, dynamic>> searchParkingZones({
     String? name,
     int? cityId,
@@ -337,7 +365,6 @@ class ApiService {
     }
   }
 
-  // PARKING SPOTS
   static Future<Map<String, dynamic>> createParkingSpot({
     required int parkingZoneId,
     required int type,
@@ -399,7 +426,10 @@ class ApiService {
   static Future<void> deleteParkingSpot(int spotId) async {
     try {
       final response = await http
-          .delete(Uri.parse('${AppUrls.parkingSpots}/$spotId'), headers: _getHeaders())
+          .delete(
+            Uri.parse('${AppUrls.parkingSpots}/$spotId'),
+            headers: _getHeaders(),
+          )
           .timeout(_timeout);
 
       await _handleResponse(response);
@@ -427,7 +457,6 @@ class ApiService {
     }
   }
 
-  // RESERVATIONS
   static Future<Map<String, dynamic>> searchReservations({
     int? userId,
     int? parkingZoneId,
@@ -439,7 +468,11 @@ class ApiService {
       final params = await _buildQueryParams(
         page: page,
         pageSize: pageSize,
-        filters: {'userId': userId, 'parkingZoneId': parkingZoneId, 'status': status},
+        filters: {
+          'userId': userId,
+          'parkingZoneId': parkingZoneId,
+          'status': status,
+        },
       );
 
       final response = await http
@@ -451,11 +484,12 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> updateReservationStatus(int reservationId, int status) async {
+  static Future<Map<String, dynamic>> updateReservationStatus(
+    int reservationId,
+    int status,
+  ) async {
     try {
-      var data = {
-        'status': status
-      };
+      var data = {'status': status};
       final response = await http
           .put(
             Uri.parse('${AppUrls.reservations}/$reservationId'),
@@ -470,7 +504,9 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> checkInReservation(int reservationId) async {
+  static Future<Map<String, dynamic>> checkInReservation(
+    int reservationId,
+  ) async {
     try {
       var data = {
         'isCheckedIn': true,
@@ -490,7 +526,9 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> checkOutReservation(int reservationId) async {
+  static Future<Map<String, dynamic>> checkOutReservation(
+    int reservationId,
+  ) async {
     try {
       var data = {
         'isCheckedOut': true,
@@ -527,10 +565,7 @@ class ApiService {
       );
 
       final response = await http
-          .get(
-            _buildUri(AppUrls.notifications, params),
-            headers: _getHeaders(),
-          )
+          .get(_buildUri(AppUrls.notifications, params), headers: _getHeaders())
           .timeout(_timeout);
 
       return await _handleResponse(response);
@@ -555,8 +590,7 @@ class ApiService {
     }
   }
 
-  static Future<void> sendNotificationToAll(
-      Map<String, dynamic> body) async {
+  static Future<void> sendNotificationToAll(Map<String, dynamic> body) async {
     try {
       final response = await http
           .post(
@@ -586,6 +620,4 @@ class ApiService {
       throw Exception('Greška pri označavanju notifikacije: $e');
     }
   }
-
-  
 }

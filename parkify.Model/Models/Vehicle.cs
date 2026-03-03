@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace parkify.Model.Models
+﻿namespace parkify.Model.Models
 {
     public class Vehicle
     {

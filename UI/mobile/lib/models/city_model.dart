@@ -21,8 +21,12 @@ class City {
       name: json['name'] ?? '',
       latitude: (json['latitude'] ?? 0.0).toDouble(),
       longitude: (json['longitude'] ?? 0.0).toDouble(),
-      created: json['created'] != null ? DateTime.parse(json['created']) : DateTime.now(),
-      modified: json['modified'] != null ? DateTime.parse(json['modified']) : null,
+      created: json['created'] != null
+          ? DateTime.parse(json['created'])
+          : DateTime.now(),
+      modified: json['modified'] != null
+          ? DateTime.parse(json['modified'])
+          : null,
     );
   }
 

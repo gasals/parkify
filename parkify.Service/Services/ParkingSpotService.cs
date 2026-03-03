@@ -48,7 +48,7 @@ namespace parkify.Service.Services
         public override void BeforeInsert(ParkingSpotInsertRequest request, Database.ParkingSpot entity)
         {
             ParkingZone parkingZone = _parkingZoneService.GetById(request.ParkingZoneId);
-            if(parkingZone == null)
+            if (parkingZone == null)
                 throw new Exception("Ne postoji zona sa proslijeđenim ID-em.");
 
             ParkingZoneUpdateRequest updateRequest = new ParkingZoneUpdateRequest

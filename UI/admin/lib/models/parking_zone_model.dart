@@ -97,7 +97,6 @@ enum ReservationStatus {
   cancelled(5, 'Otkazana'),
   noShow(6, 'Nije prikazana');
 
-
   final int value;
   final String label;
 

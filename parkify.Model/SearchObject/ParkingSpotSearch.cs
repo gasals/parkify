@@ -1,6 +1,4 @@
-﻿using parkify.Model.SearchObject;
-
-namespace parkify.Model.SearchObject
+﻿namespace parkify.Model.SearchObject
 {
     public class ParkingSpotSearch : BaseSearchObject
     {

@@ -13,7 +13,7 @@ class ChangePasswordSheet extends StatefulWidget {
 class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
   late TextEditingController _passwordController;
   late TextEditingController _passwordConfirmController;
-  
+
   bool _showPassword = false;
   bool _showPasswordConfirm = false;
   bool _isLoading = false;
@@ -51,10 +51,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               children: [
                 const Text(
                   'Promijeni lozinku',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -63,7 +60,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               ],
             ),
             const SizedBox(height: 24),
-            
+
             TextField(
               controller: _passwordController,
               obscureText: !_showPassword,
@@ -86,7 +83,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             TextField(
               controller: _passwordConfirmController,
               obscureText: !_showPasswordConfirm,
@@ -95,11 +92,15 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                 prefixIcon: const Icon(Icons.lock, color: AppColors.primary),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _showPasswordConfirm ? Icons.visibility : Icons.visibility_off,
+                    _showPasswordConfirm
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                     color: AppColors.primary,
                   ),
                   onPressed: () {
-                    setState(() => _showPasswordConfirm = !_showPasswordConfirm);
+                    setState(
+                      () => _showPasswordConfirm = !_showPasswordConfirm,
+                    );
                   },
                 ),
                 border: OutlineInputBorder(
@@ -109,7 +110,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             Row(
               children: [
                 Expanded(
@@ -150,7 +151,8 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
   }
 
   Future<void> _changePassword() async {
-    if (_passwordController.text.isEmpty || _passwordConfirmController.text.isEmpty) {
+    if (_passwordController.text.isEmpty ||
+        _passwordConfirmController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Popuni sva polja'),
@@ -184,7 +186,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       final success = await authProvider.changePassword(
         password: _passwordController.text,
         passwordConfirm: _passwordConfirmController.text,
@@ -209,10 +211,7 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Greška: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {

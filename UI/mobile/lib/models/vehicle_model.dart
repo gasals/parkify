@@ -25,7 +25,9 @@ class Vehicle {
       category: json['category'],
       model: json['model'],
       created: DateTime.parse(json['created']),
-      modified: json['modified'] != null ? DateTime.parse(json['modified']) : null,
+      modified: json['modified'] != null
+          ? DateTime.parse(json['modified'])
+          : null,
     );
   }
 

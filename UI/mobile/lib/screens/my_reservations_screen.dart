@@ -29,11 +29,10 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       final userId = authProvider.user?.id ?? 0;
 
       if (mounted) {
-        Provider.of<ReservationProvider>(context, listen: false)
-            .getUserReservations(
-          userId: userId,
-          page: _currentPage,
-        );
+        Provider.of<ReservationProvider>(
+          context,
+          listen: false,
+        ).getUserReservations(userId: userId, page: _currentPage);
       }
     });
   }
@@ -41,8 +40,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
   void _onScroll() async {
     if (!_scrollController.hasClients) return;
 
-    final provider =
-        Provider.of<ReservationProvider>(context, listen: false);
+    final provider = Provider.of<ReservationProvider>(context, listen: false);
 
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
@@ -51,8 +49,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       _isFetchingMore = true;
       _currentPage++;
 
-      final authProvider =
-          Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
       await provider.getUserReservations(
         userId: authProvider.user?.id ?? 0,
@@ -104,9 +101,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Kreiraj prvu rezervaciju na mapi',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                    ),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -136,8 +131,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     );
   }
 
-  Widget _buildReservationCard(
-      BuildContext context, Reservation reservation) {
+  Widget _buildReservationCard(BuildContext context, Reservation reservation) {
     final statusColor = _getStatusColor(reservation.status);
     final statusText = reservation.getStatusText();
     final statusIcon = _getStatusIcon(reservation.status);
@@ -160,8 +154,11 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.confirmation_number,
-                              size: 16, color: AppColors.primary),
+                          const Icon(
+                            Icons.confirmation_number,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -261,16 +258,18 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-
                 const SizedBox(width: 8),
-                if (reservation.status == 1 || reservation.status == 2 && reservation.reservationStart.isAfter(DateTime.now()))
+                if (reservation.status == 1 ||
+                    reservation.status == 2 &&
+                        reservation.reservationStart.isAfter(DateTime.now()))
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () =>
-                          _cancelReservation(context, reservation),
+                      onPressed: () => _cancelReservation(context, reservation),
                       icon: const Icon(Icons.close, size: 18),
-                      label: const Text('Otkaži',
-                          overflow: TextOverflow.ellipsis),
+                      label: const Text(
+                        'Otkaži',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
               ],
@@ -281,8 +280,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     );
   }
 
-  Widget _buildDetailRowWithIcon(
-      IconData icon, String label, String value) {
+  Widget _buildDetailRowWithIcon(IconData icon, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -292,26 +290,19 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
             ),
           ],
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
 
-  void _cancelReservation(
-      BuildContext context, Reservation reservation) {
+  void _cancelReservation(BuildContext context, Reservation reservation) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -327,15 +318,14 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           TextButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              final provider =
-                  Provider.of<ReservationProvider>(context, listen: false);
-              final success =
-                  await provider.cancelReservation(reservation.id);
+              final provider = Provider.of<ReservationProvider>(
+                context,
+                listen: false,
+              );
+              final success = await provider.cancelReservation(reservation.id);
               if (success && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Rezervacija je otkazana'),
-                  ),
+                  const SnackBar(content: Text('Rezervacija je otkazana')),
                 );
               }
             },

@@ -43,10 +43,15 @@ class Payment {
       stripePaymentIntentId: json['stripePaymentIntentId'] ?? '',
       clientSecret: json['clientSecret'] ?? '',
       transactionId: json['transactionId'] ?? '',
-      created: json['created'] != null ? DateTime.parse(json['created']) : DateTime.now(),
-      completed:
-          json['completed'] != null ? DateTime.parse(json['completed']) : null,
-      refunded: json['refunded'] != null ? DateTime.parse(json['refunded']) : null,
+      created: json['created'] != null
+          ? DateTime.parse(json['created'])
+          : DateTime.now(),
+      completed: json['completed'] != null
+          ? DateTime.parse(json['completed'])
+          : null,
+      refunded: json['refunded'] != null
+          ? DateTime.parse(json['refunded'])
+          : null,
       refundReason: json['refundReason'] ?? '',
     );
   }

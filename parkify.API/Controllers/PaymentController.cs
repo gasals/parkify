@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Stripe;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
+using Stripe;
 
 namespace parkify.API.Controllers
 {
@@ -42,7 +42,7 @@ namespace parkify.API.Controllers
                 var paymentIntent = await service.CreateAsync(options);
 
                 var payment = _paymentService.Insert(request);
-                
+
                 return Ok(new
                 {
                     payment.Id,

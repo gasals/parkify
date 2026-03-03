@@ -1,5 +1,3 @@
-using parkify.Model.SearchObject;
-
 namespace parkify.Model.SearchObject
 {
     public class PaymentSearch : BaseSearchObject

@@ -17,11 +17,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId =
-          Provider.of<AuthProvider>(context, listen: false).user?.id;
+      final userId = Provider.of<AuthProvider>(context, listen: false).user?.id;
       if (userId != null) {
-        Provider.of<NotificationProvider>(context, listen: false)
-            .fetchNotifications(userId: userId);
+        Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        ).fetchNotifications(userId: userId);
       }
     });
   }
@@ -37,15 +38,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         actions: [
           Consumer<NotificationProvider>(
             builder: (context, provider, _) {
-              final hasUnread =
-                  provider.notifications.any((n) => !n.isRead);
+              final hasUnread = provider.notifications.any((n) => !n.isRead);
               if (!hasUnread) return const SizedBox.shrink();
               return TextButton(
                 onPressed: () {
-                  final userId = Provider.of<AuthProvider>(context,
-                          listen: false)
-                      .user
-                      ?.id;
+                  final userId = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  ).user?.id;
                   if (userId != null) provider.markAllAsRead(userId);
                 },
                 child: const Text(
@@ -100,8 +100,11 @@ class _EmptyState extends StatelessWidget {
               color: Colors.grey[100],
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.notifications_none,
-                size: 48, color: Colors.grey[400]),
+            child: Icon(
+              Icons.notifications_none,
+              size: 48,
+              color: Colors.grey[400],
+            ),
           ),
           const SizedBox(height: 16),
           Text(
@@ -153,7 +156,6 @@ class _NotificationTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -163,7 +165,7 @@ class _NotificationTile extends StatelessWidget {
               child: Icon(type.icon, color: type.color, size: 20),
             ),
             const SizedBox(width: 14),
-            // Content
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,8 +206,7 @@ class _NotificationTile extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     _formatDate(notification.created),
-                    style: TextStyle(
-                        fontSize: 11, color: Colors.grey[400]),
+                    style: TextStyle(fontSize: 11, color: Colors.grey[400]),
                   ),
                 ],
               ),
@@ -226,17 +227,17 @@ class _NotificationTile extends StatelessWidget {
   }
 
   _TypeInfo _typeInfo(int type) => switch (type) {
-        1 => _TypeInfo(Icons.check_circle_outline, const Color(0xFF10B981)),
-        2 => _TypeInfo(Icons.alarm_outlined, const Color(0xFFF59E0B)),
-        3 => _TypeInfo(Icons.payment_outlined, const Color(0xFF3B82F6)),
-        4 => _TypeInfo(Icons.error_outline, const Color(0xFFEF4444)),
-        5 => _TypeInfo(Icons.local_parking, const Color(0xFF6366F1)),
-        6 => _TypeInfo(Icons.local_offer_outlined, const Color(0xFFF59E0B)),
-        7 => _TypeInfo(Icons.cancel_outlined, const Color(0xFFEF4444)),
-        8 => _TypeInfo(Icons.login_outlined, const Color(0xFF14B8A6)),
-        9 => _TypeInfo(Icons.block_outlined, Colors.grey),
-        _ => _TypeInfo(Icons.notifications_outlined, Colors.grey),
-      };
+    1 => _TypeInfo(Icons.check_circle_outline, const Color(0xFF10B981)),
+    2 => _TypeInfo(Icons.alarm_outlined, const Color(0xFFF59E0B)),
+    3 => _TypeInfo(Icons.payment_outlined, const Color(0xFF3B82F6)),
+    4 => _TypeInfo(Icons.error_outline, const Color(0xFFEF4444)),
+    5 => _TypeInfo(Icons.local_parking, const Color(0xFF6366F1)),
+    6 => _TypeInfo(Icons.local_offer_outlined, const Color(0xFFF59E0B)),
+    7 => _TypeInfo(Icons.cancel_outlined, const Color(0xFFEF4444)),
+    8 => _TypeInfo(Icons.login_outlined, const Color(0xFF14B8A6)),
+    9 => _TypeInfo(Icons.block_outlined, Colors.grey),
+    _ => _TypeInfo(Icons.notifications_outlined, Colors.grey),
+  };
 }
 
 class _TypeInfo {

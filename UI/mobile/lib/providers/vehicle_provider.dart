@@ -55,7 +55,7 @@ class VehicleProvider extends ChangeNotifier {
         userId: userId,
         licensePlate: licensePlate,
         category: category,
-        model: model
+        model: model,
       );
 
       await ApiService.addVehicle(newVehicle);

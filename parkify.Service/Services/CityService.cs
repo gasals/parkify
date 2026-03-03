@@ -18,12 +18,12 @@ namespace parkify.Service.Services
         public override IQueryable<Database.City> AddFilter(CitySearch search, IQueryable<Database.City> query)
         {
             query = base.AddFilter(search, query);
-            
+
             if (!string.IsNullOrEmpty(search?.Name))
             {
                 query = query.Where(x => x.Name.Contains(search.Name));
             }
-            
+
             return query;
         }
     }

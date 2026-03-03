@@ -1,5 +1,3 @@
-using parkify.Model.Models;
-
 namespace parkify.Model.Requests
 {
     public class ReservationUpdateRequest

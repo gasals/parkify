@@ -42,16 +42,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _lastNameController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _passwordConfirmController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.fillAllFields)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.fillAllFields)));
       return;
     }
 
     if (_passwordController.text != _passwordConfirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lozinke se ne podudaraju.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lozinke se ne podudaraju.')));
       return;
     }
 
@@ -61,7 +61,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       'email': _emailController.text,
       'firstName': _firstNameController.text,
       'lastName': _lastNameController.text,
-      'address': _addressController.text.isEmpty ? null : _addressController.text,
+      'address': _addressController.text.isEmpty
+          ? null
+          : _addressController.text,
       'city': _cityController.text.isEmpty ? null : _cityController.text,
       'password': _passwordController.text,
       'passwordConfirm': _passwordConfirmController.text,
@@ -72,7 +74,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.errorMessage ?? 'Registracija neuspješna.')),
+        SnackBar(
+          content: Text(
+            authProvider.errorMessage ?? 'Registracija neuspješna.',
+          ),
+        ),
       );
     }
   }
@@ -96,15 +102,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         suffixIcon: onToggleObscure != null
             ? IconButton(
                 icon: Icon(
-                  (obscureToggle ?? true) ? Icons.visibility_off : Icons.visibility,
+                  (obscureToggle ?? true)
+                      ? Icons.visibility_off
+                      : Icons.visibility,
                   color: AppColors.primary,
                 ),
                 onPressed: onToggleObscure,
               )
             : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: AppColors.primary, width: 2),
@@ -139,10 +145,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     Text(
                       AppStrings.register,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 32),
 
@@ -215,7 +218,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscurePasswordConfirm,
                       obscureToggle: _obscurePasswordConfirm,
                       onToggleObscure: () {
-                        setState(() => _obscurePasswordConfirm = !_obscurePasswordConfirm);
+                        setState(
+                          () => _obscurePasswordConfirm =
+                              !_obscurePasswordConfirm,
+                        );
                       },
                     ),
                     const SizedBox(height: 24),
@@ -235,7 +241,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               child: Text(
                                 AppStrings.register,
-                                style: const TextStyle(fontSize: 16, color: Colors.white),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                     ),

@@ -170,13 +170,16 @@ class ParkingZoneProvider extends ChangeNotifier {
           pageSize: 1000,
         );
 
-        final zones = (response['results'] as List?)
+        final zones =
+            (response['results'] as List?)
                 ?.map((z) => ParkingZone.fromJson(z as Map<String, dynamic>))
                 .toList() ??
             [];
 
-        final updatedZone =
-            zones.firstWhere((z) => z.id == parkingZoneId, orElse: () => _parkingZones[index]);
+        final updatedZone = zones.firstWhere(
+          (z) => z.id == parkingZoneId,
+          orElse: () => _parkingZones[index],
+        );
 
         _parkingZones[index] = updatedZone;
       }

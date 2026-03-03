@@ -75,7 +75,9 @@ class ParkingZoneProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.getParkingSpotsByZoneId(_selectedZone!.id);
+      final result = await ApiService.getParkingSpotsByZoneId(
+        _selectedZone!.id,
+      );
       _selectedZone!.spots = (result['results'] as List)
           .map((spot) => ParkingSpot.fromJson(spot as Map<String, dynamic>))
           .toList();

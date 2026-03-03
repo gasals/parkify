@@ -56,24 +56,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: const Color(0xFF6366F1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.directions_car, color: Colors.white, size: 32),
+                child: const Icon(
+                  Icons.directions_car,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
               const SizedBox(height: 24),
 
               const Text(
                 'Parkify Admin',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Prijavite se na admin panel',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 32),
 
@@ -134,8 +132,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation(Colors.white),
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(
@@ -167,10 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: Text(
                         authProvider.errorMessage!,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 12,
-                        ),
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
                       ),
                     ),
                   );

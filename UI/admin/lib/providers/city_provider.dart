@@ -19,7 +19,10 @@ class CityProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.getAllCities(page: page, pageSize: pageSize);
+      final result = await ApiService.getAllCities(
+        page: page,
+        pageSize: pageSize,
+      );
       final resultsList = result['results'] as List? ?? [];
 
       _cities = resultsList

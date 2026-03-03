@@ -20,8 +20,10 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ReviewProvider>(context, listen: false)
-          .getZoneReviews(parkingZoneId: widget.parkingZone.id);
+      Provider.of<ReviewProvider>(
+        context,
+        listen: false,
+      ).getZoneReviews(parkingZoneId: widget.parkingZone.id);
     });
   }
 
@@ -37,9 +39,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           return Column(
             children: [
               _buildRatingHeader(reviewProvider),
-              Expanded(
-                child: _buildReviewsList(reviewProvider),
-              ),
+              Expanded(child: _buildReviewsList(reviewProvider)),
             ],
           );
         },
@@ -125,7 +125,9 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      _buildRatingStars(reviewProvider.userReview!.rating.toDouble()),
+                      _buildRatingStars(
+                        reviewProvider.userReview!.rating.toDouble(),
+                      ),
                     ],
                   ),
                 ],
@@ -155,18 +157,12 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             const SizedBox(height: 16),
             Text(
               'Nema ocjena',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 8),
             Text(
               'Budi prvi da ocijenišš ovaj parking',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textTertiary,
-              ),
+              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
             ),
           ],
         ),
@@ -188,7 +184,8 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     Review review,
     ReviewProvider reviewProvider,
   ) {
-    final isUserReview = review.userId == 
+    final isUserReview =
+        review.userId ==
         Provider.of<AuthProvider>(context, listen: false).user?.id;
 
     return Card(
@@ -233,16 +230,15 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                 (i) => Icon(
                   Icons.star,
                   size: 16,
-                  color: i < review.rating ? Colors.amber : AppColors.textTertiary,
+                  color: i < review.rating
+                      ? Colors.amber
+                      : AppColors.textTertiary,
                 ),
               ),
             ),
             if (review.reviewText != null && review.reviewText!.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(
-                review.reviewText!,
-                style: const TextStyle(fontSize: 13),
-              ),
+              Text(review.reviewText!, style: const TextStyle(fontSize: 13)),
             ],
           ],
         ),
@@ -260,8 +256,8 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           color: fillPercentage > 0.5
               ? Colors.amber
               : fillPercentage > 0
-                  ? Colors.amber.withOpacity(0.5)
-                  : AppColors.textTertiary,
+              ? Colors.amber.withOpacity(0.5)
+              : AppColors.textTertiary,
         );
       }),
     );
@@ -270,9 +266,8 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   void _showAddReviewDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => _AddReviewDialog(
-        parkingZoneId: widget.parkingZone.id,
-      ),
+      builder: (context) =>
+          _AddReviewDialog(parkingZoneId: widget.parkingZone.id),
     );
   }
 }
@@ -313,7 +308,10 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final reviewProvider = Provider.of<ReviewProvider>(context, listen: false);
+      final reviewProvider = Provider.of<ReviewProvider>(
+        context,
+        listen: false,
+      );
 
       if (reviewProvider.userReview != null) {
         await reviewProvider.updateReview(
@@ -338,9 +336,9 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
       }
     } finally {
       if (mounted) {
@@ -365,10 +363,7 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                 children: [
                   const Text(
                     'Ocijeni parking',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   GestureDetector(
                     onTap: Navigator.of(context).pop,
@@ -448,8 +443,9 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation(Colors.white),
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(

@@ -1,8 +1,8 @@
-using System.Text;
-using System.Text.Json;
 using parkify.RabbitMQ.Models;
 using parkify.RabbitMQ.Settings;
 using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 
 namespace parkify.RabbitMQ
 {

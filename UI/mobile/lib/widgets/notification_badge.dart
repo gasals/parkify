@@ -17,8 +17,7 @@ class NotificationBadge extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
               color: Colors.white,
-              onPressed: () =>
-                  Navigator.pushNamed(context, '/notifications'),
+              onPressed: () => Navigator.pushNamed(context, '/notifications'),
             ),
             if (count > 0)
               Positioned(
@@ -31,7 +30,9 @@ class NotificationBadge extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   constraints: const BoxConstraints(
-                      minWidth: 18, minHeight: 18),
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
                   child: Text(
                     count > 99 ? '99+' : '$count',
                     style: const TextStyle(
