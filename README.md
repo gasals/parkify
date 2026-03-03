@@ -54,7 +54,7 @@ Pristup: Desktop aplikacija — administratorske funkcije, pregled svih parking 
 
 ### Test Korisnik
 ```
-Korisničko ime: user1
+Korisničko ime: user
 Lozinka:        Test123!
 ```
 Pristup: Normalne korisničke funkcije — pronalaženje parking mjesta, rezervacije, recenzije...
