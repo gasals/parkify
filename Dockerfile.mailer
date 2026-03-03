@@ -1,0 +1,14 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY ["parkify.RabbitMQ/parkify.RabbitMQ.csproj", "parkify.RabbitMQ/"]
+RUN dotnet restore "parkify.RabbitMQ/parkify.RabbitMQ.csproj"
+
+COPY . .
+WORKDIR "/src/parkify.RabbitMQ"
+RUN dotnet publish "parkify.RabbitMQ.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "parkify.RabbitMQ.dll"]

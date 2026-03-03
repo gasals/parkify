@@ -122,4 +122,15 @@ using (var scope = app.Services.CreateScope())
     context.Database.Migrate();
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ParkifyContext>();
+    context.Database.Migrate();
+
+    if (app.Environment.IsDevelopment())
+    {
+        DbSeeder.Seed(context);
+    }
+}
+
 app.Run("http://0.0.0.0:5050");

@@ -1,0 +1,5 @@
+RABBITMQ__USERNAME=user
+RABBITMQ__PASSWORD=mypass
+
+SQL__PASSWORD=YourStrong!Passw0rd
+SQL__DATABASE=ParkifyDB
