@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -160,7 +161,7 @@ namespace parkify.Service.Services
             if (request.IsCheckedIn.HasValue && request.IsCheckedIn.Value)
             {
                 if (DateTime.UtcNow < entity.ReservationStart)
-                    throw new Exception("Check-in prije početka rezervacije.");
+                    throw new UserException("Check-in prije početka rezervacije.");
 
                 entity.IsCheckedIn = true;
                 entity.CheckInTime = request.CheckInTime ?? DateTime.UtcNow;
@@ -216,7 +217,8 @@ namespace parkify.Service.Services
         private string GenerateReservationCode(ReservationInsertRequest request)
         {
             var dateTimePart = request.ReservationStart.ToString("yyMMddHHmm");
-            return $"U{request.UserId}-Z{request.ParkingZoneId}-{dateTimePart}";
+            var random = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
+            return $"U{request.UserId}-Z{request.ParkingZoneId}-{dateTimePart}-{random}";
         }
     }
 }

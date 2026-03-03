@@ -322,12 +322,23 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 context,
                 listen: false,
               );
+              final authProvider = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              );
               final success = await provider.cancelReservation(reservation.id);
               if (success && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Rezervacija je otkazana')),
                 );
               }
+              await provider.getUserReservations(
+                userId: authProvider.user?.id ?? 0,
+                page: 1,
+              );
+              setState(() {
+                _currentPage = 1;
+              });
             },
             child: const Text('Otkaži'),
           ),

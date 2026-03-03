@@ -39,7 +39,10 @@ class _ReservationScreenState extends State<ReservationScreen> {
     _endTime = _startTime.add(const Duration(hours: 1));
   }
 
-  double get _durationHours => _endTime.difference(_startTime).inMinutes / 60.0;
+  int get _durationHours {
+    final diff = _endTime.difference(_startTime);
+    return (diff.inMinutes / 60).ceil();
+  }
 
   double get _calculatedPrice =>
       widget.parkingZone.pricePerHour * _durationHours;

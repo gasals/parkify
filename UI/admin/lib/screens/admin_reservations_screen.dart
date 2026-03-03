@@ -124,14 +124,33 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               const SizedBox(width: 12),
               Expanded(child: _buildZoneAutocomplete()),
               const SizedBox(width: 12),
-              // Status — styled dropdown
+              // FIX: isti stil kao autocomplete polja pored njega
               Expanded(
-                child: AdminDropdownField<ReservationStatus>(
+                child: DropdownButtonFormField<ReservationStatus>(
                   value: _selectedStatus,
-                  label: 'Status',
-                  icon: Icons.flag_outlined,
-                  items: ReservationStatus.values,
-                  labelBuilder: (s) => s.label,
+                  isExpanded: true,
+                  decoration: SearchFieldDecoration.buildInputDecoration(
+                    labelText: 'Status',
+                    icon: Icons.flag_outlined,
+                  ),
+                  items: [
+                    const DropdownMenuItem<ReservationStatus>(
+                      value: null,
+                      child: Text('Svi statusi', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    ),
+                    ...ReservationStatus.values.map((s) => DropdownMenuItem(
+                          value: s,
+                          child: Row(children: [
+                            Container(
+                              width: 8, height: 8,
+                              decoration: BoxDecoration(
+                                  color: _statusColorStatic(s), shape: BoxShape.circle),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(s.label, style: const TextStyle(fontSize: 13)),
+                          ]),
+                        )),
+                  ],
                   onChanged: (s) => setState(() => _selectedStatus = s),
                 ),
               ),
@@ -140,16 +159,15 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              // Legenda statusa
               Expanded(
                 child: Wrap(
                   spacing: 12,
                   runSpacing: 4,
                   children: [
-                    _legendItem('Na čekanju', Colors.orange),
-                    _legendItem('Potvrđena', Colors.blue),
+                    _legendItem('Na \u010dekanju', Colors.orange),
+                    _legendItem('Potvr\u0111ena', Colors.blue),
                     _legendItem('Aktivna', Colors.green),
-                    _legendItem('Završena', Colors.grey),
+                    _legendItem('Zavr\u0161ena', Colors.grey),
                     _legendItem('Otkazana', Colors.red),
                     _legendItem('No show', Colors.purple),
                   ],
@@ -172,11 +190,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       children: [
         Container(
             width: 8, height: 8,
-            decoration:
-                BoxDecoration(color: color, shape: BoxShape.circle)),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 4),
-        Text(label,
-            style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[700])),
       ],
     );
   }
@@ -280,7 +296,6 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header s badge-om kao na users/zones ──────────────────────
             Row(
               children: [
                 CircleAvatar(
@@ -298,7 +313,6 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                // ── Status badge — isti stil kao users/zones ────────────
                 AdminStatusBadge(
                   label: statusEnum.label,
                   color: statusColor,
@@ -306,7 +320,6 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               ],
             ),
             const Divider(height: 28),
-            // ── Info rows ──────────────────────────────────────────────────
             _infoRow(Icons.local_parking, 'Zona ID',
                 reservation.parkingZoneId.toString()),
             _infoRow(Icons.calendar_today, 'Datum',
@@ -319,7 +332,6 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
             _infoRow(Icons.monetization_on, 'Cijena',
                 '${reservation.finalPrice} BAM'),
             const Spacer(),
-            // ── Actions ─────────────────────────────────────────────────────
             Row(
               children: [
                 Expanded(
@@ -337,8 +349,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                     ),
                   ),
                 ),
-                if ((!reservation.isCheckedIn || !reservation.isCheckedOut) &&
-                    reservation.status == 2) ...[
+                if ((!reservation.isCheckedIn && reservation.status == 2) || (!reservation.isCheckedOut && reservation.status == 3)) ...[
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
@@ -398,7 +409,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     );
   }
 
-  Color _statusColor(ReservationStatus s) => switch (s) {
+  // static verzija za koristenje u DropdownMenuItem builderu
+  static Color _statusColorStatic(ReservationStatus s) => switch (s) {
         ReservationStatus.pending   => Colors.orange,
         ReservationStatus.confirmed => Colors.blue,
         ReservationStatus.active    => Colors.green,
@@ -407,14 +419,16 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
         ReservationStatus.noShow    => Colors.purple,
       };
 
+  Color _statusColor(ReservationStatus s) => _statusColorStatic(s);
+
   Future<void> _checkIn(Reservation r, ReservationProvider p) async {
     final ok = await p.checkInReservation(r.id);
-    if (mounted) AdminSnackBar.show(context, ok ? 'Check-in uspješan' : 'Check-in nije uspio', ok);
+    if (mounted) AdminSnackBar.show(context, ok ? 'Check-in uspje\u0161an' : 'Check-in nije uspio', ok);
   }
 
   Future<void> _checkOut(Reservation r, ReservationProvider p) async {
     final ok = await p.checkOutReservation(r.id);
-    if (mounted) AdminSnackBar.show(context, ok ? 'Check-out uspješan' : 'Check-out nije uspio', ok);
+    if (mounted) AdminSnackBar.show(context, ok ? 'Check-out uspje\u0161an' : 'Check-out nije uspio', ok);
   }
 
   void _showChangeStatusDialog(
@@ -454,7 +468,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                                   );
                                   if (mounted) {
                                     AdminSnackBar.show(
-                                        context, 'Status ažuriran', ok);
+                                        context, 'Status a\u017euriran', ok);
                                   }
                                 },
                           style: OutlinedButton.styleFrom(

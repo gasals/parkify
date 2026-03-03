@@ -107,7 +107,7 @@ class ApiService {
     try {
       final response = await http
           .get(
-            Uri.parse('${AppUrls.baseUrl}/Users/$userId'),
+            Uri.parse('${AppUrls.users}/$userId'),
             headers: _getHeaders(),
           )
           .timeout(_timeout);
@@ -136,7 +136,7 @@ class ApiService {
 
       final response = await http
           .put(
-            Uri.parse('${AppUrls.baseUrl}/Users/$userId'),
+            Uri.parse('${AppUrls.users}/$userId'),
             headers: _getHeaders(),
             body: jsonEncode(body),
           )
@@ -159,7 +159,7 @@ class ApiService {
 
       final response = await http
           .put(
-            Uri.parse('${AppUrls.baseUrl}/Users/$userId'),
+            Uri.parse('${AppUrls.users}/$userId'),
             headers: _getHeaders(),
             body: jsonEncode(body),
           )

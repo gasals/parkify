@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -49,16 +50,16 @@ namespace parkify.Service.Services
         public override void BeforeInsert(UserInsertRequest request, Database.User entity)
         {
             if (request.Password != request.PasswordConfirm)
-                throw new Exception("Lozinka i potvrda lozinke se ne podudaraju.");
+                throw new UserException("Lozinka i potvrda lozinke se ne podudaraju.");
 
             if (!IsValidEmail(request.Email))
-                throw new Exception("Email nije u validnom formatu.");
+                throw new UserException("Email nije u validnom formatu.");
 
             if (Context.Users.Any(x => x.Username == request.Username))
-                throw new Exception("Korisničko ime je zauzeto.");
+                throw new UserException("Korisničko ime je zauzeto.");
 
             if (Context.Users.Any(x => x.Email == request.Email))
-                throw new Exception("Email je već u upotrebi.");
+                throw new UserException("Email je već u upotrebi.");
 
             if (request.IsAdmin.HasValue)
                 entity.IsAdmin = request.IsAdmin.Value;
@@ -94,20 +95,20 @@ namespace parkify.Service.Services
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
                 if (request.Password != request.PasswordConfirm)
-                    throw new Exception("Lozinka i potvrda lozinke se ne podudaraju.");
+                    throw new UserException("Lozinka i potvrda lozinke se ne podudaraju.");
 
                 entity.PasswordSalt = GenerateSalt();
                 entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
             }
 
             if (!IsValidEmail(request.Email))
-                throw new Exception("Email nije u validnom formatu.");
+                throw new UserException("Email nije u validnom formatu.");
 
             var emailExists = Context.Users
                 .Any(x => x.Email == request.Email && x.Id != entity.Id);
 
             if (emailExists)
-                throw new Exception("Email je već zauzet.");
+                throw new UserException("Email je već zauzet.");
 
             base.BeforeUpdate(request, entity);
         }

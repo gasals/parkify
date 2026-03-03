@@ -1,4 +1,5 @@
 using MapsterMapper;
+using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -40,7 +41,7 @@ namespace parkify.Service.Services
         public override void BeforeInsert(ReviewInsertRequest request, Database.Review entity)
         {
             if (Context.Reviews.Any(x => x.UserId == request.UserId && x.ParkingZoneId == request.ParkingZoneId))
-                throw new Exception("Korisnik je ve? ocijenio ovu zonu.");
+                throw new UserException("Ve? ste ocijenili ovu zonu.");
 
             base.BeforeInsert(request, entity);
         }

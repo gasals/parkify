@@ -1,6 +1,6 @@
 class AppUrls {
   static const String baseUrl =
-      'https://elina-disinclined-fulsomely.ngrok-free.dev/api';
+      'http://localhost:5050/api';
 
   static const String users = '$baseUrl/users';
   static const String login = '$baseUrl/users/login';

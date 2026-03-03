@@ -7,6 +7,7 @@ using parkify.RabbitMQ;
 using parkify.Service.Database;
 using parkify.Service.Interfaces;
 using parkify.Service.Services;
+using Parkify.Service.Jobs;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -102,6 +103,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddRabbitMQ(builder.Configuration);
 builder.Services.AddHostedService<NotificationConsumerService>();
 builder.Services.AddHostedService<ReservationMonitorService>();
+builder.Services.AddHostedService<ReservationStatusJob>();
 
 var app = builder.Build();
 

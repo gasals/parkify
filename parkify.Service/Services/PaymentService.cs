@@ -113,7 +113,7 @@ namespace parkify.Service.Services
 
                     Context.SaveChanges();
 
-                                        _publisher.PublishNotification(new NotificationMessage
+                    _publisher.PublishNotification(new NotificationMessage
                     {
                         UserId = payment.UserId,
                         Title = "Plaćanje uspješno",
@@ -144,7 +144,7 @@ namespace parkify.Service.Services
 
                     Context.SaveChanges();
 
-                                        _publisher.PublishNotification(new NotificationMessage
+                     _publisher.PublishNotification(new NotificationMessage
                     {
                         UserId = payment.UserId,
                         Title = "Novčanik dopunjen",

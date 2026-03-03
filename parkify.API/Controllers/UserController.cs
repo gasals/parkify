@@ -73,7 +73,7 @@ namespace parkify.API.Controllers
                 return BadRequest("Registracija nije uspjela.");
             }
 
-            string role = "User";
+            string role = user.IsAdmin ? "Admin" : "User";
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);

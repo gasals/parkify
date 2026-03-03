@@ -1,9 +1,10 @@
 class AppUrls {
   static const String baseUrl =
-      'https://elina-disinclined-fulsomely.ngrok-free.dev/api';
+      'http://10.0.2.2:5050/api';
 
-  static const String login = '$baseUrl/users/login';
-  static const String register = '$baseUrl/users/register';
+  static const String users = '$baseUrl/users';
+  static const String login = '$users/login';
+  static const String register = '$users/register';
 
   static const String parkingZones = '$baseUrl/parkingzones';
 
