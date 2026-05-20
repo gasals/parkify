@@ -41,6 +41,8 @@ namespace parkify.API.Controllers
                 var service = new PaymentIntentService();
                 var paymentIntent = await service.CreateAsync(options);
 
+                request.StripePaymentIntentId = paymentIntent.Id;
+
                 var payment = _paymentService.Insert(request);
 
                 return Ok(new
@@ -48,7 +50,7 @@ namespace parkify.API.Controllers
                     payment.Id,
                     payment.PaymentCode,
                     paymentIntent.ClientSecret,
-                    StripePaymentIntentId = paymentIntent.Id,
+                    payment.StripePaymentIntentId,
                     payment.Amount,
                     payment.Status
                 });
@@ -65,8 +67,8 @@ namespace parkify.API.Controllers
         {
             try
             {
-                await _paymentService.ConfirmPayment(id);
-                return Ok(new { message = "Plaćanje potvrđeno" });
+                var payment = await _paymentService.ConfirmPayment(id);
+                return Ok(payment);
             }
             catch (Exception ex)
             {

@@ -5,6 +5,7 @@ using parkify.Model.SearchObject;
 using parkify.RabbitMQ;
 using parkify.RabbitMQ.Models;
 using parkify.Service.Interfaces;
+using Stripe;
 
 namespace parkify.Service.Services
 {
@@ -53,9 +54,13 @@ namespace parkify.Service.Services
             entity.PaymentCode = Guid.NewGuid().ToString();
             entity.Status = Database.PaymentStatus.Pending;
             entity.Created = DateTime.UtcNow;
+            entity.StripePaymentIntentId = request.StripePaymentIntentId?.Trim() ?? string.Empty;
 
             if (entity.Amount <= 0)
                 throw new Exception("Iznos dopune mora biti veći od 0");
+
+            if (string.IsNullOrWhiteSpace(entity.StripePaymentIntentId))
+                throw new Exception("Stripe payment intent je obavezan.");
 
             if (request.ReservationId.HasValue)
             {
@@ -79,36 +84,59 @@ namespace parkify.Service.Services
 
         public async Task<Payment> ConfirmPayment(int paymentId)
         {
-            var payment = GetById(paymentId);
+            var payment = Context.Payments.FirstOrDefault(p => p.Id == paymentId);
 
             if (payment == null)
                 throw new Exception("Plaćanje nije pronađeno");
 
-            Update(paymentId, new PaymentUpdateRequest { Status = 3 });
+            if (payment.Status == Database.PaymentStatus.Completed)
+                return Mapper.Map<Payment>(payment);
 
-            payment.Status = (int)Database.PaymentStatus.Completed;
+            if (payment.Status == Database.PaymentStatus.Refunded || payment.Status == Database.PaymentStatus.Failed)
+                throw new Exception("Plaćanje je već u terminalnom statusu i ne može biti potvrđeno.");
+
+            var paymentIntentService = new PaymentIntentService();
+            var paymentIntent = await paymentIntentService.GetAsync(payment.StripePaymentIntentId);
+
+            if (!string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Stripe plaćanje još nije uspješno završeno.");
+
+            var expectedAmountInPfennig = (long)Math.Round(payment.Amount * 100m, MidpointRounding.AwayFromZero);
+            if (paymentIntent.AmountReceived != expectedAmountInPfennig)
+                throw new Exception("Stripe iznos se ne podudara sa lokalnim plaćanjem.");
+
+            if (Context.Payments.Any(p =>
+                    p.Id != payment.Id &&
+                    p.StripePaymentIntentId == payment.StripePaymentIntentId &&
+                    p.Status == Database.PaymentStatus.Completed))
+            {
+                throw new Exception("Ovaj Stripe payment intent je već iskorišten.");
+            }
+
+            payment.Status = Database.PaymentStatus.Completed;
             payment.Completed = DateTime.UtcNow;
+            payment.TransactionId = paymentIntent.LatestChargeId ?? paymentIntent.Id;
+            payment.Modified = DateTime.UtcNow;
 
             if (payment.ReservationId.HasValue)
             {
                 var reservation = Context.Reservations.Find(payment.ReservationId.Value);
                 if (reservation != null)
                 {
+                    reservation.PaymentAmountPaid = payment.Amount;
                     reservation.Status = Database.ReservationStatus.Confirmed;
-                    Context.Reservations.Update(reservation);
 
                     var parkingZone = Context.ParkingZones.Find(reservation.ParkingZoneId);
                     if (parkingZone != null && parkingZone.AvailableSpots > 0)
                     {
                         parkingZone.AvailableSpots -= 1;
-                        Context.ParkingZones.Update(parkingZone);
                     }
 
                     var parkingSpot = Context.ParkingSpots.Find(reservation.ParkingSpotId);
                     if (parkingSpot != null)
                     {
                         parkingSpot.IsAvailable = false;
-                        Context.ParkingSpots.Update(parkingSpot);
+                        parkingSpot.Modified = DateTime.UtcNow;
                     }
 
                     Context.SaveChanges();
@@ -132,7 +160,6 @@ namespace parkify.Service.Services
                 {
                     wallet.Balance += payment.Amount;
                     wallet.Modified = DateTime.UtcNow;
-                    Context.Wallets.Update(wallet);
 
                     Context.WalletTransactions.Add(new Database.WalletTransaction
                     {
@@ -155,7 +182,9 @@ namespace parkify.Service.Services
                 }
             }
 
-            return payment;
+            Context.SaveChanges();
+
+            return Mapper.Map<Payment>(payment);
         }
     }
 }

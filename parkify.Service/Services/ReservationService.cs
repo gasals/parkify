@@ -70,12 +70,16 @@ namespace parkify.Service.Services
                     Created = DateTime.UtcNow
                 });
 
+                entity.WalletAmountUsed = amountFromWallet;
                 entity.FinalPrice = entity.CalculatedPrice - amountFromWallet;
             }
             else
             {
+                entity.WalletAmountUsed = 0;
                 entity.FinalPrice = entity.CalculatedPrice;
             }
+
+            entity.PaymentAmountPaid = 0;
 
             if (entity.FinalPrice == 0)
             {
@@ -123,36 +127,42 @@ namespace parkify.Service.Services
             if (request.Status.HasValue &&
                 request.Status.Value == (int)Database.ReservationStatus.Cancelled)
             {
-                if (entity.CalculatedPrice > 0)
+                var refundAmount = entity.WalletAmountUsed + entity.PaymentAmountPaid;
+
+                if (refundAmount > 0)
                 {
                     var wallet = Context.Wallets.FirstOrDefault(w => w.UserId == entity.UserId);
                     if (wallet != null)
                     {
-                        wallet.Balance += entity.CalculatedPrice;
+                        wallet.Balance += refundAmount;
                         wallet.Modified = DateTime.UtcNow;
                         Context.Wallets.Update(wallet);
 
                         Context.WalletTransactions.Add(new Database.WalletTransaction
                         {
                             WalletId = wallet.Id,
-                            Amount = entity.CalculatedPrice,
+                            Amount = refundAmount,
                             Type = Database.WalletTransactionType.Cancellation,
                             Created = DateTime.UtcNow
                         });
                     }
                 }
 
-                var zoneForCancel = Context.ParkingZones.Find(entity.ParkingZoneId);
-                if (zoneForCancel != null)
+                if (entity.Status == Database.ReservationStatus.Confirmed ||
+                    entity.Status == Database.ReservationStatus.Active)
                 {
-                    zoneForCancel.AvailableSpots += 1;
-                }
+                    var zoneForCancel = Context.ParkingZones.Find(entity.ParkingZoneId);
+                    if (zoneForCancel != null)
+                    {
+                        zoneForCancel.AvailableSpots += 1;
+                    }
 
-                var spotForCancel = Context.ParkingSpots.Find(entity.ParkingSpotId);
-                if (spotForCancel != null)
-                {
-                    spotForCancel.IsAvailable = true;
-                    spotForCancel.Modified = DateTime.UtcNow;
+                    var spotForCancel = Context.ParkingSpots.Find(entity.ParkingSpotId);
+                    if (spotForCancel != null)
+                    {
+                        spotForCancel.IsAvailable = true;
+                        spotForCancel.Modified = DateTime.UtcNow;
+                    }
                 }
 
                 entity.Status = Database.ReservationStatus.Cancelled;
@@ -160,7 +170,7 @@ namespace parkify.Service.Services
                 {
                     UserId = entity.UserId,
                     Title = "Rezervacija otkazana",
-                    Message = $"Vaša rezervacija je uspješno otkazana. Iznos od {entity.CalculatedPrice:F2} KM je vraćen na vaš novčanik.",
+                    Message = $"Vaša rezervacija je uspješno otkazana. Iznos od {refundAmount:F2} KM je vraćen na vaš novčanik.",
                     Type = (int)Database.NotificationType.ReservationCancelled,
                     Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
                     ReservationId = entity.Id,

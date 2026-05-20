@@ -18,6 +18,11 @@ class UserProvider extends ChangeNotifier {
   int get totalPages => _totalPages;
   int get totalCount => _totalCount;
 
+  String _messageFromError(Object error, String fallback) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty ? fallback : message;
+  }
+
   Future<void> searchUsers({
     String? username,
     String? email,
@@ -59,7 +64,10 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       log('Admin UserProvider.searchUsers error: $e');
-      _errorMessage = 'Došlo je do greške pri pretrazi korisnika.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri pretrazi korisnika.',
+      );
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -99,7 +107,10 @@ class UserProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       log('Admin UserProvider.createUser error: $e');
-      _errorMessage = 'Došlo je do greške pri kreiranju korisnika.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri kreiranju korisnika.',
+      );
       notifyListeners();
       return false;
     } finally {
@@ -139,7 +150,10 @@ class UserProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       log('Admin UserProvider.updateUser error: $e');
-      _errorMessage = 'Došlo je do greške pri ažuriranju korisnika.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri ažuriranju korisnika.',
+      );
       notifyListeners();
       return false;
     } finally {
@@ -171,7 +185,10 @@ class UserProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       log('Admin UserProvider.toggleUserActive error: $e');
-      _errorMessage = 'Došlo je do greške pri promjeni statusa korisnika.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri promjeni statusa korisnika.',
+      );
       notifyListeners();
       return false;
     } finally {
@@ -190,7 +207,10 @@ class UserProvider extends ChangeNotifier {
           .toList();
     } catch (e) {
       log('Admin UserProvider.getAllUsersList error: $e');
-      _errorMessage = 'Došlo je do greške pri preuzimanju korisnika.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri preuzimanju korisnika.',
+      );
       return [];
     }
   }
@@ -209,7 +229,10 @@ class UserProvider extends ChangeNotifier {
           .toList();
     } catch (e) {
       log('Admin UserProvider.searchUsersLive error: $e');
-      _errorMessage = 'Došlo je do greške pri pretrazi korisnika.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri pretrazi korisnika.',
+      );
       return [];
     }
   }

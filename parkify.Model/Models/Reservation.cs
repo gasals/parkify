@@ -16,6 +16,8 @@
         public decimal CalculatedPrice { get; set; }
         public decimal? DiscountAmount { get; set; }
         public decimal FinalPrice { get; set; }
+        public decimal WalletAmountUsed { get; set; }
+        public decimal PaymentAmountPaid { get; set; }
         public bool RequiresDisabledSpot { get; set; } = false;
         public string Notes { get; set; } = string.Empty;
         public string QRCodeData { get; set; } = string.Empty;

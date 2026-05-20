@@ -13,6 +13,11 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _user != null;
 
+  String _messageFromError(Object error, String fallback) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty ? fallback : message;
+  }
+
   Future<bool> login(String username, String password) async {
     _isLoading = true;
     _errorMessage = null;
@@ -32,7 +37,10 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
       return true;
     } catch (e) {
-      _errorMessage = "Neuspješna prijava. Provjerite podatke.";
+      _errorMessage = _messageFromError(
+        e,
+        "Neuspješna prijava. Provjerite podatke.",
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -46,7 +54,10 @@ class AuthProvider extends ChangeNotifier {
       _user = User.fromJson(userData);
       notifyListeners();
     } catch (e) {
-      _errorMessage = "Greška pri učitavanju podataka korisnika.";
+      _errorMessage = _messageFromError(
+        e,
+        "Greška pri učitavanju podataka korisnika.",
+      );
     }
   }
 
@@ -62,7 +73,10 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       log('AuthProvider.register error: $e');
-      _errorMessage = 'Neuspješna registracija. Pokušajte ponovno.';
+      _errorMessage = _messageFromError(
+        e,
+        'Neuspješna registracija. Pokušajte ponovno.',
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -102,7 +116,10 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       log('AuthProvider.updateUser error: $e');
-      _errorMessage = 'Došlo je do greške pri ažuriranju korisnika.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri ažuriranju korisnika.',
+      );
       notifyListeners();
       return false;
     } finally {
@@ -131,7 +148,10 @@ class AuthProvider extends ChangeNotifier {
       return success;
     } catch (e) {
       log('AuthProvider.changePassword error: $e');
-      _errorMessage = 'Došlo je do greške pri promjeni lozinke.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri promjeni lozinke.',
+      );
       notifyListeners();
       return false;
     } finally {

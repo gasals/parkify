@@ -61,10 +61,7 @@ namespace parkify.Service.Services
             if (Context.Users.Any(x => x.Email == request.Email))
                 throw new UserException("Email je već u upotrebi.");
 
-            if (request.IsAdmin.HasValue)
-                entity.IsAdmin = request.IsAdmin.Value;
-            else
-                entity.IsAdmin = false;
+            entity.IsAdmin = false;
 
             entity.PasswordSalt = GenerateSalt();
             entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);

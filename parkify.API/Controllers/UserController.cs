@@ -22,57 +22,52 @@ namespace parkify.API.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public IActionResult Login(string username, string password)
+        public IActionResult Login([FromBody] LoginRequest request)
         {
-            var user = (_service as IUserService)?.Login(username, password);
+            if (string.IsNullOrWhiteSpace(request?.Username) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest(new { error = "Username i lozinka su obavezni." });
+            }
+
+            var user = (_service as IUserService)?.Login(request.Username, request.Password);
 
             if (user == null)
             {
-                return Unauthorized("Pogrešan username ili lozinka.");
+                return Unauthorized(new { error = "Pogrešan username ili lozinka." });
             }
 
-            string role = user.IsAdmin ? "Admin" : "User";
+            return Ok(CreateAuthResponse(user));
+        }
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public override User Insert([FromBody] UserInsertRequest request)
+        {
+            return base.Insert(request);
+        }
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Role, role)
-                }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                Issuer = _configuration["Jwt:Issuer"],
-                Audience = _configuration["Jwt:Audience"],
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-            return Ok(new
-            {
-                Token = tokenString,
-                user.Id,
-                user.IsAdmin,
-                user.IsActive
-            });
+        [HttpPut("{id}")]
+        public override User Update(int id, [FromBody] UserUpdateRequest request)
+        {
+            return base.Update(id, request);
         }
 
         [HttpPost("register")]
         [AllowAnonymous]
         public IActionResult Register([FromBody] UserInsertRequest request)
         {
-            var user = base.Insert(request);
+            var user = (_service as IUserService)?.Insert(request);
 
             if (user == null)
             {
-                return BadRequest("Registracija nije uspjela.");
+                return BadRequest(new { error = "Registracija nije uspjela." });
             }
 
+            return Ok(CreateAuthResponse(user));
+        }
+
+        private object CreateAuthResponse(User user)
+        {
             string role = user.IsAdmin ? "Admin" : "User";
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -95,13 +90,13 @@ namespace parkify.API.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            return Ok(new
+            return new
             {
                 Token = tokenString,
                 user.Id,
                 user.IsAdmin,
                 user.IsActive
-            });
+            };
         }
 
         [HttpGet]

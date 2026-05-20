@@ -16,15 +16,80 @@ class ApiService {
     'ngrok-skip-browser-warning': 'true',
   };
 
+  static String _messageFromBody(
+    String body, {
+    String fallback = 'Došlo je do greške.',
+  }) {
+    if (body.isEmpty) return fallback;
+
+    try {
+      final decoded = jsonDecode(body);
+
+      if (decoded is Map<String, dynamic>) {
+        final error = decoded['error'];
+        if (error is String && error.isNotEmpty) return error;
+
+        final message = decoded['message'];
+        if (message is String && message.isNotEmpty) return message;
+
+        final title = decoded['title'];
+        if (title is String && title.isNotEmpty) return title;
+
+        final errors = decoded['errors'];
+        if (errors is Map<String, dynamic>) {
+          final messages = <String>[];
+
+          errors.forEach((_, value) {
+            if (value is List) {
+              messages.addAll(value.whereType<String>());
+            } else if (value is String && value.isNotEmpty) {
+              messages.add(value);
+            }
+          });
+
+          if (messages.isNotEmpty) {
+            return messages.join('\n');
+          }
+        }
+      }
+
+      if (decoded is String && decoded.isNotEmpty) {
+        return decoded;
+      }
+    } catch (_) {
+      if (body.isNotEmpty) return body;
+    }
+
+    return fallback;
+  }
+
+  static String _messageFromError(Object error, String fallback) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty ? fallback : message;
+  }
+
+  static Never _throwWithMessage(Object error, String fallback) {
+    throw Exception(_messageFromError(error, fallback));
+  }
+
   static Future<Map<String, dynamic>> _handleResponse(
     http.Response response,
   ) async {
     if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.body.isEmpty) {
+        return <String, dynamic>{};
+      }
+
       return jsonDecode(response.body) as Map<String, dynamic>;
-    } else if (response.statusCode == 401) {
-      throw Exception('Neautorizovan pristup');
+    } else if (response.statusCode == 401 || response.statusCode == 403) {
+      throw Exception(
+        _messageFromBody(response.body, fallback: 'Neautorizovan pristup'),
+      );
     }
-    throw Exception('Greška: ${response.statusCode}');
+
+    throw Exception(
+      _messageFromBody(response.body, fallback: 'Greška: ${response.statusCode}'),
+    );
   }
 
   static Future<Map<String, String>> _buildQueryParams({
@@ -60,17 +125,16 @@ class ApiService {
     try {
       final response = await http
           .post(
-            Uri.parse(
-              '${AppUrls.users}/login?username=$username&password=$password',
-            ),
+            Uri.parse('${AppUrls.users}/login'),
             headers: _getHeaders(),
+            body: jsonEncode({'username': username, 'password': password}),
           )
           .timeout(_timeout);
 
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.login error: $e');
-      throw Exception('Login greška');
+      _throwWithMessage(e, 'Login greška');
     }
   }
 
@@ -94,7 +158,7 @@ class ApiService {
     try {
       final response = await http
           .put(
-            Uri.parse('${AppUrls.users}/$userId/change-password'),
+            Uri.parse('${AppUrls.users}/$userId'),
             headers: _getHeaders(),
             body: jsonEncode({
               'password': password,
@@ -106,7 +170,7 @@ class ApiService {
       await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.changePassword error: $e');
-      throw Exception('Greška pri promjeni lozinke');
+      _throwWithMessage(e, 'Greška pri promjeni lozinke');
     }
   }
 
@@ -180,7 +244,6 @@ class ApiService {
               'lastName': lastName,
               'address': address ?? '',
               'city': city ?? '',
-              'isAdmin': true,
             }),
           )
           .timeout(_timeout);
@@ -188,7 +251,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.createUser error: $e');
-      throw Exception('Greška pri kreiranju korisnika');
+      _throwWithMessage(e, 'Greška pri kreiranju korisnika');
     }
   }
 
@@ -219,7 +282,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.updateUser error: $e');
-      throw Exception('Greška pri ažuriranju korisnika');
+      _throwWithMessage(e, 'Greška pri ažuriranju korisnika');
     }
   }
 
@@ -229,8 +292,8 @@ class ApiService {
   }) async {
     try {
       final response = await http
-          .patch(
-            Uri.parse('${AppUrls.users}/$userId/toggle-active'),
+          .put(
+            Uri.parse('${AppUrls.users}/$userId'),
             headers: _getHeaders(),
             body: jsonEncode({'isActive': isActive}),
           )
@@ -239,7 +302,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.toggleUserActive error: $e');
-      throw Exception('Greška pri promjeni statusa');
+      _throwWithMessage(e, 'Greška pri promjeni statusa');
     }
   }
 

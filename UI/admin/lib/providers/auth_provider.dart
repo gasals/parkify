@@ -13,6 +13,11 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _isAuthenticated;
 
+  String _messageFromError(Object error, String fallback) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty ? fallback : message;
+  }
+
   Future<bool> adminLogin(String username, String password) async {
     _isLoading = true;
     _errorMessage = null;
@@ -38,7 +43,10 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
       return true;
     } catch (e) {
-      _errorMessage = "Neuspješna prijava. Provjerite podatke.";
+      _errorMessage = _messageFromError(
+        e,
+        "Neuspješna prijava. Provjerite podatke.",
+      );
       _isAuthenticated = false;
       notifyListeners();
       return false;
@@ -54,7 +62,10 @@ class AuthProvider extends ChangeNotifier {
       _user = User.fromJson(userData);
       notifyListeners();
     } catch (e) {
-      _errorMessage = "Greška pri učitavanju podataka korisnika.";
+      _errorMessage = _messageFromError(
+        e,
+        "Greška pri učitavanju podataka korisnika.",
+      );
       notifyListeners();
     }
   }
@@ -93,7 +104,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(e, 'Greška pri ažuriranju korisnika.');
       notifyListeners();
       return false;
     } finally {
@@ -121,7 +132,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(e, 'Greška pri promjeni lozinke.');
       notifyListeners();
       return false;
     } finally {

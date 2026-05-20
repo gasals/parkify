@@ -117,6 +117,22 @@ namespace parkify.Service.Database
                 .HasMaxLength(50);
 
             modelBuilder.Entity<Reservation>()
+                .Property(r => r.CalculatedPrice)
+                .HasPrecision(10, 2);
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.FinalPrice)
+                .HasPrecision(10, 2);
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.WalletAmountUsed)
+                .HasPrecision(10, 2);
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.PaymentAmountPaid)
+                .HasPrecision(10, 2);
+
+            modelBuilder.Entity<Reservation>()
                 .HasOne(r => r.User)
                 .WithMany(u => u.Reservations)
                 .HasForeignKey(r => r.UserId)
@@ -145,6 +161,10 @@ namespace parkify.Service.Database
                 .Property(p => p.PaymentCode)
                 .IsRequired()
                 .HasMaxLength(50);
+
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.Amount)
+                .HasPrecision(10, 2);
 
             modelBuilder.Entity<Payment>()
                 .HasOne(p => p.User)
@@ -271,6 +291,10 @@ namespace parkify.Service.Database
                 .IsRequired();
 
             modelBuilder.Entity<Wallet>()
+                .Property(r => r.Balance)
+                .HasPrecision(10, 2);
+
+            modelBuilder.Entity<Wallet>()
                 .HasIndex(w => w.UserId)
                 .IsUnique();
 
@@ -286,6 +310,10 @@ namespace parkify.Service.Database
             modelBuilder.Entity<WalletTransaction>()
                 .Property(r => r.WalletId)
                 .IsRequired();
+
+            modelBuilder.Entity<WalletTransaction>()
+                .Property(r => r.Amount)
+                .HasPrecision(10, 2);
 
             modelBuilder.Entity<WalletTransaction>()
                 .HasOne(wt => wt.Wallet)

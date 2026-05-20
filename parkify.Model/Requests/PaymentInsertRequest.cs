@@ -6,5 +6,6 @@ namespace parkify.Model.Requests
         public int? WalletId { get; set; }
         public int UserId { get; set; }
         public decimal Amount { get; set; }
+        public string? StripePaymentIntentId { get; set; }
     }
 }

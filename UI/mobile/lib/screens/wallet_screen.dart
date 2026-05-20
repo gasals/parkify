@@ -235,6 +235,20 @@ class _WalletFormSheetState extends State<WalletFormSheet> {
   final _amountController = TextEditingController();
   bool _isLoading = false;
 
+  String _messageFromError(Object error, String fallback) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty ? fallback : message;
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -352,8 +366,29 @@ class _WalletFormSheetState extends State<WalletFormSheet> {
         clientSecret: payment.clientSecret,
       );
 
-      if (success && mounted) {
-        await paymentProvider.confirmPayment(paymentId: payment.id);
+      if (!success) {
+        if (mounted) {
+          _showError(
+            paymentProvider.errorMessage ??
+                'Došlo je do greške pri plaćanju.',
+          );
+        }
+        return;
+      }
+
+      final confirmed = await paymentProvider.confirmPayment(paymentId: payment.id);
+
+      if (!confirmed) {
+        if (mounted) {
+          _showError(
+            paymentProvider.errorMessage ??
+                'Došlo je do greške pri potvrdi plaćanja.',
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
 
         Navigator.pop(context);
         widget.onSuccess();
@@ -368,11 +403,9 @@ class _WalletFormSheetState extends State<WalletFormSheet> {
     } catch (e) {
       debugPrint('WalletScreen._submitForm error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Došlo je do greške. Pokušajte ponovno.'),
-            backgroundColor: Colors.red,
-          ),
+        _showError(
+          paymentProvider.errorMessage ??
+              _messageFromError(e, 'Došlo je do greške. Pokušajte ponovno.'),
         );
       }
     } finally {
