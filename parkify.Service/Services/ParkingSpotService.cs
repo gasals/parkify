@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -63,6 +64,42 @@ namespace parkify.Service.Services
             entity.SpotCode = $"Z{request.ParkingZoneId}/{request.RowNumber}-{request.ColumnNumber}";
 
             base.BeforeInsert(request, entity);
+        }
+
+        public ParkingSpot Delete(int id)
+        {
+            var entity = Context.ParkingSpots.FirstOrDefault(x => x.Id == id);
+            if (entity == null)
+            {
+                throw new UserException("Parking mjesto sa proslijeđenim ID-em ne postoji.");
+            }
+
+            var hasReservations = Context.Reservations.Any(x => x.ParkingSpotId == id);
+            if (hasReservations)
+            {
+                throw new UserException("Parking mjesto se ne može obrisati jer ima povezane rezervacije. Deaktivirajte ga umjesto brisanja.");
+            }
+
+            var parkingZone = Context.ParkingZones.Find(entity.ParkingZoneId);
+            if (parkingZone != null)
+            {
+                parkingZone.TotalSpots = Math.Max(0, parkingZone.TotalSpots - 1);
+
+                if (entity.Type == Database.ParkingSpotType.Disabled)
+                {
+                    parkingZone.DisabledSpots = Math.Max(0, parkingZone.DisabledSpots - 1);
+                }
+
+                if (entity.IsAvailable)
+                {
+                    parkingZone.AvailableSpots = Math.Max(0, parkingZone.AvailableSpots - 1);
+                }
+            }
+
+            Context.ParkingSpots.Remove(entity);
+            Context.SaveChanges();
+
+            return Mapper.Map<ParkingSpot>(entity);
         }
 
         public ParkingSpot SetAvailable(int id, bool isAvailable)

@@ -41,5 +41,12 @@ namespace parkify.API.Controllers
         {
             return base.GetById(id);
         }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Delete(int id)
+        {
+            return Ok((_service as IParkingSpotService)!.Delete(id));
+        }
     }
 }

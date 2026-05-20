@@ -1,9 +1,11 @@
 using parkify.Model.Models;
+using parkify.Model.Requests;
 using parkify.Model.SearchObject;
 
 namespace parkify.Service.Interfaces
 {
-    public interface ICityService : IService<City, CitySearch>
+    public interface ICityService : ICRUDService<City, CitySearch, CityInsertRequest, CityUpdateRequest>
     {
+        City Delete(int id);
     }
 }

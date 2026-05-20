@@ -89,7 +89,6 @@ class PreferenceProvider extends ChangeNotifier {
 
   Future<void> updatePreference({
     required int userId,
-    bool? prefersCovered,
     bool? prefersNearby,
     int? preferredCityId,
     int? favoriteParkingZoneId,
@@ -102,7 +101,6 @@ class PreferenceProvider extends ChangeNotifier {
     try {
       final data = <String, dynamic>{};
 
-      if (prefersCovered != null) data['prefersCovered'] = prefersCovered;
       if (prefersNearby != null) data['prefersNearby'] = prefersNearby;
       if (preferredCityId != null) data['preferredCityId'] = preferredCityId;
       if (favoriteParkingZoneId != null) {

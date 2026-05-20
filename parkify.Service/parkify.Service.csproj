@@ -18,6 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="QuestPDF" Version="2024.12.1" />
     <PackageReference Include="Stripe.net" Version="50.3.0" />
   </ItemGroup>
 

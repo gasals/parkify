@@ -131,7 +131,6 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                               columnNumber: columnNumber,
                               type: 0,
                               isAvailable: false,
-                              isCovered: false,
                             ),
                           );
 
@@ -147,7 +146,6 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                           final isSelected = _selectedSpot?.id == spot.id;
                           final isAvailable = spot.isAvailable;
                           final isDisabled = spot.type == 2;
-                          final isCovered = spot.isCovered;
 
                           return GestureDetector(
                             onTap: isAvailable
@@ -183,8 +181,6 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                                   Icon(
                                     isDisabled
                                         ? Icons.wheelchair_pickup
-                                        : isCovered
-                                        ? Icons.roofing
                                         : Icons.local_parking,
                                     size: 16,
                                     color: isSelected

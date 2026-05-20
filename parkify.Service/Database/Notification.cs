@@ -29,6 +29,7 @@
         SpecialOffer = 6,
         ReservationCancelled = 7,
         CheckInReminder = 8,
-        ParkingFull = 9
+        ParkingFull = 9,
+        PaymentRefunded = 10
     }
 }

@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -13,20 +14,14 @@ namespace parkify.Service.Services
         : BaseCRUDService<Payment, PaymentSearch, Database.Payment, PaymentInsertRequest, PaymentUpdateRequest>,
           IPaymentService
     {
-        private readonly IReservationService _reservationService;
-        private readonly IWalletService _walletService;
         private readonly IMessagePublisher _publisher;
 
         public PaymentService(
             Database.ParkifyContext context,
             IMapper mapper,
-            IReservationService reservationService,
-            IWalletService walletService,
             IMessagePublisher publisher)
             : base(context, mapper)
         {
-            _reservationService = reservationService;
-            _walletService = walletService;
             _publisher = publisher;
         }
 
@@ -64,14 +59,14 @@ namespace parkify.Service.Services
 
             if (request.ReservationId.HasValue)
             {
-                var reservation = _reservationService.GetById(request.ReservationId.Value);
-                if (reservation == null)
+                var reservationExists = Context.Reservations.Any(r => r.Id == request.ReservationId.Value);
+                if (!reservationExists)
                     throw new Exception("Rezervacija ne postoji");
             }
             else if (request.WalletId.HasValue)
             {
-                var wallet = _walletService.GetById(request.WalletId.Value);
-                if (wallet == null)
+                var walletExists = Context.Wallets.Any(w => w.Id == request.WalletId.Value);
+                if (!walletExists)
                     throw new Exception("Wallet ne postoji");
             }
             else
@@ -117,6 +112,7 @@ namespace parkify.Service.Services
             payment.Completed = DateTime.UtcNow;
             payment.TransactionId = paymentIntent.LatestChargeId ?? paymentIntent.Id;
             payment.Modified = DateTime.UtcNow;
+            NotificationMessage? notification = null;
 
             if (payment.ReservationId.HasValue)
             {
@@ -139,9 +135,7 @@ namespace parkify.Service.Services
                         parkingSpot.Modified = DateTime.UtcNow;
                     }
 
-                    Context.SaveChanges();
-
-                    _publisher.PublishNotification(new NotificationMessage
+                    notification = new NotificationMessage
                     {
                         UserId = payment.UserId,
                         Title = "Plaćanje uspješno",
@@ -150,7 +144,7 @@ namespace parkify.Service.Services
                         Type = (int)Database.NotificationType.PaymentSuccessful,
                         Channel = NotificationChannel.Both,
                         ReservationId = reservation.Id
-                    });
+                    };
                 }
             }
             else if (payment.WalletId.HasValue)
@@ -169,20 +163,132 @@ namespace parkify.Service.Services
                         Created = DateTime.UtcNow
                     });
 
-                    Context.SaveChanges();
-
-                     _publisher.PublishNotification(new NotificationMessage
+                    notification = new NotificationMessage
                     {
                         UserId = payment.UserId,
                         Title = "Novčanik dopunjen",
                         Message = $"Vaš novčanik je uspješno dopunjen sa {payment.Amount:F2} KM.",
                         Type = (int)Database.NotificationType.PaymentSuccessful,
                         Channel = NotificationChannel.Both
+                    };
+                }
+            }
+
+            Context.SaveChanges();
+
+            if (notification != null)
+            {
+                _publisher.PublishNotification(notification);
+            }
+
+            return Mapper.Map<Payment>(payment);
+        }
+
+        public async Task<Payment> RefundPayment(int paymentId, string reason)
+        {
+            var payment = Context.Payments.FirstOrDefault(p => p.Id == paymentId);
+
+            if (payment == null)
+                throw new UserException("Plaćanje nije pronađeno.");
+
+            if (payment.Status == Database.PaymentStatus.Refunded)
+                return Mapper.Map<Payment>(payment);
+
+            if (payment.Status != Database.PaymentStatus.Completed)
+                throw new UserException("Samo završeno plaćanje može biti refundirano.");
+
+            if (string.IsNullOrWhiteSpace(payment.StripePaymentIntentId))
+                throw new UserException("Plaćanje nema Stripe payment intent i ne može biti refundirano.");
+
+            var sanitizedReason = reason?.Trim();
+            if (string.IsNullOrWhiteSpace(sanitizedReason))
+                throw new UserException("Razlog refundacije je obavezan.");
+
+            var paymentIntentService = new PaymentIntentService();
+            var paymentIntent = await paymentIntentService.GetAsync(payment.StripePaymentIntentId);
+
+            if (!string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
+                throw new UserException("Stripe plaćanje nije u statusu koji dozvoljava refundaciju.");
+
+            var refundService = new RefundService();
+            var refund = await refundService.CreateAsync(new RefundCreateOptions
+            {
+                PaymentIntent = payment.StripePaymentIntentId,
+                Reason = RefundReasons.RequestedByCustomer,
+                Metadata = new Dictionary<string, string>
+                {
+                    { "paymentId", payment.Id.ToString() },
+                    { "reason", sanitizedReason }
+                }
+            });
+
+            if (!string.Equals(refund.Status, "succeeded", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(refund.Status, "pending", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new UserException("Stripe refundacija nije uspjela.");
+            }
+
+            payment.Status = Database.PaymentStatus.Refunded;
+            payment.RefundReason = sanitizedReason;
+            payment.Refunded = DateTime.UtcNow;
+            payment.Modified = DateTime.UtcNow;
+
+            if (payment.ReservationId.HasValue)
+            {
+                var reservation = Context.Reservations.FirstOrDefault(r => r.Id == payment.ReservationId.Value);
+                if (reservation != null)
+                {
+                    reservation.PaymentAmountPaid = 0;
+
+                    if (reservation.Status == Database.ReservationStatus.Confirmed ||
+                        reservation.Status == Database.ReservationStatus.Active)
+                    {
+                        reservation.Status = Database.ReservationStatus.Cancelled;
+
+                        var parkingZone = Context.ParkingZones.Find(reservation.ParkingZoneId);
+                        if (parkingZone != null)
+                        {
+                            parkingZone.AvailableSpots += 1;
+                        }
+
+                        var parkingSpot = Context.ParkingSpots.Find(reservation.ParkingSpotId);
+                        if (parkingSpot != null)
+                        {
+                            parkingSpot.IsAvailable = true;
+                            parkingSpot.Modified = DateTime.UtcNow;
+                        }
+                    }
+                }
+            }
+            else if (payment.WalletId.HasValue)
+            {
+                var wallet = Context.Wallets.Find(payment.WalletId.Value);
+                if (wallet != null)
+                {
+                    wallet.Balance -= payment.Amount;
+                    wallet.Modified = DateTime.UtcNow;
+
+                    Context.WalletTransactions.Add(new Database.WalletTransaction
+                    {
+                        WalletId = wallet.Id,
+                        Amount = -payment.Amount,
+                        Type = Database.WalletTransactionType.Refund,
+                        Created = DateTime.UtcNow
                     });
                 }
             }
 
             Context.SaveChanges();
+
+            _publisher.PublishNotification(new NotificationMessage
+            {
+                UserId = payment.UserId,
+                Title = "Plaćanje refundirano",
+                Message = $"Plaćanje od {payment.Amount:F2} KM je refundirano. Razlog: {payment.RefundReason}",
+                Type = (int)Database.NotificationType.PaymentRefunded,
+                Channel = NotificationChannel.Both,
+                ReservationId = payment.ReservationId
+            });
 
             return Mapper.Map<Payment>(payment);
         }

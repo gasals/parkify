@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:mobile/screens/vehicle_selection_screen.dart';
 import 'package:mobile/screens/wallet_screen.dart';
 import 'package:provider/provider.dart';
@@ -11,9 +10,9 @@ import '../providers/notification_provider.dart';
 import '../providers/reservation_provider.dart';
 import '../providers/preference_provider.dart';
 import '../providers/city_provider.dart';
+import '../providers/parking_zone_provider.dart';
 import '../screens/maps_screen.dart';
 import '../screens/my_reservations_screen.dart';
-import '../screens/notifications_screen.dart';
 import '../screens/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -50,6 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
         listen: false,
       ).loadUserPreference(userId: userId);
       Provider.of<CityProvider>(context, listen: false).getAllCities();
+      Provider.of<ParkingZoneProvider>(
+        context,
+        listen: false,
+      ).getRecommendedZones(userId: userId);
 
       Provider.of<NotificationProvider>(
         context,

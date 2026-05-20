@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import '../constants/stripe_keys.dart';
 import '../models/payment_model.dart';
 import '../services/api_service.dart';
 
@@ -62,6 +63,13 @@ class PaymentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!StripeKeys.isConfigured) {
+        _errorMessage =
+            'Stripe publishable key nije konfigurisan. Pokreni aplikaciju sa --dart-define=STRIPE_PUBLISHABLE_KEY=...';
+        notifyListeners();
+        return false;
+      }
+
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: clientSecret,

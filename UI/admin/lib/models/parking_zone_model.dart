@@ -10,7 +10,6 @@ class ParkingZone {
   final double longitude;
   final int totalSpots;
   final int disabledSpots;
-  final int coveredSpots;
   final int availableSpots;
   final double pricePerHour;
   final double dailyRate;
@@ -29,7 +28,6 @@ class ParkingZone {
     required this.longitude,
     required this.totalSpots,
     required this.disabledSpots,
-    required this.coveredSpots,
     required this.availableSpots,
     required this.pricePerHour,
     required this.dailyRate,
@@ -50,7 +48,6 @@ class ParkingZone {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       totalSpots: json['totalSpots'] as int? ?? 0,
       disabledSpots: json['disabledSpots'] as int? ?? 0,
-      coveredSpots: json['coveredSpots'] as int? ?? 0,
       availableSpots: json['availableSpots'] as int? ?? 0,
       pricePerHour: (json['pricePerHour'] as num?)?.toDouble() ?? 0.0,
       dailyRate: (json['dailyRate'] as num?)?.toDouble() ?? 0.0,
@@ -78,7 +75,6 @@ class ParkingZone {
       'longitude': longitude,
       'totalSpots': totalSpots,
       'disabledSpots': disabledSpots,
-      'coveredSpots': coveredSpots,
       'availableSpots': availableSpots,
       'pricePerHour': pricePerHour,
       'dailyRate': dailyRate,

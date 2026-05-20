@@ -259,6 +259,22 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
               ),
             )),
           ]),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => _deleteZone(zone, provider),
+              icon: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
+              label: const Text(
+                'OBRIŠI ZONU',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
         ]),
       ),
     );
@@ -323,6 +339,35 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
           );
           if (mounted) AdminSnackBar.show(context,
               zone.isActive ? 'Zona je deaktivirana' : 'Zona je aktivirana', ok);
+        },
+      ),
+    );
+  }
+
+  void _deleteZone(ParkingZone zone, ParkingZoneProvider provider) {
+    showDialog(
+      context: context,
+      builder: (_) => AdminConfirmDialog(
+        title: 'Obriši zonu?',
+        message:
+            'Zona će biti trajno obrisana samo ako nema povezanih mjesta ni historije rezervacija.',
+        confirmLabel: 'Obriši',
+        confirmColor: Colors.red,
+        onConfirm: () async {
+          final ok = await provider.deleteParkingZone(zone.id);
+          if (!mounted) {
+            return;
+          }
+
+          if (ok) {
+            AdminSnackBar.show(context, 'Zona je obrisana', true);
+            return;
+          }
+
+          AdminSnackBar.error(
+            context,
+            provider.errorMessage ?? 'Brisanje zone nije uspjelo.',
+          );
         },
       ),
     );
@@ -922,6 +967,21 @@ class _SpotsGridDialog extends StatelessWidget {
           ]),
         ),
       ),
+      Positioned(
+        top: -4,
+        left: -4,
+        child: GestureDetector(
+          onTap: () => _showDeleteSpotDialog(context, spot, p),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.delete_outline, color: Colors.white, size: 12),
+          ),
+        ),
+      ),
       Positioned(bottom: -4, right: -4,
         child: GestureDetector(
           onTap: () => _showToggleSpotDialog(context, spot, p),
@@ -1121,6 +1181,32 @@ class _SpotsGridDialog extends StatelessWidget {
           final ok = await p.toggleParkingSpotActive(
               spotId: spot.id, isAvailable: !spot.isAvailable);
           if (context.mounted) AdminSnackBar.show(context, 'Mjesto a\u017eurirano', ok);
+        },
+      ),
+    );
+  }
+
+  void _showDeleteSpotDialog(BuildContext context, dynamic spot, ParkingZoneProvider p) {
+    showDialog(
+      context: context,
+      builder: (_) => AdminConfirmDialog(
+        title: 'Obriši mjesto?',
+        message:
+            'Mjesto će biti trajno obrisano samo ako nema povezanih rezervacija.',
+        confirmLabel: 'Obriši',
+        confirmColor: Colors.red,
+        onConfirm: () async {
+          final ok = await p.deleteParkingSpot(spot.id);
+          if (context.mounted) {
+            if (ok) {
+              AdminSnackBar.show(context, 'Mjesto je obrisano', true);
+            } else {
+              AdminSnackBar.error(
+                context,
+                p.errorMessage ?? 'Brisanje mjesta nije uspjelo.',
+              );
+            }
+          }
         },
       ),
     );

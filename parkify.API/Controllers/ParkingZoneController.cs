@@ -41,5 +41,19 @@ namespace parkify.API.Controllers
         {
             return base.GetById(id);
         }
+
+        [HttpGet("recommendations/{userId}")]
+        [Authorize]
+        public IActionResult GetRecommendations(int userId, [FromQuery] int count = 5)
+        {
+            return Ok((_service as IParkingZoneService)!.GetRecommendations(userId, count));
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Delete(int id)
+        {
+            return Ok((_service as IParkingZoneService)!.Delete(id));
+        }
     }
 }

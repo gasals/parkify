@@ -1,7 +1,6 @@
 class Preference {
   final int id;
   final int userId;
-  final bool prefersCovered;
   final bool prefersNearby;
   final int? preferredCityId;
   final int? favoriteParkingZoneId;
@@ -12,7 +11,6 @@ class Preference {
   Preference({
     required this.id,
     required this.userId,
-    this.prefersCovered = false,
     this.prefersNearby = true,
     this.preferredCityId,
     this.favoriteParkingZoneId,
@@ -25,7 +23,6 @@ class Preference {
     return Preference(
       id: json['id'] ?? 0,
       userId: json['userId'] ?? 0,
-      prefersCovered: json['prefersCovered'] ?? false,
       prefersNearby: json['prefersNearby'] ?? true,
       preferredCityId: json['preferredCityId'],
       favoriteParkingZoneId: json['favoriteParkingZoneId'],
@@ -41,7 +38,6 @@ class Preference {
     return {
       'id': id,
       'userId': userId,
-      'prefersCovered': prefersCovered,
       'prefersNearby': prefersNearby,
       'preferredCityId': preferredCityId,
       'favoriteParkingZoneId': favoriteParkingZoneId,

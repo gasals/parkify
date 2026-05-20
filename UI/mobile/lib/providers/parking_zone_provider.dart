@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 
 class ParkingZoneProvider extends ChangeNotifier {
   List<ParkingZone> _parkingZones = [];
+  List<ParkingZone> _recommendedZones = [];
   ParkingZone? _selectedZone;
   bool _isLoading = false;
   String? _errorMessage;
@@ -12,6 +13,7 @@ class ParkingZoneProvider extends ChangeNotifier {
   int _totalCount = 0;
 
   List<ParkingZone> get parkingZones => _parkingZones;
+  List<ParkingZone> get recommendedZones => _recommendedZones;
   ParkingZone? get selectedZone => _selectedZone;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -68,6 +70,27 @@ class ParkingZoneProvider extends ChangeNotifier {
       _errorMessage = 'Došlo je do greške pri učitavanju parking zone.';
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> getRecommendedZones({required int userId, int count = 5}) async {
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await ApiService.getRecommendedParkingZones(
+        userId: userId,
+        count: count,
+      );
+
+      _recommendedZones = result
+          .map((zone) => ParkingZone.fromJson(zone))
+          .toList();
+    } catch (e) {
+      log('ParkingZoneProvider.getRecommendedZones error: $e');
+      _errorMessage = 'Došlo je do greške pri učitavanju preporučenih zona.';
+    } finally {
       notifyListeners();
     }
   }

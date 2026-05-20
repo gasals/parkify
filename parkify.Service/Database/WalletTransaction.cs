@@ -17,6 +17,7 @@
         Reservation = 1,
         TopUp = 2,
         Cancellation = 3,
-        Extra = 4
+        Extra = 4,
+        Refund = 5
     }
 }

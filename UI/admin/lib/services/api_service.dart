@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:typed_data';
 import 'package:admin/constants/app_urls.dart';
 import 'package:http/http.dart' as http;
 
@@ -92,6 +93,17 @@ class ApiService {
     );
   }
 
+  static Future<Uint8List> _handleBytesResponse(
+    http.Response response, {
+    String fallback = 'Greška pri preuzimanju fajla.',
+  }) async {
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return response.bodyBytes;
+    }
+
+    throw Exception(_messageFromBody(response.body, fallback: fallback));
+  }
+
   static Future<Map<String, String>> _buildQueryParams({
     int? page,
     int? pageSize,
@@ -146,7 +158,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.getUserById error: $e');
-      throw Exception('Greška pri preuzimanju korisnika');
+      _throwWithMessage(e, 'Greška pri preuzimanju korisnika');
     }
   }
 
@@ -200,7 +212,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.searchUsers error: $e');
-      throw Exception('Greška pri pretrazi korisnika');
+      _throwWithMessage(e, 'Greška pri pretrazi korisnika');
     }
   }
 
@@ -216,7 +228,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.getAllUsers error: $e');
-      throw Exception('Greška pri preuzimanju korisnika');
+      _throwWithMessage(e, 'Greška pri preuzimanju korisnika');
     }
   }
 
@@ -318,7 +330,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.getAllCities error: $e');
-      throw Exception('Greška pri preuzimanju gradova');
+      _throwWithMessage(e, 'Greška pri preuzimanju gradova');
     }
   }
 
@@ -330,7 +342,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.getCityById error: $e');
-      throw Exception('Greška pri preuzimanju grada');
+      _throwWithMessage(e, 'Greška pri preuzimanju grada');
     }
   }
 
@@ -346,7 +358,72 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.searchCities error: $e');
-      throw Exception('Greška pri pretrazi gradova');
+      _throwWithMessage(e, 'Greška pri pretrazi gradova');
+    }
+  }
+
+  static Future<Map<String, dynamic>> createCity({
+    required String name,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(AppUrls.cities),
+            headers: _getHeaders(),
+            body: jsonEncode({
+              'name': name,
+              'latitude': latitude,
+              'longitude': longitude,
+            }),
+          )
+          .timeout(_timeout);
+      return await _handleResponse(response);
+    } catch (e) {
+      log('Admin ApiService.createCity error: $e');
+      _throwWithMessage(e, 'Greška pri kreiranju grada');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateCity({
+    required int cityId,
+    String? name,
+    double? latitude,
+    double? longitude,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (name != null) body['name'] = name;
+      if (latitude != null) body['latitude'] = latitude;
+      if (longitude != null) body['longitude'] = longitude;
+
+      final response = await http
+          .put(
+            Uri.parse('${AppUrls.cities}/$cityId'),
+            headers: _getHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+      return await _handleResponse(response);
+    } catch (e) {
+      log('Admin ApiService.updateCity error: $e');
+      _throwWithMessage(e, 'Greška pri ažuriranju grada');
+    }
+  }
+
+  static Future<void> deleteCity(int cityId) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('${AppUrls.cities}/$cityId'),
+            headers: _getHeaders(),
+          )
+          .timeout(_timeout);
+      await _handleResponse(response);
+    } catch (e) {
+      log('Admin ApiService.deleteCity error: $e');
+      _throwWithMessage(e, 'Greška pri brisanju grada');
     }
   }
 
@@ -370,7 +447,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.searchZones error: $e');
-      throw Exception('Greška pri pretrazi parking zona');
+      _throwWithMessage(e, 'Greška pri pretrazi parking zona');
     }
   }
 
@@ -406,7 +483,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.createZone error: $e');
-      throw Exception('Greška pri kreiranju zone');
+      _throwWithMessage(e, 'Greška pri kreiranju zone');
     }
   }
 
@@ -439,7 +516,23 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.updateZone error: $e');
-      throw Exception('Greška pri ažuriranju zone');
+      _throwWithMessage(e, 'Greška pri ažuriranju zone');
+    }
+  }
+
+  static Future<void> deleteParkingZone(int zoneId) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('${AppUrls.parkingZones}/$zoneId'),
+            headers: _getHeaders(),
+          )
+          .timeout(_timeout);
+
+      await _handleResponse(response);
+    } catch (e) {
+      log('Admin ApiService.deleteZone error: $e');
+      _throwWithMessage(e, 'Greška pri brisanju zone');
     }
   }
 
@@ -468,7 +561,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.addSpot error: $e');
-      throw Exception('Greška pri dodavanju spota');
+      _throwWithMessage(e, 'Greška pri dodavanju spota');
     }
   }
 
@@ -499,7 +592,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.updateSpot error: $e');
-      throw Exception('Greška pri ažuriranju spota');
+      _throwWithMessage(e, 'Greška pri ažuriranju spota');
     }
   }
 
@@ -515,7 +608,7 @@ class ApiService {
       await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.deleteSpot error: $e');
-      throw Exception('Greška pri brisanju spota');
+      _throwWithMessage(e, 'Greška pri brisanju mjesta');
     }
   }
 
@@ -526,7 +619,7 @@ class ApiService {
     try {
       final response = await http
           .put(
-            Uri.parse('${AppUrls}/$spotId'),
+            Uri.parse('${AppUrls.parkingSpots}/$spotId'),
             headers: _getHeaders(),
             body: jsonEncode({'isAvailable': isAvailable}),
           )
@@ -535,7 +628,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.toggleSpotActive error: $e');
-      throw Exception('Greška pri promjeni statusa spota');
+      _throwWithMessage(e, 'Greška pri promjeni statusa spota');
     }
   }
 
@@ -563,7 +656,55 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.searchReservations error: $e');
-      throw Exception('Greška pri pretrazi rezervacija');
+      _throwWithMessage(e, 'Greška pri pretrazi rezervacija');
+    }
+  }
+
+  static Future<Uint8List> downloadReservationReportPdf({
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    try {
+      final response = await http
+          .get(
+            _buildUri('${AppUrls.reservations}/report/pdf', {
+              if (from != null) 'from': from.toIso8601String(),
+              if (to != null) 'to': to.toIso8601String(),
+            }),
+            headers: _getHeaders(),
+          )
+          .timeout(_timeout);
+      return await _handleBytesResponse(
+        response,
+        fallback: 'Greška pri preuzimanju operativnog izvještaja.',
+      );
+    } catch (e) {
+      log('Admin ApiService.downloadReservationReportPdf error: $e');
+      _throwWithMessage(e, 'Greška pri preuzimanju operativnog izvještaja');
+    }
+  }
+
+  static Future<Uint8List> downloadFinanceReportPdf({
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    try {
+      final response = await http
+          .get(
+            _buildUri('${AppUrls.reservations}/report/finance/pdf', {
+              if (from != null) 'from': from.toIso8601String(),
+              if (to != null) 'to': to.toIso8601String(),
+            }),
+            headers: _getHeaders(),
+          )
+          .timeout(_timeout);
+      return await _handleBytesResponse(
+        response,
+        fallback: 'Greška pri preuzimanju finansijskog izvještaja.',
+      );
+    } catch (e) {
+      log('Admin ApiService.downloadFinanceReportPdf error: $e');
+      _throwWithMessage(e, 'Greška pri preuzimanju finansijskog izvještaja');
     }
   }
 
@@ -584,7 +725,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.updateReservationStatus error: $e');
-      throw Exception('Greška pri ažuriranju statusa');
+      _throwWithMessage(e, 'Greška pri ažuriranju statusa');
     }
   }
 
@@ -607,7 +748,7 @@ class ApiService {
       return await _handleResponse(response);
     } catch (e) {
       log('Admin ApiService.checkIn error: $e');
-      throw Exception('Greška pri check-in-u');
+      _throwWithMessage(e, 'Greška pri check-in-u');
     }
   }
 
@@ -629,7 +770,7 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri check-out-u: $e');
+      _throwWithMessage(e, 'Greška pri check-out-u');
     }
   }
 
@@ -644,8 +785,8 @@ class ApiService {
         page: page,
         pageSize: pageSize,
         filters: {
-          if (userId != null) 'userId': userId,
-          if (isRead != null) 'isRead': isRead,
+          'userId': userId,
+          'isRead': isRead,
         },
       );
 
@@ -655,7 +796,7 @@ class ApiService {
 
       return await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri učitavanju notifikacija: $e');
+      _throwWithMessage(e, 'Greška pri učitavanju notifikacija');
     }
   }
 
@@ -671,7 +812,7 @@ class ApiService {
 
       await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri slanju notifikacije: $e');
+      _throwWithMessage(e, 'Greška pri slanju notifikacije');
     }
   }
 
@@ -687,7 +828,7 @@ class ApiService {
 
       await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri slanju notifikacija svima: $e');
+      _throwWithMessage(e, 'Greška pri slanju notifikacija svima');
     }
   }
 
@@ -702,7 +843,7 @@ class ApiService {
 
       await _handleResponse(response);
     } catch (e) {
-      throw Exception('Greška pri označavanju notifikacije: $e');
+      _throwWithMessage(e, 'Greška pri označavanju notifikacije');
     }
   }
 }

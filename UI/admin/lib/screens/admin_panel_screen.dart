@@ -2,12 +2,13 @@ import 'package:admin/screens/admin_notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'admin_cities_screen.dart';
 import 'admin_reservations_screen.dart';
 import 'admin_users_screen.dart';
 import 'admin_parking_zones_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
-  const AdminPanelScreen({Key? key}) : super(key: key);
+  const AdminPanelScreen({super.key});
 
   @override
   State<AdminPanelScreen> createState() => _AdminPanelScreenState();
@@ -20,7 +21,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     AdminMenuItem(icon: Icons.local_parking, label: 'Parking zone', index: 0),
     AdminMenuItem(icon: Icons.calendar_today, label: 'Rezervacije', index: 1),
     AdminMenuItem(icon: Icons.people, label: 'Korisnici', index: 2),
-    AdminMenuItem(icon: Icons.notifications, label: 'Notifikacije', index: 3),
+    AdminMenuItem(icon: Icons.location_city, label: 'Gradovi', index: 3),
+    AdminMenuItem(icon: Icons.notifications, label: 'Notifikacije', index: 4),
   ];
 
   @override
@@ -137,7 +139,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     ),
                   ),
                   selected: isSelected,
-                  selectedTileColor: const Color(0xFF6366F1).withOpacity(0.1),
+                  selectedTileColor: const Color(0xFF6366F1).withValues(alpha: 0.1),
                   onTap: () {
                     setState(() => _selectedIndex = index);
                   },
@@ -169,6 +171,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       case 2:
         return const AdminUsersScreen();
       case 3:
+        return const AdminCitiesScreen();
+      case 4:
         return const AdminNotificationsScreen();
       default:
         return const AdminParkingZonesScreen();

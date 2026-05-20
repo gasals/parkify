@@ -67,7 +67,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       'city': _cityController.text.isEmpty ? null : _cityController.text,
       'password': _passwordController.text,
       'passwordConfirm': _passwordConfirmController.text,
-      'isAdmin': false,
     });
 
     if (success) {

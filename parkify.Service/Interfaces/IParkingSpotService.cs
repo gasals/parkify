@@ -6,6 +6,7 @@ namespace parkify.Service.Interfaces
 {
     public interface IParkingSpotService : ICRUDService<ParkingSpot, ParkingSpotSearch, ParkingSpotInsertRequest, ParkingSpotUpdateRequest>
     {
+        ParkingSpot Delete(int id);
         ParkingSpot SetAvailable(int id, bool isAvailable);
     }
 }

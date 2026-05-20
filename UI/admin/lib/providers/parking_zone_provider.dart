@@ -18,6 +18,11 @@ class ParkingZoneProvider extends ChangeNotifier {
   int get totalPages => _totalPages;
   int get totalCount => _totalCount;
 
+  String _messageFromError(Object error, String fallback) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty ? fallback : message;
+  }
+
   Future<void> searchParkingZones({
     String? name,
     int? cityId,
@@ -56,7 +61,10 @@ class ParkingZoneProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri pretrazi parking zona.',
+      );
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -95,7 +103,10 @@ class ParkingZoneProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri kreiranju zone.',
+      );
       notifyListeners();
       return false;
     } finally {
@@ -136,7 +147,10 @@ class ParkingZoneProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri ažuriranju zone.',
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -187,7 +201,10 @@ class ParkingZoneProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri dodavanju mjesta.',
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -219,7 +236,10 @@ class ParkingZoneProvider extends ChangeNotifier {
       await searchParkingZones(includeSpots: true);
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri ažuriranju mjesta.',
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -237,7 +257,10 @@ class ParkingZoneProvider extends ChangeNotifier {
       await searchParkingZones(includeSpots: true);
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri brisanju mjesta.',
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -261,7 +284,10 @@ class ParkingZoneProvider extends ChangeNotifier {
       await searchParkingZones(includeSpots: true);
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri promjeni statusa mjesta.',
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -281,7 +307,10 @@ class ParkingZoneProvider extends ChangeNotifier {
           .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri pretrazi parking zona.',
+      );
       return [];
     }
   }
@@ -295,8 +324,34 @@ class ParkingZoneProvider extends ChangeNotifier {
           .map((city) => City.fromJson(city as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri pretrazi gradova.',
+      );
       return [];
+    }
+  }
+
+  Future<bool> deleteParkingZone(int zoneId) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await ApiService.deleteParkingZone(zoneId);
+
+      _parkingZones.removeWhere((zone) => zone.id == zoneId);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri brisanju zone.',
+      );
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

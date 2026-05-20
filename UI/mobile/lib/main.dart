@@ -17,7 +17,6 @@ import 'providers/auth_provider.dart';
 import 'providers/parking_zone_provider.dart';
 import 'providers/reservation_provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/my_reservations_screen.dart';
 import 'screens/settings_screen.dart';
@@ -25,9 +24,16 @@ import 'screens/settings_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  Stripe.publishableKey = StripeKeys.publishableKey;
-  Stripe.merchantIdentifier = StripeKeys.merchantIdentifier;
-  Stripe.urlScheme = StripeKeys.urlScheme;
+  if (StripeKeys.isConfigured) {
+    Stripe.publishableKey = StripeKeys.publishableKey;
+    Stripe.merchantIdentifier = StripeKeys.merchantIdentifier;
+    Stripe.urlScheme = StripeKeys.urlScheme;
+    await Stripe.instance.applySettings();
+  } else {
+    debugPrint(
+      'Stripe publishable key nije konfigurisan. Pokreni aplikaciju sa --dart-define=STRIPE_PUBLISHABLE_KEY=... da omogućiš plaćanja.',
+    );
+  }
 
   runApp(MyApp());
 }

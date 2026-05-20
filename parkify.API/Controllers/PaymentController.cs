@@ -75,6 +75,26 @@ namespace parkify.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [HttpPut("{id}/refund")]
+        [Authorize]
+        public async Task<IActionResult> RefundPayment(int id, [FromBody] RefundRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request?.Reason))
+                {
+                    return BadRequest(new { error = "Razlog refundacije je obavezan." });
+                }
+
+                var payment = await _paymentService.RefundPayment(id, request.Reason);
+                return Ok(payment);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 
 }

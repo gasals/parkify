@@ -8,7 +8,6 @@ class ParkingZone {
   final double longitude;
   final int totalSpots;
   final int disabledSpots;
-  final int coveredSpots;
   final int availableSpots;
   final double pricePerHour;
   final double dailyRate;
@@ -28,7 +27,6 @@ class ParkingZone {
     required this.longitude,
     required this.totalSpots,
     required this.disabledSpots,
-    required this.coveredSpots,
     required this.availableSpots,
     required this.pricePerHour,
     required this.dailyRate,
@@ -48,7 +46,6 @@ class ParkingZone {
       longitude: (json['longitude'] ?? 0.0).toDouble(),
       totalSpots: json['totalSpots'] ?? 0,
       disabledSpots: json['disabledSpots'] ?? 0,
-      coveredSpots: json['coveredSpots'] ?? 0,
       availableSpots: json['availableSpots'] ?? 0,
       pricePerHour: (json['pricePerHour'] ?? 0.0).toDouble(),
       dailyRate: (json['dailyRate'] ?? 0.0).toDouble(),
@@ -57,7 +54,9 @@ class ParkingZone {
       spots: (json['spots'] as List?)
           ?.map((spot) => ParkingSpot.fromJson(spot))
           .toList(),
-    );
+    )
+      ..averageRating = (json['averageRating'] ?? 0.0).toDouble()
+      ..reviewCount = json['reviewCount'] ?? 0;
   }
 
   Map<String, dynamic> toJson() => {
@@ -70,12 +69,13 @@ class ParkingZone {
     'longitude': longitude,
     'totalSpots': totalSpots,
     'disabledSpots': disabledSpots,
-    'coveredSpots': coveredSpots,
     'availableSpots': availableSpots,
     'pricePerHour': pricePerHour,
     'dailyRate': dailyRate,
     'isActive': isActive,
     'isFavorite': isFavorite,
+    'averageRating': averageRating,
+    'reviewCount': reviewCount,
     'spots': spots?.map((spot) => spot.toJson()).toList(),
   };
 }
@@ -88,7 +88,6 @@ class ParkingSpot {
   final int columnNumber;
   final int type;
   final bool isAvailable;
-  final bool isCovered;
 
   ParkingSpot({
     required this.id,
@@ -98,7 +97,6 @@ class ParkingSpot {
     required this.columnNumber,
     required this.type,
     required this.isAvailable,
-    required this.isCovered,
   });
 
   factory ParkingSpot.fromJson(Map<String, dynamic> json) {
@@ -110,7 +108,6 @@ class ParkingSpot {
       columnNumber: json['columnNumber'] ?? 0,
       type: json['type'] ?? 1,
       isAvailable: json['isAvailable'] ?? true,
-      isCovered: json['isCovered'] ?? false,
     );
   }
 
@@ -122,6 +119,5 @@ class ParkingSpot {
     'columnNumber': columnNumber,
     'type': type,
     'isAvailable': isAvailable,
-    'isCovered': isCovered,
   };
 }

@@ -1,6 +1,8 @@
 class AppUrls {
-  static const String baseUrl =
-      'http://localhost:5050/api';
+    static const String baseUrl = String.fromEnvironment(
+        'PARKIFY_API_BASE_URL',
+        defaultValue: 'http://10.0.2.2:5050/api',
+    );
 
   static const String users = '$baseUrl/users';
   static const String login = '$baseUrl/users/login';

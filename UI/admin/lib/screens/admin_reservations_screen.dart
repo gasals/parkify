@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:admin/services/api_service.dart';
 import 'package:admin/widgets/admin_dialog_widgets.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/parking_zone_model.dart';
@@ -8,7 +12,7 @@ import '../providers/reservation_provider.dart';
 import '../widgets/common_widgets.dart';
 
 class AdminReservationsScreen extends StatefulWidget {
-  const AdminReservationsScreen({Key? key}) : super(key: key);
+  const AdminReservationsScreen({super.key});
 
   @override
   State<AdminReservationsScreen> createState() =>
@@ -92,6 +96,36 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     _performSearch();
   }
 
+  Future<void> _downloadReport({required bool finance}) async {
+    try {
+      final now = DateTime.now();
+      final from = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
+      final bytes = finance
+          ? await ApiService.downloadFinanceReportPdf(from: from, to: now)
+          : await ApiService.downloadReservationReportPdf(from: from, to: now);
+
+      final location = await getSaveLocation(
+        suggestedName: finance ? 'parkify-finansijski-izvjestaj.pdf' : 'parkify-rezervacije-izvjestaj.pdf',
+        acceptedTypeGroups: const [
+          XTypeGroup(label: 'PDF', extensions: ['pdf']),
+        ],
+      );
+
+      if (location == null) {
+        return;
+      }
+
+      final file = File(location.path);
+      await file.writeAsBytes(bytes, flush: true);
+
+      if (!mounted) return;
+      AdminSnackBar.show(context, 'PDF je uspješno sačuvan.', true);
+    } catch (e) {
+      if (!mounted) return;
+      AdminSnackBar.show(context, e.toString().replaceFirst('Exception: ', ''), false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,7 +161,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               // FIX: isti stil kao autocomplete polja pored njega
               Expanded(
                 child: DropdownButtonFormField<ReservationStatus>(
-                  value: _selectedStatus,
+                  initialValue: _selectedStatus,
                   isExpanded: true,
                   decoration: SearchFieldDecoration.buildInputDecoration(
                     labelText: 'Status',
@@ -173,6 +207,18 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                   ],
                 ),
               ),
+              OutlinedButton.icon(
+                onPressed: () => _downloadReport(finance: false),
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: const Text('Operativni PDF'),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: () => _downloadReport(finance: true),
+                icon: const Icon(Icons.request_quote_outlined),
+                label: const Text('Finansijski PDF'),
+              ),
+              const SizedBox(width: 12),
               CommonButtons.buildClearButton(onPressed: _clearSearch),
               const SizedBox(width: 12),
               CommonButtons.buildSearchButton(
@@ -300,7 +346,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: kPrimary.withOpacity(0.1),
+                  backgroundColor: kPrimary.withValues(alpha: 0.1),
                   child: const Icon(Icons.confirmation_number_outlined,
                       size: 18, color: kPrimary),
                 ),
@@ -473,7 +519,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                                 },
                           style: OutlinedButton.styleFrom(
                             backgroundColor: isSelected
-                                ? color.withOpacity(0.1)
+                              ? color.withValues(alpha: 0.1)
                                 : null,
                             side: BorderSide(
                                 color: isSelected ? color : Colors.grey[300]!),

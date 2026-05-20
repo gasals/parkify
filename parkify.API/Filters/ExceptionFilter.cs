@@ -14,15 +14,15 @@ namespace parkify.API.Filters
         }
         public override void OnException(ExceptionContext context)
         {
-            _logger.LogError(context.Exception, context.Exception.Message);
-
             if (context.Exception is UserException)
             {
+                _logger.LogWarning(context.Exception, context.Exception.Message);
                 context.ModelState.AddModelError("userError", context.Exception.Message);
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
             }
             else
             {
+                _logger.LogError(context.Exception, context.Exception.Message);
                 context.ModelState.AddModelError("ERROR", "Server side error, please check logs.");
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }

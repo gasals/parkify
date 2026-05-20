@@ -12,7 +12,6 @@ import '../models/preference_model.dart';
 import '../providers/parking_zone_provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/parking_details_screen.dart';
-import 'package:collection/collection.dart';
 
 class MapsScreen extends StatefulWidget {
   @override
@@ -27,6 +26,7 @@ class _MapsScreenState extends State<MapsScreen> {
   ParkingZone? _selectedZone;
   BottomSheetState _sheetState = BottomSheetState.closed;
   Preference? _userPreference;
+  ParkingZone? _recommendedZone;
 
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -63,10 +63,14 @@ class _MapsScreenState extends State<MapsScreen> {
     }
 
     await zoneProvider.getParkingZones();
+    await zoneProvider.getRecommendedZones(userId: userId ?? 0);
     await cityProvider.getAllCities();
 
     setState(() {
       _filteredZones = zoneProvider.parkingZones;
+      _recommendedZone = zoneProvider.recommendedZones.isNotEmpty
+          ? zoneProvider.recommendedZones.first
+          : null;
     });
 
     _animateToPreferredCity(cityProvider);
@@ -106,6 +110,20 @@ class _MapsScreenState extends State<MapsScreen> {
         }).toList();
       }
     });
+  }
+
+  ParkingZone? _findZoneById(List<ParkingZone> zones, int? zoneId) {
+    if (zoneId == null) {
+      return null;
+    }
+
+    for (final zone in zones) {
+      if (zone.id == zoneId) {
+        return zone;
+      }
+    }
+
+    return null;
   }
 
   Set<Marker> _buildMarkers() {
@@ -207,10 +225,12 @@ class _MapsScreenState extends State<MapsScreen> {
           }
 
           final favoriteZone = _userPreference?.favoriteParkingZoneId != null
-              ? _filteredZones.firstWhereOrNull(
-                  (zone) => zone.id == _userPreference?.favoriteParkingZoneId,
+              ? _findZoneById(
+                  _filteredZones,
+                  _userPreference?.favoriteParkingZoneId,
                 )
               : null;
+          final recommendedZone = favoriteZone == null ? _recommendedZone : null;
 
           return Stack(
             children: [
@@ -279,8 +299,62 @@ class _MapsScreenState extends State<MapsScreen> {
                   ),
                 ),
 
+              if (recommendedZone != null)
+                Positioned(
+                  top: 50,
+                  left: 12,
+                  right: 12,
+                  child: GestureDetector(
+                    onTap: () async {
+                      setState(() {
+                        _selectedZone =
+                            _findZoneById(provider.parkingZones, recommendedZone.id) ??
+                            recommendedZone;
+                        _sheetState = BottomSheetState.info;
+                      });
+
+                      _mapController?.animateCamera(
+                        CameraUpdate.newLatLng(
+                          LatLng(recommendedZone.latitude, recommendedZone.longitude),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black12, blurRadius: 4),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Preporučena zona: ${recommendedZone.name}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
               Positioned(
-                top: favoriteZone != null ? 110 : 100,
+                top: (favoriteZone != null || recommendedZone != null) ? 110 : 100,
                 left: 12,
                 right: 12,
                 child: Container(
@@ -328,7 +402,7 @@ class _MapsScreenState extends State<MapsScreen> {
 
               if (_searchQuery.isNotEmpty && _filteredZones.isNotEmpty)
                 Positioned(
-                  top: favoriteZone != null ? 160 : 150,
+                  top: (favoriteZone != null || recommendedZone != null) ? 160 : 150,
                   left: 12,
                   right: 12,
                   child: Container(
