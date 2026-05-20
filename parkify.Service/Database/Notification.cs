@@ -14,6 +14,9 @@
         public DateTime? Modified { get; set; }
         public DateTime? ReadDate { get; set; }
 
+        public User User { get; set; } = null!;
+        public Reservation? Reservation { get; set; }
+        public ParkingZone? ParkingZone { get; set; }
     }
 
     public enum NotificationType

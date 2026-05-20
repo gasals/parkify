@@ -5,9 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using parkify.API.Filters;
 using parkify.RabbitMQ;
 using parkify.Service.Database;
+using parkify.Service.Extensions;
 using parkify.Service.Interfaces;
-using parkify.Service.Services;
-using Parkify.Service.Jobs;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,19 +18,7 @@ builder.Services.AddDbContext<ParkifyContext>(options =>
            .EnableSensitiveDataLogging());
 
 builder.Services.AddMapster();
-
-builder.Services.AddTransient<IUserService, UserService>();
-builder.Services.AddTransient<IParkingZoneService, ParkingZoneService>();
-builder.Services.AddTransient<IParkingSpotService, ParkingSpotService>();
-builder.Services.AddTransient<INotificationService, NotificationService>();
-builder.Services.AddTransient<IReservationService, ReservationService>();
-builder.Services.AddTransient<IPaymentService, PaymentService>();
-builder.Services.AddTransient<IPreferenceService, PreferenceService>();
-builder.Services.AddTransient<IReviewService, ReviewService>();
-builder.Services.AddTransient<ICityService, CityService>();
-builder.Services.AddTransient<IVehicleService, VehicleService>();
-builder.Services.AddTransient<IWalletService, WalletService>();
-builder.Services.AddTransient<IWalletTransactionService, WalletTransactionService>();
+builder.Services.AddParkifyCoreServices();
 
 builder.Services.AddControllers(x =>
 {
@@ -101,9 +88,6 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddRabbitMQ(builder.Configuration);
-builder.Services.AddHostedService<NotificationConsumerService>();
-builder.Services.AddHostedService<ReservationMonitorService>();
-builder.Services.AddHostedService<ReservationStatusJob>();
 
 var app = builder.Build();
 
@@ -117,12 +101,6 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ParkifyContext>();
-    context.Database.Migrate();
-}
 
 using (var scope = app.Services.CreateScope())
 {

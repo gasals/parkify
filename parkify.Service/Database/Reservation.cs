@@ -25,6 +25,11 @@
         public DateTime? CheckInTime { get; set; }
         public DateTime? CheckOutTime { get; set; }
 
+        public User User { get; set; } = null!;
+        public ParkingZone ParkingZone { get; set; } = null!;
+        public ParkingSpot ParkingSpot { get; set; } = null!;
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 
     public enum ReservationStatus

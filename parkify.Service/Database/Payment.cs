@@ -18,6 +18,9 @@
         public DateTime? Refunded { get; set; }
         public string RefundReason { get; set; } = string.Empty;
 
+        public Wallet? Wallet { get; set; }
+        public Reservation? Reservation { get; set; }
+        public User User { get; set; } = null!;
     }
 
     public enum PaymentStatus

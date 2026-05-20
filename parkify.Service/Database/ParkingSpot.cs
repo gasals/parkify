@@ -13,6 +13,8 @@
         public DateTime? Modified { get; set; }
         public bool IsActive { get; set; } = true;
 
+        public ParkingZone ParkingZone { get; set; } = null!;
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     }
 
     public enum ParkingSpotType

@@ -67,6 +67,41 @@ services:
     networks:
       - parkifynet
 
+  parkify-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: parkify-worker
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+      - ConnectionStrings__DefaultConnection=Server=parkify-sql,1433;Database=${SQL_DATABASE};User=sa;Password=${SQL_PASSWORD};TrustServerCertificate=True;
+
+      - Stripe__SecretKey=${STRIPE_SECRET}
+      - Stripe__PublishableKey=${STRIPE_PUBLISHABLE}
+
+      - RabbitMQ__Host=parkify-rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=${RABBIT_USER}
+      - RabbitMQ__Password=${RABBIT_PASS}
+      - RabbitMQ__VirtualHost=/
+      - RabbitMQ__NotificationQueue=parkify.notifications
+      - RabbitMQ__ExchangeName=parkify.exchange
+
+      - Smtp__Host=${SMTP_HOST}
+      - Smtp__Port=${SMTP_PORT}
+      - Smtp__Username=${SMTP_USERNAME}
+      - Smtp__Password=${SMTP_PASSWORD}
+      - Smtp__EnableSsl=true
+      - Smtp__FromAddress=${SMTP_FROM}
+      - Smtp__FromName=${SMTP_NAME}
+    depends_on:
+      - parkify-sql
+      - parkify-rabbitmq
+    networks:
+      - parkifynet
+
 networks:
   parkifynet:
     driver: bridge

@@ -88,14 +88,40 @@ namespace parkify.Service.Services
             if (message.Channel == NotificationChannel.InApp ||
                 message.Channel == NotificationChannel.Both)
             {
+                var reservationId = message.ReservationId;
+                if (reservationId.HasValue)
+                {
+                    var reservationExists = await db.Reservations.AnyAsync(r => r.Id == reservationId.Value);
+                    if (!reservationExists)
+                    {
+                        _logger.LogWarning(
+                            "ReservationId {ReservationId} nije pronađen. Notification će biti sačuvana bez ReservationId reference.",
+                            reservationId.Value);
+                        reservationId = null;
+                    }
+                }
+
+                var parkingZoneId = message.ParkingZoneId;
+                if (parkingZoneId.HasValue)
+                {
+                    var parkingZoneExists = await db.ParkingZones.AnyAsync(z => z.Id == parkingZoneId.Value);
+                    if (!parkingZoneExists)
+                    {
+                        _logger.LogWarning(
+                            "ParkingZoneId {ParkingZoneId} nije pronađen. Notification će biti sačuvana bez ParkingZoneId reference.",
+                            parkingZoneId.Value);
+                        parkingZoneId = null;
+                    }
+                }
+
                 db.Notifications.Add(new Database.Notification
                 {
                     UserId = message.UserId,
                     Title = message.Title,
                     Message = message.Message,
                     Type = (Database.NotificationType)message.Type,
-                    ReservationId = message.ReservationId,
-                    ParkingZoneId = message.ParkingZoneId,
+                    ReservationId = reservationId,
+                    ParkingZoneId = parkingZoneId,
                     IsRead = false,
                     Created = DateTime.UtcNow
                 });

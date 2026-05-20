@@ -80,6 +80,12 @@ namespace parkify.Service.Database
                 .Property(p => p.CityId)
                 .IsRequired();
 
+            modelBuilder.Entity<ParkingZone>()
+                .HasOne(p => p.City)
+                .WithMany(c => c.ParkingZones)
+                .HasForeignKey(p => p.CityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<ParkingSpot>()
                 .HasKey(p => p.Id);
 
@@ -91,6 +97,12 @@ namespace parkify.Service.Database
                 .Property(p => p.SpotCode)
                 .IsRequired()
                 .HasMaxLength(50);
+
+            modelBuilder.Entity<ParkingSpot>()
+                .HasOne(p => p.ParkingZone)
+                .WithMany(z => z.Spots)
+                .HasForeignKey(p => p.ParkingZoneId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Reservation>()
                 .HasKey(r => r.Id);
@@ -104,6 +116,24 @@ namespace parkify.Service.Database
                 .IsRequired()
                 .HasMaxLength(50);
 
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.User)
+                .WithMany(u => u.Reservations)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.ParkingZone)
+                .WithMany(z => z.Reservations)
+                .HasForeignKey(r => r.ParkingZoneId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.ParkingSpot)
+                .WithMany(s => s.Reservations)
+                .HasForeignKey(r => r.ParkingSpotId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Payment>()
                 .HasKey(p => p.Id);
 
@@ -115,6 +145,24 @@ namespace parkify.Service.Database
                 .Property(p => p.PaymentCode)
                 .IsRequired()
                 .HasMaxLength(50);
+
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.User)
+                .WithMany(u => u.Payments)
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Reservation)
+                .WithMany(r => r.Payments)
+                .HasForeignKey(p => p.ReservationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Wallet)
+                .WithMany(w => w.Payments)
+                .HasForeignKey(p => p.WalletId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Notification>()
                 .HasKey(n => n.Id);
@@ -128,6 +176,24 @@ namespace parkify.Service.Database
                 .Property(n => n.Message)
                 .IsRequired();
 
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.Reservation)
+                .WithMany(r => r.Notifications)
+                .HasForeignKey(n => n.ReservationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.ParkingZone)
+                .WithMany(z => z.Notifications)
+                .HasForeignKey(n => n.ParkingZoneId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Review>()
                 .HasKey(r => r.Id);
 
@@ -139,12 +205,46 @@ namespace parkify.Service.Database
                 .Property(r => r.Rating)
                 .IsRequired();
 
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany(u => u.Reviews)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.ParkingZone)
+                .WithMany(z => z.Reviews)
+                .HasForeignKey(r => r.ParkingZoneId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Preference>()
                 .HasKey(p => p.Id);
 
             modelBuilder.Entity<Preference>()
                 .Property(p => p.PreferredCityId)
                 .IsRequired(false);
+
+            modelBuilder.Entity<Preference>()
+                .HasIndex(p => p.UserId)
+                .IsUnique();
+
+            modelBuilder.Entity<Preference>()
+                .HasOne(p => p.User)
+                .WithOne(u => u.Preference)
+                .HasForeignKey<Preference>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Preference>()
+                .HasOne(p => p.PreferredCity)
+                .WithMany(c => c.Preferences)
+                .HasForeignKey(p => p.PreferredCityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Preference>()
+                .HasOne(p => p.FavoriteParkingZone)
+                .WithMany(z => z.FavoriteByPreferences)
+                .HasForeignKey(p => p.FavoriteParkingZoneId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Vehicle>()
                 .HasKey(r => r.Id);
@@ -157,6 +257,12 @@ namespace parkify.Service.Database
                 .Property(r => r.LicensePlate)
                 .IsRequired();
 
+            modelBuilder.Entity<Vehicle>()
+                .HasOne(v => v.User)
+                .WithMany(u => u.Vehicles)
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Wallet>()
                 .HasKey(r => r.Id);
 
@@ -164,12 +270,28 @@ namespace parkify.Service.Database
                 .Property(r => r.UserId)
                 .IsRequired();
 
+            modelBuilder.Entity<Wallet>()
+                .HasIndex(w => w.UserId)
+                .IsUnique();
+
+            modelBuilder.Entity<Wallet>()
+                .HasOne(w => w.User)
+                .WithOne(u => u.Wallet)
+                .HasForeignKey<Wallet>(w => w.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<WalletTransaction>()
                 .HasKey(r => r.Id);
 
             modelBuilder.Entity<WalletTransaction>()
                 .Property(r => r.WalletId)
                 .IsRequired();
+
+            modelBuilder.Entity<WalletTransaction>()
+                .HasOne(wt => wt.Wallet)
+                .WithMany(w => w.Transactions)
+                .HasForeignKey(wt => wt.WalletId)
+                .OnDelete(DeleteBehavior.Restrict);
 
 
             modelBuilder.Entity<ParkingZone>()

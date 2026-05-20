@@ -10,5 +10,6 @@
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }
 
+        public User User { get; set; } = null!;
     }
 }

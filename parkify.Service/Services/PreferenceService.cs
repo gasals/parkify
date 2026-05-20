@@ -43,7 +43,6 @@ namespace parkify.Service.Services
                 var newPreference = new PreferenceInsertRequest
                 {
                     UserId = userId,
-                    PrefersCovered = false,
                     PrefersNearby = true,
                     NotifyAboutOffers = true
                 };

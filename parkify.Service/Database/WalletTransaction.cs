@@ -8,6 +8,8 @@
         public WalletTransactionType Type { get; set; }
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }
+
+        public Wallet Wallet { get; set; } = null!;
     }
 
     public enum WalletTransactionType

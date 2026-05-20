@@ -15,5 +15,13 @@
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
         public bool IsAdmin { get; set; } = false;
+
+        public Wallet? Wallet { get; set; }
+        public Preference? Preference { get; set; }
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }

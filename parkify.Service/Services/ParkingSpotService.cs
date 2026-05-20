@@ -10,11 +10,9 @@ namespace parkify.Service.Services
         : BaseCRUDService<ParkingSpot, ParkingSpotSearch, Database.ParkingSpot, ParkingSpotInsertRequest, ParkingSpotUpdateRequest>,
           IParkingSpotService
     {
-        IParkingZoneService _parkingZoneService;
-        public ParkingSpotService(Database.ParkifyContext context, IMapper mapper, IParkingZoneService parkingZoneService)
+        public ParkingSpotService(Database.ParkifyContext context, IMapper mapper)
             : base(context, mapper)
         {
-            _parkingZoneService = parkingZoneService;
         }
 
         public override IQueryable<Database.ParkingSpot> AddFilter(ParkingSpotSearch search, IQueryable<Database.ParkingSpot> query)
@@ -47,18 +45,20 @@ namespace parkify.Service.Services
 
         public override void BeforeInsert(ParkingSpotInsertRequest request, Database.ParkingSpot entity)
         {
-            ParkingZone parkingZone = _parkingZoneService.GetById(request.ParkingZoneId);
+            var parkingZone = Context.ParkingZones.Find(request.ParkingZoneId);
             if (parkingZone == null)
                 throw new Exception("Ne postoji zona sa proslijeđenim ID-em.");
 
-            ParkingZoneUpdateRequest updateRequest = new ParkingZoneUpdateRequest
+            parkingZone.TotalSpots += 1;
+            if (request.Type == (int)ParkingSpotType.Disabled)
             {
-                TotalSpots = parkingZone.TotalSpots + 1,
-                DisabledSpots = request.Type == (int)ParkingSpotType.Disabled ? parkingZone.DisabledSpots + 1 : parkingZone.DisabledSpots,
-                AvailableSpots = request.IsAvailable ? parkingZone.AvailableSpots + 1 : parkingZone.AvailableSpots
-            };
+                parkingZone.DisabledSpots += 1;
+            }
 
-            _parkingZoneService.Update(parkingZone.Id, updateRequest);
+            if (request.IsAvailable)
+            {
+                parkingZone.AvailableSpots += 1;
+            }
 
             entity.SpotCode = $"Z{request.ParkingZoneId}/{request.RowNumber}-{request.ColumnNumber}";
 
@@ -67,13 +67,15 @@ namespace parkify.Service.Services
 
         public ParkingSpot SetAvailable(int id, bool isAvailable)
         {
-            var spot = GetById(id);
-            if (spot == null)
+            var entity = Context.ParkingSpots.Find(id);
+            if (entity == null)
                 throw new Exception("Ne postoji mjesto sa proslijeđenim ID-em.");
 
-            ParkingSpotUpdateRequest updateRequest = new ParkingSpotUpdateRequest { SpotCode = spot.SpotCode, IsAvailable = isAvailable };
+            entity.IsAvailable = isAvailable;
+            entity.Modified = DateTime.UtcNow;
+            Context.SaveChanges();
 
-            return Update(id, updateRequest);
+            return Mapper.Map<ParkingSpot>(entity);
         }
     }
 }

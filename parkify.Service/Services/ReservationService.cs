@@ -12,20 +12,14 @@ namespace parkify.Service.Services
         : BaseCRUDService<Reservation, ReservationSearch, Database.Reservation, ReservationInsertRequest, ReservationUpdateRequest>,
           IReservationService
     {
-        private readonly IParkingZoneService _parkingZoneService;
-        private readonly IParkingSpotService _parkingSpotService;
         private readonly IMessagePublisher _publisher;
 
         public ReservationService(
             Database.ParkifyContext context,
             IMapper mapper,
-            IParkingZoneService parkingZoneService,
-            IParkingSpotService parkingSpotService,
             IMessagePublisher publisher)
             : base(context, mapper)
         {
-            _parkingZoneService = parkingZoneService;
-            _parkingSpotService = parkingSpotService;
             _publisher = publisher;
         }
 
@@ -52,7 +46,7 @@ namespace parkify.Service.Services
         {
             entity.DurationInHours = (int)Math.Ceiling((entity.ReservationEnd - entity.ReservationStart).TotalHours);
 
-            var parkingZone = _parkingZoneService.GetById(entity.ParkingZoneId);
+            var parkingZone = Context.ParkingZones.Find(entity.ParkingZoneId);
             if (parkingZone == null)
                 throw new Exception("Parking zona nije pronađena.");
 
@@ -86,14 +80,27 @@ namespace parkify.Service.Services
             if (entity.FinalPrice == 0)
             {
                 entity.Status = Database.ReservationStatus.Confirmed;
-                _parkingZoneService.Update(
-                    parkingZone.Id,
-                    new ParkingZoneUpdateRequest { AvailableSpots = parkingZone.AvailableSpots - 1 });
-                _parkingSpotService.SetAvailable(entity.ParkingSpotId, false);
+
+                if (parkingZone.AvailableSpots > 0)
+                {
+                    parkingZone.AvailableSpots -= 1;
+                }
+
+                var parkingSpot = Context.ParkingSpots.Find(entity.ParkingSpotId);
+                if (parkingSpot != null)
+                {
+                    parkingSpot.IsAvailable = false;
+                    parkingSpot.Modified = DateTime.UtcNow;
+                }
             }
 
             entity.ReservationCode = GenerateReservationCode(request);
 
+            base.BeforeInsert(request, entity);
+        }
+
+        public override void AfterInsert(Database.Reservation entity, ReservationInsertRequest request)
+        {
             if (entity.Status == Database.ReservationStatus.Confirmed)
             {
                 _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
@@ -103,11 +110,12 @@ namespace parkify.Service.Services
                     Message = $"Vaša rezervacija je uspješno kreirana i potvrđena. Kod rezervacije: {entity.ReservationCode}",
                     Type = (int)Database.NotificationType.ReservationConfirmed,
                     Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
-                    ReservationId = entity.Id
+                    ReservationId = entity.Id,
+                    ParkingZoneId = entity.ParkingZoneId
                 });
             }
 
-            base.BeforeInsert(request, entity);
+            base.AfterInsert(entity, request);
         }
 
         public override void BeforeUpdate(ReservationUpdateRequest request, Database.Reservation entity)
@@ -134,18 +142,19 @@ namespace parkify.Service.Services
                     }
                 }
 
-                var zoneForCancel = _parkingZoneService.GetById(entity.ParkingZoneId);
+                var zoneForCancel = Context.ParkingZones.Find(entity.ParkingZoneId);
                 if (zoneForCancel != null)
                 {
-                    _parkingZoneService.Update(
-                        zoneForCancel.Id,
-                        new ParkingZoneUpdateRequest
-                        {
-                            AvailableSpots = zoneForCancel.AvailableSpots + 1
-                        });
+                    zoneForCancel.AvailableSpots += 1;
                 }
 
-                _parkingSpotService.SetAvailable(entity.ParkingSpotId, true);
+                var spotForCancel = Context.ParkingSpots.Find(entity.ParkingSpotId);
+                if (spotForCancel != null)
+                {
+                    spotForCancel.IsAvailable = true;
+                    spotForCancel.Modified = DateTime.UtcNow;
+                }
+
                 entity.Status = Database.ReservationStatus.Cancelled;
                 _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
                 {
@@ -154,7 +163,8 @@ namespace parkify.Service.Services
                     Message = $"Vaša rezervacija je uspješno otkazana. Iznos od {entity.CalculatedPrice:F2} KM je vraćen na vaš novčanik.",
                     Type = (int)Database.NotificationType.ReservationCancelled,
                     Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
-                    ReservationId = entity.Id
+                    ReservationId = entity.Id,
+                    ParkingZoneId = entity.ParkingZoneId
                 });
             }
 
@@ -181,7 +191,7 @@ namespace parkify.Service.Services
 
                     if (extraHours > 0)
                     {
-                        var parkingZone = _parkingZoneService.GetById(entity.ParkingZoneId);
+                        var parkingZone = Context.ParkingZones.Find(entity.ParkingZoneId);
                         if (parkingZone != null)
                         {
                             var extraCost = extraHours * parkingZone.PricePerHour;
@@ -210,7 +220,6 @@ namespace parkify.Service.Services
                 }
             }
 
-            Context.SaveChanges();
             base.BeforeUpdate(request, entity);
         }
 
