@@ -3,6 +3,8 @@ import 'package:admin/providers/city_provider.dart';
 import 'package:admin/widgets/admin_dialog_widgets.dart';
 import 'package:admin/widgets/common_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 class AdminCitiesScreen extends StatefulWidget {
@@ -231,6 +233,8 @@ class _CityDialogState extends State<_CityDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _latitudeController;
   late final TextEditingController _longitudeController;
+  late LatLng _pickedLocation;
+  final MapController _mapController = MapController();
   bool _isSaving = false;
 
   bool get _isEdit => widget.city != null;
@@ -244,6 +248,10 @@ class _CityDialogState extends State<_CityDialog> {
     );
     _longitudeController = TextEditingController(
       text: widget.city?.longitude.toString() ?? '',
+    );
+    _pickedLocation = LatLng(
+      widget.city?.latitude ?? 43.8563,
+      widget.city?.longitude ?? 18.4131,
     );
   }
 
@@ -339,6 +347,54 @@ class _CityDialogState extends State<_CityDialog> {
                           label: 'Longitude',
                           icon: Icons.explore_outlined,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      height: 260,
+                      child: FlutterMap(
+                        mapController: _mapController,
+                        options: MapOptions(
+                          initialCenter: _pickedLocation,
+                          initialZoom: 13,
+                          onTap: (_, point) {
+                            setState(() {
+                              _pickedLocation = point;
+                              _latitudeController.text = point.latitude.toStringAsFixed(6);
+                              _longitudeController.text = point.longitude.toStringAsFixed(6);
+                            });
+                          },
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'parkify.admin',
+                          ),
+                          MarkerLayer(markers: [
+                            Marker(
+                              point: _pickedLocation,
+                              width: 44,
+                              height: 44,
+                              child: const Icon(Icons.location_pin, size: 40, color: kPrimary),
+                            ),
+                          ]),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.info_outline, size: 16, color: kPrimary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Klikni na mapu da odabereš lokaciju grada.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                       ),
                     ],

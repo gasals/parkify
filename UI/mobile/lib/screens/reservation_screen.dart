@@ -5,6 +5,7 @@ import 'package:mobile/providers/wallet_provider.dart';
 import 'package:mobile/services/navigation_service.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../models/reservation_model.dart';
 import '../models/parking_zone_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/reservation_provider.dart';
@@ -159,6 +160,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
       listen: false,
     );
     final walletProvider = Provider.of<WalletProvider>(context, listen: false);
+    Reservation? createdReservation;
+    var reservationCompleted = false;
 
     try {
       final licensePlate = context
@@ -181,6 +184,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
       final reservation = await reservationProvider.createReservation(
         reservationData,
       );
+      createdReservation = reservation;
 
       if (reservation.id == 0) {
         throw Exception('Greška pri kreiranju rezervacije');
@@ -204,7 +208,9 @@ class _ReservationScreenState extends State<ReservationScreen> {
         );
 
         if (!paymentSuccess) {
-          throw Exception('Plaćanje je otkazano');
+          throw Exception(
+            paymentProvider.errorMessage ?? 'Plaćanje je otkazano.',
+          );
         }
 
         final confirmed = await paymentProvider.confirmPayment(
@@ -212,21 +218,28 @@ class _ReservationScreenState extends State<ReservationScreen> {
         );
 
         if (!confirmed) {
-          throw Exception('Plaćanje nije potvrđeno');
+          throw Exception(
+            paymentProvider.errorMessage ?? 'Plaćanje nije potvrđeno.',
+          );
         }
         finalCode = payment.paymentCode;
       }
 
       await walletProvider.fetchUserWallet(authProvider.user!.id);
+      reservationCompleted = true;
 
       setState(() {
         _reservationCode = finalCode;
         _isConfirmed = true;
       });
     } catch (e) {
+      if (createdReservation != null && !reservationCompleted) {
+        await reservationProvider.cancelReservation(createdReservation.id);
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Neuspješno kreiranje rezervacije: $e'),
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
           backgroundColor: Colors.red,
         ),
       );

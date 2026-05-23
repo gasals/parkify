@@ -344,13 +344,14 @@ class _WalletFormSheetState extends State<WalletFormSheet> {
 
     setState(() => _isLoading = true);
 
+    final paymentProvider = Provider.of<PaymentProvider>(
+      context,
+      listen: false,
+    );
+
     try {
       final amount = double.parse(_amountController.text);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final paymentProvider = Provider.of<PaymentProvider>(
-        context,
-        listen: false,
-      );
       final walletProvider = Provider.of<WalletProvider>(
         context,
         listen: false,

@@ -8,6 +8,7 @@ class NotificationProvider extends ChangeNotifier {
   bool _isLoading = false;
   int _currentPage = 1;
   int _totalPages = 1;
+  static const int _pageSize = 20;
 
   List<AppNotification> get notifications => _notifications;
   int get unreadCount => _unreadCount;
@@ -35,6 +36,8 @@ class NotificationProvider extends ChangeNotifier {
                 AppNotification.fromJson(notification as Map<String, dynamic>),
           )
           .toList();
+      final totalCount = (result['count'] ?? result['totalCount'] ?? 0) as int;
+      _totalPages = (totalCount / _pageSize).ceil().clamp(1, 9999);
     } catch (e) {
       debugPrint('fetchNotifications error: $e');
     } finally {
@@ -43,7 +46,7 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchNextPage({int? userId}) async {
+  Future<void> fetchNextPage({int? userId, bool? isRead}) async {
     if (_isLoading || _currentPage >= _totalPages) return;
     _isLoading = true;
     notifyListeners();
@@ -52,9 +55,17 @@ class NotificationProvider extends ChangeNotifier {
       _currentPage++;
       final result = await ApiService.getNotifications(
         userId: userId,
+        isRead: isRead,
         page: _currentPage,
+        pageSize: _pageSize,
       );
-      _notifications.addAll(result['results'] as List<AppNotification>);
+      final resultsList = result['results'] as List? ?? [];
+      _notifications.addAll(
+        resultsList.map(
+          (notification) =>
+              AppNotification.fromJson(notification as Map<String, dynamic>),
+        ),
+      );
     } catch (_) {
       _currentPage--;
     } finally {

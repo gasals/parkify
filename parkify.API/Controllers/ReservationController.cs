@@ -24,9 +24,9 @@ namespace parkify.API.Controllers
 
         [HttpGet("report/finance/pdf")]
         [Authorize(Roles = "Admin")]
-        public IActionResult GetFinanceReportPdf([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        public IActionResult GetFinanceReportPdf([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int? userId)
         {
-            var pdfBytes = (_service as IReservationService)!.GenerateFinanceReportPdf(from, to);
+            var pdfBytes = (_service as IReservationService)!.GenerateFinanceReportPdf(from, to, userId);
             var fileName = $"parkify-finance-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
             return File(pdfBytes, "application/pdf", fileName);
         }

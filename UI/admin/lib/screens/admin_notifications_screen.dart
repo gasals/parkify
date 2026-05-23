@@ -2,6 +2,7 @@ import 'package:admin/widgets/admin_dialog_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/notification_model.dart';
+import '../models/user_model.dart';
 import '../providers/notification_provider.dart';
 import '../providers/user_provider.dart';
 import '../widgets/common_widgets.dart';
@@ -16,8 +17,23 @@ class AdminNotificationsScreen extends StatefulWidget {
 
 class _AdminNotificationsScreenState
     extends State<AdminNotificationsScreen> {
+  static const Map<int, String> _notificationTypeLabels = {
+    1: 'Uspjeh rezervacije',
+    2: 'Podsjetnik',
+    3: 'Plaćanje',
+    4: 'Greška',
+    5: 'Parking zona',
+    6: 'Ponuda',
+    7: 'Otkazivanje',
+    8: 'Prijava',
+    9: 'Blokada',
+  };
+
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _userSearchCtrl = TextEditingController();
+  User? _selectedUser;
   bool? _filterRead;
+  int? _filterType;
 
   @override
   void initState() {
@@ -35,6 +51,7 @@ class _AdminNotificationsScreenState
   @override
   void dispose() {
     _scrollController.dispose();
+    _userSearchCtrl.dispose();
     super.dispose();
   }
 
@@ -42,14 +59,30 @@ class _AdminNotificationsScreenState
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
       Provider.of<NotificationProvider>(context, listen: false)
-          .fetchNextPage();
+          .fetchNextPage(userId: _selectedUser?.id, isRead: _filterRead);
     }
   }
 
   void _applyFilter(bool? isRead) {
     setState(() => _filterRead = isRead);
     Provider.of<NotificationProvider>(context, listen: false)
-        .fetchNotifications(isRead: isRead);
+        .fetchNotifications(userId: _selectedUser?.id, isRead: isRead);
+  }
+
+  Future<void> _performSearch() async {
+    await Provider.of<NotificationProvider>(context, listen: false)
+        .fetchNotifications(userId: _selectedUser?.id, isRead: _filterRead);
+  }
+
+  Future<void> _clearFilters() async {
+    setState(() {
+      _selectedUser = null;
+      _filterRead = null;
+      _filterType = null;
+    });
+    _userSearchCtrl.clear();
+    await Provider.of<NotificationProvider>(context, listen: false)
+        .fetchNotifications();
   }
 
   @override
@@ -76,32 +109,117 @@ class _AdminNotificationsScreenState
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: SearchContainerStyle.buildDecoration(),
-      child: Row(
+      child: Column(
         children: [
-          _FilterPill(label: 'Sve', selected: _filterRead == null, onTap: () => _applyFilter(null)),
-          const SizedBox(width: 8),
-          _FilterPill(label: 'Nepročitane', selected: _filterRead == false, onTap: () => _applyFilter(false), color: kDanger),
-          const SizedBox(width: 8),
-          _FilterPill(label: 'Pročitane', selected: _filterRead == true, onTap: () => _applyFilter(true), color: kSuccess),
-          const Spacer(),
-          CommonButtons.buildAddButton(
-            onPressed: () => _showSendDialog(toAll: false),
-            label: 'Pošalji korisniku',
+          Row(
+            children: [
+              Expanded(child: _buildUserAutocomplete()),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 220,
+                child: DropdownButtonFormField<int?>(
+                  initialValue: _filterType,
+                  isExpanded: true,
+                  decoration: SearchFieldDecoration.buildInputDecoration(
+                    labelText: 'Tip notifikacije',
+                    icon: Icons.notifications_active_outlined,
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('Svi tipovi', style: TextStyle(fontSize: 13)),
+                    ),
+                    ..._notificationTypeLabels.entries.map(
+                      (entry) => DropdownMenuItem<int?>(
+                        value: entry.key,
+                        child: Text(entry.value, style: const TextStyle(fontSize: 13)),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => _filterType = value),
+                ),
+              ),
+              const SizedBox(width: 12),
+              CommonButtons.buildClearButton(onPressed: _clearFilters),
+              const SizedBox(width: 12),
+              CommonButtons.buildSearchButton(
+                onPressed: _performSearch,
+                isLoading: false,
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: () => _showSendDialog(toAll: true),
-            icon: const Icon(Icons.campaign_outlined, size: 18, color: Colors.white),
-            label: const Text('Pošalji svima',
-                style: TextStyle(color: Colors.white, fontSize: 13)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kSuccess,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _FilterPill(label: 'Sve', selected: _filterRead == null, onTap: () => _applyFilter(null)),
+              const SizedBox(width: 8),
+              _FilterPill(label: 'Nepročitane', selected: _filterRead == false, onTap: () => _applyFilter(false), color: kDanger),
+              const SizedBox(width: 8),
+              _FilterPill(label: 'Pročitane', selected: _filterRead == true, onTap: () => _applyFilter(true), color: kSuccess),
+              const Spacer(),
+              CommonButtons.buildAddButton(
+                onPressed: () => _showSendDialog(toAll: false),
+                label: 'Pošalji korisniku',
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () => _showSendDialog(toAll: true),
+                icon: const Icon(Icons.campaign_outlined, size: 18, color: Colors.white),
+                label: const Text('Pošalji svima',
+                    style: TextStyle(color: Colors.white, fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kSuccess,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUserAutocomplete() {
+    return Consumer<UserProvider>(
+      builder: (context, provider, _) => Autocomplete<User>(
+        optionsBuilder: (value) {
+          if (value.text.isEmpty) return const Iterable<User>.empty();
+          return provider.users.where((user) =>
+              user.username.toLowerCase().contains(value.text.toLowerCase()) ||
+              user.email.toLowerCase().contains(value.text.toLowerCase()));
+        },
+        displayStringForOption: (user) => '${user.username} (${user.email})',
+        onSelected: (user) {
+          _userSearchCtrl.text = '${user.username} (${user.email})';
+          setState(() => _selectedUser = user);
+        },
+        fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+          controller.text = _userSearchCtrl.text;
+          controller.selection = TextSelection.fromPosition(
+            TextPosition(offset: controller.text.length),
+          );
+          return TextField(
+            controller: controller,
+            focusNode: focusNode,
+            onEditingComplete: onEditingComplete,
+            onChanged: (value) async {
+              _userSearchCtrl.text = value;
+              if (_selectedUser != null &&
+                  value != '${_selectedUser!.username} (${_selectedUser!.email})') {
+                setState(() => _selectedUser = null);
+              }
+              if (value.isNotEmpty) {
+                await provider.searchUsers(username: value, pageSize: 1000);
+              }
+            },
+            decoration: SearchFieldDecoration.buildInputDecoration(
+              labelText: 'Korisnik',
+              icon: Icons.person_outline,
+            ),
+          );
+        },
       ),
     );
   }
@@ -109,17 +227,23 @@ class _AdminNotificationsScreenState
   Widget _buildList() {
     return Consumer<NotificationProvider>(
       builder: (context, provider, _) {
+        final visibleNotifications = _filterType == null
+            ? provider.notifications
+            : provider.notifications
+                .where((notification) => notification.type == _filterType)
+                .toList();
+
         if (provider.isLoading && provider.notifications.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (provider.notifications.isEmpty) {
+        if (visibleNotifications.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.notifications_none, size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 16),
-                Text('Nema notifikacija',
+                Text('Nema notifikacija za odabrane filtere',
                     style: TextStyle(color: Colors.grey[400], fontSize: 16)),
               ],
             ),
@@ -134,12 +258,21 @@ class _AdminNotificationsScreenState
             childAspectRatio: 2.0,
           ),
           itemCount:
-              provider.notifications.length + (provider.isLoading ? 1 : 0),
+              visibleNotifications.length + (provider.isLoading ? 1 : 0),
           itemBuilder: (context, index) {
-            if (index == provider.notifications.length) {
+            if (index == visibleNotifications.length) {
               return const Center(child: CircularProgressIndicator());
             }
-            return _NotificationCard(notification: provider.notifications[index]);
+            final userProvider = context.read<UserProvider>();
+            final user = userProvider.users.cast<User?>().firstWhere(
+                  (item) => item?.id == visibleNotifications[index].userId,
+                  orElse: () => null,
+                );
+            final username = user?.username ?? 'Korisnik #${visibleNotifications[index].userId}';
+            return _NotificationCard(
+              notification: visibleNotifications[index],
+              username: username,
+            );
           },
         );
       },
@@ -156,7 +289,8 @@ class _AdminNotificationsScreenState
 
 class _NotificationCard extends StatelessWidget {
   final AppNotification notification;
-  const _NotificationCard({required this.notification});
+  final String username;
+  const _NotificationCard({required this.notification, required this.username});
 
   static const _typeData = {
     1: (Icons.check_circle_outline, Color(0xFF10B981)),
@@ -236,7 +370,7 @@ class _NotificationCard extends StatelessWidget {
                 Row(children: [
                   Icon(Icons.person_outline, size: 12, color: Colors.grey[400]),
                   const SizedBox(width: 4),
-                  Text('Korisnik #${notification.userId}',
+                  Text(username,
                       style: TextStyle(fontSize: 11, color: Colors.grey[400])),
                 ]),
                 Row(children: [

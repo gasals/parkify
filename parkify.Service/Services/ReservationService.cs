@@ -183,41 +183,6 @@ namespace parkify.Service.Services
                             }
                         });
 
-                        column.Item().Text("Posljednje rezervacije").FontSize(14).SemiBold();
-                        column.Item().Table(table =>
-                        {
-                            table.ColumnsDefinition(columns =>
-                            {
-                                columns.RelativeColumn(2);
-                                columns.RelativeColumn(2);
-                                columns.RelativeColumn(1);
-                                columns.RelativeColumn(1);
-                                columns.RelativeColumn(2);
-                            });
-
-                            table.Header(header =>
-                            {
-                                header.Cell().Element(TableHeader).Text("Kod");
-                                header.Cell().Element(TableHeader).Text("Zona");
-                                header.Cell().Element(TableHeader).AlignRight().Text("Korisnik");
-                                header.Cell().Element(TableHeader).AlignRight().Text("Iznos");
-                                header.Cell().Element(TableHeader).Text("Kreirano");
-                            });
-
-                            foreach (var reservation in reservations.Take(8))
-                            {
-                                table.Cell().Element(TableCell).Text(reservation.ReservationCode);
-                                table.Cell().Element(TableCell).Text(reservation.ZoneName);
-                                table.Cell().Element(TableCell).AlignRight().Text(reservation.UserId.ToString());
-                                table.Cell().Element(TableCell).AlignRight().Text($"{reservation.FinalPrice:F2} KM");
-                                table.Cell().Element(TableCell).Text(reservation.Created.ToString("dd.MM.yyyy HH:mm"));
-                            }
-
-                            if (!reservations.Any())
-                            {
-                                table.Cell().ColumnSpan(5).Element(TableCell).Text("Nema rezervacija za odabrani period.");
-                            }
-                        });
                     });
 
                     page.Footer().AlignCenter().Text($"Generisano: {DateTime.UtcNow:dd.MM.yyyy HH:mm} UTC").FontSize(9);
@@ -225,7 +190,7 @@ namespace parkify.Service.Services
             }).GeneratePdf();
         }
 
-        public byte[] GenerateFinanceReportPdf(DateTime? from, DateTime? to)
+        public byte[] GenerateFinanceReportPdf(DateTime? from, DateTime? to, int? userId = null)
         {
             var start = from?.ToUniversalTime() ?? DateTime.UtcNow.Date.AddDays(-30);
             var end = to?.ToUniversalTime() ?? DateTime.UtcNow;
@@ -235,12 +200,29 @@ namespace parkify.Service.Services
                 throw new UserException("Datum završetka mora biti poslije datuma početka izvještaja.");
             }
 
+            var userDisplayName = userId.HasValue
+                ? Context.Users
+                    .Where(x => x.Id == userId.Value)
+                    .Select(x => string.IsNullOrWhiteSpace(x.FirstName) && string.IsNullOrWhiteSpace(x.LastName)
+                        ? x.Username
+                        : $"{x.FirstName} {x.LastName}".Trim())
+                    .FirstOrDefault()
+                : null;
+
+            if (userId.HasValue && string.IsNullOrWhiteSpace(userDisplayName))
+            {
+                throw new UserException("Odabrani korisnik nije pronađen.");
+            }
+
             var payments = Context.Payments
                 .Where(x => x.Created >= start && x.Created <= end)
+                .Where(x => !userId.HasValue || x.UserId == userId.Value)
                 .Select(x => new
                 {
                     x.Id,
                     x.UserId,
+                    Username = x.User.Username,
+                    FullName = ((x.User.FirstName ?? string.Empty) + " " + (x.User.LastName ?? string.Empty)).Trim(),
                     x.ReservationId,
                     x.WalletId,
                     x.Amount,
@@ -257,6 +239,24 @@ namespace parkify.Service.Services
             var grossRevenue = completedPayments.Sum(x => x.Amount);
             var totalRefunds = refundedPayments.Sum(x => x.Amount);
             var netRevenue = grossRevenue - totalRefunds;
+
+            var userBreakdown = completedPayments
+                .GroupBy(x => new
+                {
+                    x.UserId,
+                    DisplayName = string.IsNullOrWhiteSpace(x.FullName) ? x.Username : x.FullName
+                })
+                .Select(x => new
+                {
+                    x.Key.UserId,
+                    x.Key.DisplayName,
+                    PaymentCount = x.Count(),
+                    TotalAmount = x.Sum(y => y.Amount)
+                })
+                .OrderByDescending(x => x.TotalAmount)
+                .ThenByDescending(x => x.PaymentCount)
+                .Take(userId.HasValue ? 1 : 10)
+                .ToList();
 
             QuestPDF.Settings.License = LicenseType.Community;
 
@@ -294,7 +294,39 @@ namespace parkify.Service.Services
                             row.RelativeItem().Element(block => SummaryCard(block, "Rezervacijska", completedPayments.Count(x => x.ReservationId.HasValue).ToString()));
                             row.RelativeItem().Element(block => SummaryCard(block, "Novčanik", completedPayments.Count(x => x.WalletId.HasValue).ToString()));
                             row.RelativeItem().Element(block => SummaryCard(block, "Na čekanju", pendingPayments.Count.ToString()));
-                            row.RelativeItem().Element(block => SummaryCard(block, "Refundirane", refundedPayments.Count.ToString()));
+                            row.RelativeItem().Element(block => SummaryCard(block, userId.HasValue ? "Korisnik" : "Refundirane", userId.HasValue ? userDisplayName! : refundedPayments.Count.ToString()));
+                        });
+
+                        column.Item().Text(userId.HasValue ? "Finansijski pregled korisnika" : "Promet po korisniku").FontSize(14).SemiBold();
+                        column.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(3);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(TableHeader).Text("Korisnik");
+                                header.Cell().Element(TableHeader).AlignRight().Text("Uplate");
+                                header.Cell().Element(TableHeader).AlignRight().Text("Ukupno");
+                            });
+
+                            if (userBreakdown.Any())
+                            {
+                                foreach (var user in userBreakdown)
+                                {
+                                    table.Cell().Element(TableCell).Text($"{user.DisplayName} (ID: {user.UserId})");
+                                    table.Cell().Element(TableCell).AlignRight().Text(user.PaymentCount.ToString());
+                                    table.Cell().Element(TableCell).AlignRight().Text($"{user.TotalAmount:F2} KM");
+                                }
+                            }
+                            else
+                            {
+                                table.Cell().ColumnSpan(3).Element(TableCell).Text("Nema evidentiranih uplata za odabrani period.");
+                            }
                         });
 
                         column.Item().Text("Posljednje transakcije").FontSize(14).SemiBold();
@@ -321,7 +353,7 @@ namespace parkify.Service.Services
                             foreach (var payment in payments.Take(15))
                             {
                                 table.Cell().Element(TableCell).Text(payment.Id.ToString());
-                                table.Cell().Element(TableCell).Text(payment.UserId.ToString());
+                                table.Cell().Element(TableCell).Text(string.IsNullOrWhiteSpace(payment.FullName) ? $"{payment.Username} ({payment.UserId})" : $"{payment.FullName} ({payment.UserId})");
                                 table.Cell().Element(TableCell).Text(payment.ReservationId.HasValue ? "Rezervacija" : "Novčanik");
                                 table.Cell().Element(TableCell).AlignRight().Text($"{payment.Amount:F2} KM");
                                 table.Cell().Element(TableCell).Text(payment.Status.ToString());

@@ -229,52 +229,53 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
           ]),
           const SizedBox(height: 16),
           Row(children: [
-            Expanded(child: ElevatedButton.icon(
+            Expanded(child: SizedBox(height: 40, child: ElevatedButton.icon(
               onPressed: () => _showEditZoneDialog(zone, provider),
               icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-              label: const Text('UREDI', style: TextStyle(color: Colors.white, fontSize: 11)),
+              label: const FittedBox(child: Text('UREDI', style: TextStyle(color: Colors.white, fontSize: 11))),
               style: ElevatedButton.styleFrom(backgroundColor: kPrimary, elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            )),
+            ))),
             const SizedBox(width: 8),
-            Expanded(child: OutlinedButton.icon(
-              // FIX: prosljedjuje zoneId umjesto zone objekta
+            Expanded(child: SizedBox(height: 40, child: OutlinedButton.icon(
               onPressed: () => _showSpotsDialog(zone.id, provider),
               icon: const Icon(Icons.grid_view_rounded, size: 16),
-              label: const Text('MJESTA', style: TextStyle(fontSize: 11)),
+              label: const FittedBox(child: Text('MJESTA', style: TextStyle(fontSize: 11))),
               style: OutlinedButton.styleFrom(foregroundColor: kPrimary,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   side: const BorderSide(color: kPrimary),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            )),
+            ))),
             const SizedBox(width: 8),
-            Expanded(child: OutlinedButton.icon(
+            Expanded(child: SizedBox(height: 40, child: OutlinedButton.icon(
               onPressed: () => _toggleZoneActive(zone, provider),
               icon: Icon(zone.isActive ? Icons.lock_outline : Icons.lock_open_outlined, size: 16),
-              label: Text(zone.isActive ? 'DEAKTIVIRAJ' : 'AKTIVIRAJ',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              label: FittedBox(
+                child: Text(zone.isActive ? 'DEAKTIVIRAJ' : 'AKTIVIRAJ',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: zone.isActive ? Colors.red : Colors.green,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 side: BorderSide(color: zone.isActive ? Colors.red : Colors.green),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-            )),
-          ]),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
+            ))),
+            const SizedBox(width: 8),
+            Expanded(child: SizedBox(height: 40, child: OutlinedButton.icon(
               onPressed: () => _deleteZone(zone, provider),
-              icon: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
-              label: const Text(
-                'OBRIŠI ZONU',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
+              icon: const Icon(Icons.delete_outline, size: 16),
+              label: const FittedBox(child: Text('OBRIŠI',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-            ),
-          ),
+            ))),
+          ]),
         ]),
       ),
     );
@@ -313,7 +314,7 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
 
   void _showEditZoneDialog(ParkingZone zone, ParkingZoneProvider provider) {
     showDialog(context: context,
-        builder: (_) => _EditZoneDialog(zone: zone, provider: provider));
+      builder: (_) => _EditZoneDialog(zone: zone, provider: provider, allCities: _allCities));
   }
 
   // FIX: prima zoneId, dialog sam cita svjeze podatke iz providera
@@ -715,7 +716,8 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
 class _EditZoneDialog extends StatefulWidget {
   final ParkingZone zone;
   final ParkingZoneProvider provider;
-  const _EditZoneDialog({required this.zone, required this.provider});
+  final List<City> allCities;
+  const _EditZoneDialog({required this.zone, required this.provider, required this.allCities});
 
   @override
   State<_EditZoneDialog> createState() => _EditZoneDialogState();
@@ -728,6 +730,12 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
   late final _priceCtrl = TextEditingController(text: widget.zone.pricePerHour.toString());
   late final _dailyCtrl = TextEditingController(text: widget.zone.dailyRate.toString());
   late final _descCtrl  = TextEditingController(text: widget.zone.description ?? '');
+  late City? _selectedCity = widget.allCities.cast<City?>().firstWhere(
+        (city) => city?.id == widget.zone.cityId,
+        orElse: () => null,
+      );
+  late LatLng _pickedLocation = LatLng(widget.zone.latitude, widget.zone.longitude);
+  final MapController _mapController = MapController();
   bool _isLoading = false;
 
   @override
@@ -770,7 +778,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: SizedBox(
-        width: 520,
+        width: 700,
         child: Form(
           key: _formKey,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -778,7 +786,32 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(children: [
-                _field(_nameCtrl, 'Naziv', Icons.local_parking, validator: _reqName),
+                Row(children: [
+                  Expanded(child: _field(_nameCtrl, 'Naziv', Icons.local_parking, validator: _reqName)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButtonFormField<City>(
+                      initialValue: _selectedCity,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: 'Grad',
+                        labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        prefixIcon: Icon(Icons.location_city, size: 18, color: Colors.grey[500]),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kPrimary, width: 2)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      ),
+                      items: widget.allCities.map((city) => DropdownMenuItem<City>(
+                        value: city,
+                        child: Text(city.name, style: const TextStyle(fontSize: 13)),
+                      )).toList(),
+                      onChanged: _isLoading ? null : (city) => setState(() => _selectedCity = city),
+                    ),
+                  ),
+                ]),
                 const SizedBox(height: 12),
                 _field(_addrCtrl, 'Adresa', Icons.pin_drop_outlined, validator: _reqAddr),
                 const SizedBox(height: 12),
@@ -791,6 +824,48 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
                 ]),
                 const SizedBox(height: 12),
                 _field(_descCtrl, 'Opis', Icons.notes, maxLines: 2),
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 260,
+                    child: FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        initialCenter: _pickedLocation,
+                        initialZoom: 14,
+                        onTap: (_, point) => setState(() => _pickedLocation = point),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'parkify.admin',
+                        ),
+                        MarkerLayer(markers: [
+                          Marker(
+                            point: _pickedLocation,
+                            width: 44,
+                            height: 44,
+                            child: const Icon(Icons.location_pin, size: 40, color: kPrimary),
+                          ),
+                        ]),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 16, color: kPrimary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Klikni na mapu da postaviš novu lokaciju zone. Lat: ${_pickedLocation.latitude.toStringAsFixed(6)}, Lng: ${_pickedLocation.longitude.toStringAsFixed(6)}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ),
+                  ],
+                ),
               ]),
             ),
             AdminDialogFooter(children: [
@@ -846,6 +921,9 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
       zoneId: widget.zone.id,
       name: _nameCtrl.text.trim(), description: _descCtrl.text.trim(),
       address: _addrCtrl.text.trim(),
+      cityId: _selectedCity?.id,
+      latitude: _pickedLocation.latitude,
+      longitude: _pickedLocation.longitude,
       pricePerHour: double.tryParse(_priceCtrl.text.trim().replaceAll(',', '.')),
       dailyRate: double.tryParse(_dailyCtrl.text.trim().replaceAll(',', '.')),
       isActive: null,

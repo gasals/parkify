@@ -1,8 +1,6 @@
-import 'dart:io';
-
 import 'package:admin/services/api_service.dart';
+import 'package:admin/utils/file_saver.dart';
 import 'package:admin/widgets/admin_dialog_widgets.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/parking_zone_model.dart';
@@ -30,6 +28,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
   ParkingZone? _selectedZone;
   ReservationStatus? _selectedStatus;
   bool _isSearching = false;
+  bool _isDownloadingReport = false;
+
+  static final _reportFirstDate = DateTime(2020, 1, 1);
 
   @override
   void initState() {
@@ -97,33 +98,195 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
   }
 
   Future<void> _downloadReport({required bool finance}) async {
+    if (_isDownloadingReport) {
+      return;
+    }
+
     try {
-      final now = DateTime.now();
-      final from = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
-      final bytes = finance
-          ? await ApiService.downloadFinanceReportPdf(from: from, to: now)
-          : await ApiService.downloadReservationReportPdf(from: from, to: now);
+      final options = await _showReportOptionsDialog(finance: finance);
 
-      final location = await getSaveLocation(
-        suggestedName: finance ? 'parkify-finansijski-izvjestaj.pdf' : 'parkify-rezervacije-izvjestaj.pdf',
-        acceptedTypeGroups: const [
-          XTypeGroup(label: 'PDF', extensions: ['pdf']),
-        ],
-      );
-
-      if (location == null) {
+      if (options == null) {
         return;
       }
 
-      final file = File(location.path);
-      await file.writeAsBytes(bytes, flush: true);
+      setState(() => _isDownloadingReport = true);
+
+      final from = DateTime(
+        options.range.start.year,
+        options.range.start.month,
+        options.range.start.day,
+      );
+      final to = DateTime(
+        options.range.end.year,
+        options.range.end.month,
+        options.range.end.day,
+        23,
+        59,
+        59,
+      );
+      final bytes = finance
+          ? await ApiService.downloadFinanceReportPdf(
+              from: from,
+              to: to,
+              userId: options.onlySelectedUser ? _selectedUser?.id : null,
+            )
+          : await ApiService.downloadReservationReportPdf(from: from, to: to);
+
+      final didSave = await savePdfFile(
+        bytes: bytes,
+        suggestedName: _buildReportFileName(
+          finance: finance,
+          from: from,
+          to: to,
+          userSpecific: options.onlySelectedUser,
+        ),
+      );
+
+      if (!didSave) {
+        return;
+      }
 
       if (!mounted) return;
       AdminSnackBar.show(context, 'PDF je uspješno sačuvan.', true);
     } catch (e) {
       if (!mounted) return;
       AdminSnackBar.show(context, e.toString().replaceFirst('Exception: ', ''), false);
+    } finally {
+      if (mounted) {
+        setState(() => _isDownloadingReport = false);
+      }
     }
+  }
+
+  Future<_ReportOptions?> _showReportOptionsDialog({required bool finance}) {
+    final today = DateTime.now();
+    final initialStart = DateTime(today.year, today.month, today.day)
+        .subtract(const Duration(days: 30));
+    final initialEnd = DateTime(today.year, today.month, today.day);
+
+    return showDialog<_ReportOptions>(
+        context: context,
+        builder: (dialogContext) {
+          var start = initialStart;
+          var end = initialEnd;
+          var onlySelectedUser = finance && _selectedUser != null;
+
+          Future<void> pickStartDate(StateSetter setDialogState) async {
+            final picked = await showDatePicker(
+              context: dialogContext,
+              initialDate: start,
+              firstDate: _reportFirstDate,
+              lastDate: end,
+            );
+
+            if (picked != null) {
+              setDialogState(() => start = picked);
+            }
+          }
+
+          Future<void> pickEndDate(StateSetter setDialogState) async {
+            final picked = await showDatePicker(
+              context: dialogContext,
+              initialDate: end,
+              firstDate: start,
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+            );
+
+            if (picked != null) {
+              setDialogState(() => end = picked);
+            }
+          }
+
+          return StatefulBuilder(
+            builder: (context, setDialogState) => AlertDialog(
+              title: Text(finance ? 'Finansijski PDF' : 'Operativni PDF'),
+              content: SizedBox(
+                width: 340,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _CompactDateField(
+                      label: 'Od',
+                      value: _formatDialogDate(start),
+                      onTap: () => pickStartDate(setDialogState),
+                    ),
+                    const SizedBox(height: 10),
+                    _CompactDateField(
+                      label: 'Do',
+                      value: _formatDialogDate(end),
+                      onTap: () => pickEndDate(setDialogState),
+                    ),
+                    if (finance) ...[
+                      const SizedBox(height: 12),
+                      CheckboxListTile(
+                        value: onlySelectedUser,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: const Text('Samo za odabranog korisnika'),
+                        subtitle: Text(
+                          _selectedUser == null
+                              ? 'Prvo odaberi korisnika u filteru.'
+                              : '${_selectedUser!.username} (${_selectedUser!.email})',
+                        ),
+                        onChanged: _selectedUser == null
+                            ? null
+                            : (value) => setDialogState(
+                                  () => onlySelectedUser = value ?? false,
+                                ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Otkaži'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop(
+                      _ReportOptions(
+                        range: DateTimeRange(start: start, end: end),
+                        onlySelectedUser: onlySelectedUser,
+                      ),
+                    );
+                  },
+                  child: const Text('Preuzmi'),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+  }
+
+  String _buildReportFileName({
+    required bool finance,
+    required DateTime from,
+    required DateTime to,
+    bool userSpecific = false,
+  }) {
+    final reportType = finance
+        ? (userSpecific ? 'finansijski-korisnik' : 'finansijski')
+        : 'operativni';
+    final fromText = _formatDatePart(from);
+    final toText = _formatDatePart(to);
+    return 'parkify-$reportType-izvjestaj-$fromText-do-$toText.pdf';
+  }
+
+  String _formatDialogDate(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '$day.$month.${value.year}';
+  }
+
+  String _formatDatePart(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '${value.year}-$month-$day';
   }
 
   @override
@@ -208,15 +371,19 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                 ),
               ),
               OutlinedButton.icon(
-                onPressed: () => _downloadReport(finance: false),
+                onPressed: _isDownloadingReport
+                    ? null
+                    : () => _downloadReport(finance: false),
                 icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('Operativni PDF'),
+                label: Text(_isDownloadingReport ? 'Preuzimanje...' : 'Operativni PDF'),
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
-                onPressed: () => _downloadReport(finance: true),
+                onPressed: _isDownloadingReport
+                    ? null
+                    : () => _downloadReport(finance: true),
                 icon: const Icon(Icons.request_quote_outlined),
-                label: const Text('Finansijski PDF'),
+                label: Text(_isDownloadingReport ? 'Preuzimanje...' : 'Finansijski PDF'),
               ),
               const SizedBox(width: 12),
               CommonButtons.buildClearButton(onPressed: _clearSearch),
@@ -330,6 +497,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       Reservation reservation, ReservationProvider provider) {
     final statusEnum = ReservationStatus.fromValue(reservation.status);
     final statusColor = _statusColor(statusEnum);
+    final userName = _resolveUserName(reservation.userId);
+    final zoneName = _resolveZoneName(reservation);
 
     return Card(
       elevation: 0,
@@ -366,8 +535,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               ],
             ),
             const Divider(height: 28),
-            _infoRow(Icons.local_parking, 'Zona ID',
-                reservation.parkingZoneId.toString()),
+            _infoRow(Icons.person_outline, 'Korisnik', userName),
+            _infoRow(Icons.local_parking, 'Zona', zoneName),
             _infoRow(Icons.calendar_today, 'Datum',
                 '${reservation.reservationStart.day.toString().padLeft(2, '0')}.'
                 '${reservation.reservationStart.month.toString().padLeft(2, '0')}.'
@@ -436,6 +605,36 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
         ),
       ),
     );
+  }
+
+  String _resolveUserName(int userId) {
+    final user = _allUsers.cast<User?>().firstWhere(
+          (item) => item?.id == userId,
+          orElse: () => null,
+        );
+
+    if (user == null) {
+      return 'Korisnik #$userId';
+    }
+
+    final fullName = '${user.firstName ?? ''} ${user.lastName ?? ''}'.trim();
+    return fullName.isNotEmpty ? fullName : user.username;
+  }
+
+  String _resolveZoneName(Reservation reservation) {
+    final reservationZoneName = reservation.parkingZoneName?.trim();
+    if (reservationZoneName != null && reservationZoneName.isNotEmpty) {
+      return reservationZoneName;
+    }
+
+    final zone = _allZones.cast<ParkingZone?>().firstWhere(
+          (item) => item?.id == reservation.parkingZoneId,
+          orElse: () => null,
+        );
+
+    return zone?.name.trim().isNotEmpty == true
+        ? zone!.name
+        : 'Zona #${reservation.parkingZoneId}';
   }
 
   Widget _infoRow(IconData icon, String label, String value) {
@@ -554,6 +753,58 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                   children: [const AdminCancelButton(label: 'Zatvori')]),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportOptions {
+  const _ReportOptions({required this.range, required this.onlySelectedUser});
+
+  final DateTimeRange range;
+  final bool onlySelectedUser;
+}
+
+class _CompactDateField extends StatelessWidget {
+  const _CompactDateField({
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFD7DEEA)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today_outlined, size: 18, color: Colors.grey[700]),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  const SizedBox(height: 2),
+                  Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+            const Icon(Icons.expand_more_rounded),
+          ],
         ),
       ),
     );

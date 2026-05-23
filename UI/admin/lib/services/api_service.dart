@@ -492,6 +492,9 @@ class ApiService {
     String? name,
     String? description,
     String? address,
+    int? cityId,
+    double? latitude,
+    double? longitude,
     double? pricePerHour,
     double? dailyRate,
     bool? isActive,
@@ -501,6 +504,9 @@ class ApiService {
       if (name != null) body['name'] = name;
       if (description != null) body['description'] = description;
       if (address != null) body['address'] = address;
+      if (cityId != null) body['cityId'] = cityId;
+      if (latitude != null) body['latitude'] = latitude;
+      if (longitude != null) body['longitude'] = longitude;
       if (pricePerHour != null) body['pricePerHour'] = pricePerHour;
       if (dailyRate != null) body['dailyRate'] = dailyRate;
       if (isActive != null) body['isActive'] = isActive;
@@ -687,6 +693,7 @@ class ApiService {
   static Future<Uint8List> downloadFinanceReportPdf({
     DateTime? from,
     DateTime? to,
+    int? userId,
   }) async {
     try {
       final response = await http
@@ -694,6 +701,7 @@ class ApiService {
             _buildUri('${AppUrls.reservations}/report/finance/pdf', {
               if (from != null) 'from': from.toIso8601String(),
               if (to != null) 'to': to.toIso8601String(),
+              if (userId != null) 'userId': userId.toString(),
             }),
             headers: _getHeaders(),
           )

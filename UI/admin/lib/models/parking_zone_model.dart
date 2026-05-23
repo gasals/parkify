@@ -91,7 +91,7 @@ enum ReservationStatus {
   active(3, 'Aktivna'),
   completed(4, 'Završena'),
   cancelled(5, 'Otkazana'),
-  noShow(6, 'Nije prikazana');
+  noShow(6, 'No Show');
 
   final int value;
   final String label;
