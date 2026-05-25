@@ -41,18 +41,65 @@ namespace parkify.Service.Services
         private async Task CheckReservationsAsync()
         {
             using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider
-                .GetRequiredService<Database.ParkifyContext>();
+            var db = scope.ServiceProvider.GetRequiredService<Database.ParkifyContext>();
             var now = DateTime.UtcNow;
 
-                        var upcoming = await db.Reservations
+            var toActivate = await db.Reservations
+                .Where(r => r.Status == Database.ReservationStatus.Confirmed && r.ReservationStart <= now && r.ReservationEnd > now)
+                .ToListAsync();
+            foreach (var r in toActivate)
+            {
+                r.Status = Database.ReservationStatus.Active;
+                r.Modified = now;
+                _logger.LogInformation($"Rezervacija {r.Id} aktivirana.");
+            }
+
+            var toComplete = await db.Reservations
+                .Where(r => r.Status == Database.ReservationStatus.Active && r.ReservationEnd <= now)
+                .ToListAsync();
+            foreach (var r in toComplete)
+            {
+                r.Status = Database.ReservationStatus.Completed;
+                r.Modified = now;
+                var spot = await db.ParkingSpots.FirstOrDefaultAsync(s => s.Id == r.ParkingSpotId);
+                if (spot != null)
+                {
+                    spot.IsAvailable = true;
+                    spot.Modified = now;
+                }
+                _logger.LogInformation($"Rezervacija {r.Id} završena.");
+            }
+
+            var noShowLimit = now.AddMinutes(-30);
+            var toNoShow = await db.Reservations
+                .Where(r => r.Status == Database.ReservationStatus.Confirmed && !r.IsCheckedIn && r.ReservationStart <= noShowLimit)
+                .ToListAsync();
+            foreach (var r in toNoShow)
+            {
+                r.Status = Database.ReservationStatus.NoShow;
+                r.Modified = now;
+                var spot = await db.ParkingSpots.FirstOrDefaultAsync(s => s.Id == r.ParkingSpotId);
+                if (spot != null)
+                {
+                    spot.IsAvailable = true;
+                    spot.Modified = now;
+                }
+                await PublishIfNotSentAsync(
+                    db, r.UserId, r.Id,
+                    Database.NotificationType.ReservationCancelled,
+                    "Rezervacija nije iskorištena",
+                    "Niste se pojavili na vrijeme. Rezervacija je označena kao No-Show i parking mjesto je oslobođeno.",
+                    NotificationChannel.InApp);
+                _logger.LogInformation($"Rezervacija {r.Id} označena kao No-Show.");
+            }
+
+            var upcoming = await db.Reservations
                 .Where(r =>
                     r.Status == Database.ReservationStatus.Confirmed &&
                     !r.IsCheckedIn &&
                     r.ReservationStart > now.AddMinutes(9) &&
                     r.ReservationStart <= now.AddMinutes(11))
                 .ToListAsync();
-
             foreach (var r in upcoming)
             {
                 await PublishIfNotSentAsync(
@@ -63,14 +110,13 @@ namespace parkify.Service.Services
                     NotificationChannel.Both);
             }
 
-                        var lateCheckIn = await db.Reservations
+            var lateCheckIn = await db.Reservations
                 .Where(r =>
                     r.Status == Database.ReservationStatus.Confirmed &&
                     !r.IsCheckedIn &&
                     r.ReservationStart <= now.AddMinutes(-9) &&
                     r.ReservationStart >= now.AddMinutes(-11))
                 .ToListAsync();
-
             foreach (var r in lateCheckIn)
             {
                 await PublishIfNotSentAsync(
@@ -80,6 +126,8 @@ namespace parkify.Service.Services
                     "Vaša rezervacija je počela prije 10 minuta, a još niste odradili check-in.",
                     NotificationChannel.InApp);
             }
+
+            await db.SaveChangesAsync();
         }
 
         private async Task PublishIfNotSentAsync(

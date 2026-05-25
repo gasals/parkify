@@ -94,7 +94,18 @@ namespace parkify.Service.Services
             var paymentIntent = await paymentIntentService.GetAsync(payment.StripePaymentIntentId);
 
             if (!string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
+            {
+                _publisher.PublishNotification(new NotificationMessage
+                {
+                    UserId = payment.UserId,
+                    Title = "Plaćanje nije uspjelo",
+                    Message = $"Vaše plaćanje nije uspješno završeno. Pokušajte ponovo ili kontaktirajte podršku.",
+                    Type = (int)Database.NotificationType.PaymentFailed,
+                    Channel = NotificationChannel.Both,
+                    ReservationId = payment.ReservationId
+                });
                 throw new Exception("Stripe plaćanje još nije uspješno završeno.");
+            }
 
             var expectedAmountInPfennig = (long)Math.Round(payment.Amount * 100m, MidpointRounding.AwayFromZero);
             if (paymentIntent.AmountReceived != expectedAmountInPfennig)

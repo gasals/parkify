@@ -380,6 +380,20 @@ namespace parkify.Service.Services
             if (parkingZone == null)
                 throw new UserException("Parking zona nije pronađena.");
 
+            if (parkingZone.AvailableSpots <= 0)
+            {
+                _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
+                {
+                    UserId = entity.UserId,
+                    Title = "Parking zona je puna",
+                    Message = $"Zona {parkingZone.Name} trenutno nema slobodnih mjesta.",
+                    Type = (int)Database.NotificationType.ParkingFull,
+                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
+                    ParkingZoneId = entity.ParkingZoneId
+                });
+                throw new UserException("Parking zona je puna.");
+            }
+
             var parkingSpot = Context.ParkingSpots.FirstOrDefault(ps => ps.Id == entity.ParkingSpotId);
             if (parkingSpot == null)
                 throw new UserException("Parking mjesto nije pronađeno.");
@@ -400,7 +414,18 @@ namespace parkify.Service.Services
                 throw new UserException("Odabrano parking mjesto nije aktivno.");
 
             if (!parkingSpot.IsAvailable)
+            {
+                _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
+                {
+                    UserId = entity.UserId,
+                    Title = "Nema slobodnih mjesta",
+                    Message = $"Parking mjesto {parkingSpot.SpotCode} trenutno nije dostupno.",
+                    Type = (int)Database.NotificationType.AvailabilityAlert,
+                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
+                    ParkingZoneId = entity.ParkingZoneId
+                });
                 throw new UserException("Odabrano parking mjesto trenutno nije raspoloživo.");
+            }
 
             if (request.RequiresDisabledSpot && parkingSpot.Type != Database.ParkingSpotType.Disabled)
                 throw new UserException("Za ovu rezervaciju morate odabrati invalidsko parking mjesto.");

@@ -171,7 +171,7 @@ namespace parkify.Service.Database
                 {
                     UserId = user1.Id,
                     LicensePlate = "E12-K-345",
-                    Category = "Sedan",
+                    Category = "B",
                     Model = "VW Golf"
                 };
 
