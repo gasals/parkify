@@ -7,7 +7,7 @@ namespace parkify.Service.Interfaces
     public interface INotificationService
         : ICRUDService<Notification, NotificationSearch, NotificationInsertRequest, NotificationUpdateRequest>
     {
-        void SendToUser(NotificationInsertRequest request);
-        void SendToAll(NotificationInsertRequest request);
+        Task SendToUser(NotificationInsertRequest request);
+        Task SendToAll(NotificationInsertRequest request);
     }
 }

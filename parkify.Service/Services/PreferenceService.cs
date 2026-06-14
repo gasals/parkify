@@ -1,4 +1,6 @@
 using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
+using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -36,7 +38,7 @@ namespace parkify.Service.Services
         {
             var search = new PreferenceSearch { UserId = userId };
             var query = AddFilter(search, Context.Set<Database.Preference>().AsQueryable());
-            var preference = query.FirstOrDefault();
+            var preference = await query.FirstOrDefaultAsync();
 
             if (preference == null)
             {
@@ -58,11 +60,11 @@ namespace parkify.Service.Services
         {
             var search = new PreferenceSearch { UserId = userId };
             var query = AddFilter(search, Context.Set<Database.Preference>().AsQueryable());
-            var preference = query.FirstOrDefault();
+            var preference = await query.FirstOrDefaultAsync();
 
             if (preference == null)
             {
-                throw new Exception("Korisni?ke preference nisu prona?ene");
+                throw new UserException("Korisničke preference nisu pronađene");
             }
 
             Update(preference.Id, request);

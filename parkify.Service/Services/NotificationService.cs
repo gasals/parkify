@@ -50,9 +50,9 @@ namespace parkify.Service.Services
             base.BeforeUpdate(request, entity);
         }
 
-        public void SendToUser(NotificationInsertRequest request)
+        public async Task SendToUser(NotificationInsertRequest request)
         {
-            _publisher.PublishNotification(new NotificationMessage
+            await _publisher.PublishNotificationAsync(new NotificationMessage
             {
                 UserId = request.UserId,
                 Title = request.Title,
@@ -64,16 +64,18 @@ namespace parkify.Service.Services
             });
         }
 
-        public void SendToAll(NotificationInsertRequest request)
+        public async Task SendToAll(NotificationInsertRequest request)
         {
             var userIds = Context.Users
                 .Where(u => u.IsActive)
                 .Select(u => u.Id)
                 .ToList();
 
+            var publishTasks = new List<Task>(userIds.Count);
+
             foreach (var userId in userIds)
             {
-                _publisher.PublishNotification(new NotificationMessage
+                publishTasks.Add(_publisher.PublishNotificationAsync(new NotificationMessage
                 {
                     UserId = userId,
                     Title = request.Title,
@@ -82,6 +84,28 @@ namespace parkify.Service.Services
                     Channel = (NotificationChannel)(request.Channel ?? (int)NotificationChannel.InApp),
                     ReservationId = request.ReservationId,
                     ParkingZoneId = request.ParkingZoneId
+                }));
+            }
+
+            await Task.WhenAll(publishTasks);
+        }
+
+        public void SendSpecialOfferToAll(string title, string message)
+        {
+            var userIds = Context.Users
+                .Where(u => u.IsActive)
+                .Select(u => u.Id)
+                .ToList();
+
+            foreach (var userId in userIds)
+            {
+                _ = _publisher.PublishNotificationAsync(new NotificationMessage
+                {
+                    UserId = userId,
+                    Title = title,
+                    Message = message,
+                    Type = (int)NotificationType.SpecialOffer,
+                    Channel = NotificationChannel.Both
                 });
             }
         }

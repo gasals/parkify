@@ -44,6 +44,17 @@ namespace parkify.Service.Services
             var db = scope.ServiceProvider.GetRequiredService<Database.ParkifyContext>();
             var now = DateTime.UtcNow;
 
+            var staleCutoff = now.AddMinutes(-10);
+            var stalePending = await db.Reservations
+                .Where(r => r.Status == Database.ReservationStatus.Pending && r.Modified < staleCutoff)
+                .ToListAsync();
+            foreach (var r in stalePending)
+            {
+                r.Status = Database.ReservationStatus.Cancelled;
+                r.Modified = now;
+                _logger.LogInformation("Rezervacija {ReservationId} otkazana zbog isteka pending perioda.", r.Id);
+            }
+
             var toActivate = await db.Reservations
                 .Where(r => r.Status == Database.ReservationStatus.Confirmed && r.ReservationStart <= now && r.ReservationEnd > now)
                 .ToListAsync();
@@ -146,7 +157,7 @@ namespace parkify.Service.Services
 
             if (alreadySent) return;
 
-            _publisher.PublishNotification(new NotificationMessage
+            await _publisher.PublishNotificationAsync(new NotificationMessage
             {
                 UserId = userId,
                 Title = title,

@@ -10,6 +10,12 @@ bin/
 obj/
 Debug/
 Release/
+**/android/build/
+_temp_build_report_validation/
+build_phase_*.log
+**/analyzer_output.txt
+**/temp.txt
+*~RF*.TMP
 
 # NuGet
 packages/
@@ -18,6 +24,7 @@ packages/
 # Environment
 .env
 appsettings.Local.json
+.env-*.zip
 
 # OS
 .DS_Store

@@ -382,7 +382,7 @@ namespace parkify.Service.Services
 
             if (parkingZone.AvailableSpots <= 0)
             {
-                _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
+                _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
                 {
                     UserId = entity.UserId,
                     Title = "Parking zona je puna",
@@ -415,7 +415,7 @@ namespace parkify.Service.Services
 
             if (!parkingSpot.IsAvailable)
             {
-                _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
+                _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
                 {
                     UserId = entity.UserId,
                     Title = "Nema slobodnih mjesta",
@@ -488,7 +488,7 @@ namespace parkify.Service.Services
         {
             if (entity.Status == Database.ReservationStatus.Confirmed)
             {
-                _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
+                _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
                 {
                     UserId = entity.UserId,
                     Title = "Rezervacija potvrđena",
@@ -547,7 +547,7 @@ namespace parkify.Service.Services
                 }
 
                 entity.Status = Database.ReservationStatus.Cancelled;
-                _publisher.PublishNotification(new parkify.RabbitMQ.Models.NotificationMessage
+                _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
                 {
                     UserId = entity.UserId,
                     Title = "Rezervacija otkazana",

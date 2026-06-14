@@ -52,26 +52,26 @@ namespace parkify.Service.Services
             entity.StripePaymentIntentId = request.StripePaymentIntentId?.Trim() ?? string.Empty;
 
             if (entity.Amount <= 0)
-                throw new Exception("Iznos dopune mora biti veći od 0");
+                throw new UserException("Iznos dopune mora biti veći od 0");
 
             if (string.IsNullOrWhiteSpace(entity.StripePaymentIntentId))
-                throw new Exception("Stripe payment intent je obavezan.");
+                throw new UserException("Stripe payment intent je obavezan.");
 
             if (request.ReservationId.HasValue)
             {
                 var reservationExists = Context.Reservations.Any(r => r.Id == request.ReservationId.Value);
                 if (!reservationExists)
-                    throw new Exception("Rezervacija ne postoji");
+                    throw new UserException("Rezervacija ne postoji");
             }
             else if (request.WalletId.HasValue)
             {
                 var walletExists = Context.Wallets.Any(w => w.Id == request.WalletId.Value);
                 if (!walletExists)
-                    throw new Exception("Wallet ne postoji");
+                    throw new UserException("Wallet ne postoji");
             }
             else
             {
-                throw new Exception("Morate navesti Rezervaciju ili Novčanik");
+                throw new UserException("Morate navesti Rezervaciju ili Novčanik");
             }
 
             base.BeforeInsert(request, entity);
@@ -82,20 +82,20 @@ namespace parkify.Service.Services
             var payment = Context.Payments.FirstOrDefault(p => p.Id == paymentId);
 
             if (payment == null)
-                throw new Exception("Plaćanje nije pronađeno");
+                throw new UserException("Plaćanje nije pronađeno");
 
             if (payment.Status == Database.PaymentStatus.Completed)
                 return Mapper.Map<Payment>(payment);
 
             if (payment.Status == Database.PaymentStatus.Refunded || payment.Status == Database.PaymentStatus.Failed)
-                throw new Exception("Plaćanje je već u terminalnom statusu i ne može biti potvrđeno.");
+                throw new UserException("Plaćanje je već u terminalnom statusu i ne može biti potvrđeno.");
 
             var paymentIntentService = new PaymentIntentService();
             var paymentIntent = await paymentIntentService.GetAsync(payment.StripePaymentIntentId);
 
             if (!string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
             {
-                _publisher.PublishNotification(new NotificationMessage
+                await _publisher.PublishNotificationAsync(new NotificationMessage
                 {
                     UserId = payment.UserId,
                     Title = "Plaćanje nije uspjelo",
@@ -104,19 +104,19 @@ namespace parkify.Service.Services
                     Channel = NotificationChannel.Both,
                     ReservationId = payment.ReservationId
                 });
-                throw new Exception("Stripe plaćanje još nije uspješno završeno.");
+                throw new UserException("Stripe plaćanje još nije uspješno završeno.");
             }
 
             var expectedAmountInPfennig = (long)Math.Round(payment.Amount * 100m, MidpointRounding.AwayFromZero);
             if (paymentIntent.AmountReceived != expectedAmountInPfennig)
-                throw new Exception("Stripe iznos se ne podudara sa lokalnim plaćanjem.");
+                throw new UserException("Stripe iznos se ne podudara sa lokalnim plaćanjem.");
 
             if (Context.Payments.Any(p =>
                     p.Id != payment.Id &&
                     p.StripePaymentIntentId == payment.StripePaymentIntentId &&
                     p.Status == Database.PaymentStatus.Completed))
             {
-                throw new Exception("Ovaj Stripe payment intent je već iskorišten.");
+                throw new UserException("Ovaj Stripe payment intent je već iskorišten.");
             }
 
             payment.Status = Database.PaymentStatus.Completed;
@@ -189,7 +189,7 @@ namespace parkify.Service.Services
 
             if (notification != null)
             {
-                _publisher.PublishNotification(notification);
+                await _publisher.PublishNotificationAsync(notification);
             }
 
             return Mapper.Map<Payment>(payment);
@@ -291,7 +291,7 @@ namespace parkify.Service.Services
 
             Context.SaveChanges();
 
-            _publisher.PublishNotification(new NotificationMessage
+            await _publisher.PublishNotificationAsync(new NotificationMessage
             {
                 UserId = payment.UserId,
                 Title = "Plaćanje refundirano",

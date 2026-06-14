@@ -5,6 +5,9 @@ namespace parkify.Service.Database
 {
     public static class DbSeeder
     {
+    private const int Pbkdf2Iterations = 100_000;
+    private const int Pbkdf2KeySize = 32;
+
         public static void Seed(ParkifyContext context)
         {
             var sarajevo = context.Cities.FirstOrDefault(c => c.Name == "Sarajevo");
@@ -213,14 +216,14 @@ namespace parkify.Service.Database
         public static string GenerateHash(string salt, string password)
         {
             var saltBytes = Convert.FromBase64String(salt);
-            var passwordBytes = Encoding.Unicode.GetBytes(password);
+            var derived = Rfc2898DeriveBytes.Pbkdf2(
+                password,
+                saltBytes,
+                Pbkdf2Iterations,
+                HashAlgorithmName.SHA256,
+                Pbkdf2KeySize);
 
-            var combined = new byte[saltBytes.Length + passwordBytes.Length];
-            Buffer.BlockCopy(saltBytes, 0, combined, 0, saltBytes.Length);
-            Buffer.BlockCopy(passwordBytes, 0, combined, saltBytes.Length, passwordBytes.Length);
-
-            using var algorithm = SHA1.Create();
-            return Convert.ToBase64String(algorithm.ComputeHash(combined));
+            return Convert.ToBase64String(derived);
         }
     }
 }

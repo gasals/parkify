@@ -62,7 +62,6 @@ namespace parkify.RabbitMQ
         {
             if (!_disposed)
             {
-                _connection?.CloseAsync().GetAwaiter().GetResult();
                 _connection?.Dispose();
                 _disposed = true;
             }

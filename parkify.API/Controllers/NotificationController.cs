@@ -30,17 +30,17 @@ namespace parkify.API.Controllers
 
         [HttpPost("send")]
         [Authorize(Roles = "Admin")]
-        public IActionResult SendToUser([FromBody] NotificationInsertRequest request)
+        public async Task<IActionResult> SendToUser([FromBody] NotificationInsertRequest request)
         {
-            _notificationService.SendToUser(request);
+            await _notificationService.SendToUser(request);
             return Ok(new { Message = "Notifikacija je poslana." });
         }
 
         [HttpPost("send-all")]
         [Authorize(Roles = "Admin")]
-        public IActionResult SendToAll([FromBody] NotificationInsertRequest request)
+        public async Task<IActionResult> SendToAll([FromBody] NotificationInsertRequest request)
         {
-            _notificationService.SendToAll(request);
+            await _notificationService.SendToAll(request);
             return Ok(new { Message = "Notifikacija je poslana svim korisnicima." });
         }
 

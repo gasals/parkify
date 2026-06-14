@@ -29,14 +29,12 @@ namespace parkify.API.Controllers
         }
 
         [HttpGet]
-        [AllowAnonymous]
         public override PagedResult<ParkingSpot> GetList([FromQuery] ParkingSpotSearch searchObject)
         {
             return base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
         public override ParkingSpot GetById(int id)
         {
             return base.GetById(id);

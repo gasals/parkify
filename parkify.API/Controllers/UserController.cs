@@ -49,7 +49,19 @@ namespace parkify.API.Controllers
         [HttpPut("{id}")]
         public override User Update(int id, [FromBody] UserUpdateRequest request)
         {
+            if (!CanAccessUser(id))
+                throw new UnauthorizedAccessException("Nemate pravo izmjene ovog korisnika.");
+
             return base.Update(id, request);
+        }
+
+        [HttpGet("{id}")]
+        public override User GetById(int id)
+        {
+            if (!CanAccessUser(id))
+                throw new UnauthorizedAccessException("Nemate pravo pristupa ovom korisniku.");
+
+            return base.GetById(id);
         }
 
         [HttpPost("register")]
@@ -104,6 +116,15 @@ namespace parkify.API.Controllers
         public override PagedResult<User> GetList([FromQuery] UserSearch searchObject)
         {
             return base.GetList(searchObject);
+        }
+
+        private bool CanAccessUser(int targetUserId)
+        {
+            if (User.IsInRole("Admin"))
+                return true;
+
+            var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(claimValue, out var currentUserId) && currentUserId == targetUserId;
         }
     }
 }

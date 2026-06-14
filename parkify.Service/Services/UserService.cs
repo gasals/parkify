@@ -6,7 +6,6 @@ using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
 using System.Globalization;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace parkify.Service.Services
@@ -15,6 +14,9 @@ namespace parkify.Service.Services
         : BaseCRUDService<User, UserSearch, Database.User, UserInsertRequest, UserUpdateRequest>,
           IUserService
     {
+        private const int Pbkdf2Iterations = 100_000;
+        private const int Pbkdf2KeySize = 32;
+
         public UserService(Database.ParkifyContext context, IMapper mapper)
             : base(context, mapper)
         {
@@ -151,7 +153,7 @@ namespace parkify.Service.Services
             var entity = Context.Users.FirstOrDefault(x => x.Id == id);
 
             if (entity == null)
-                throw new Exception("Korisnik sa tim ID-om ne postoji.");
+                throw new UserException("Korisnik sa tim ID-om ne postoji.");
 
             Context.Users.Remove(entity);
             Context.SaveChanges();
@@ -168,14 +170,14 @@ namespace parkify.Service.Services
         public static string GenerateHash(string salt, string password)
         {
             var saltBytes = Convert.FromBase64String(salt);
-            var passwordBytes = Encoding.Unicode.GetBytes(password);
+            var derived = Rfc2898DeriveBytes.Pbkdf2(
+                password,
+                saltBytes,
+                Pbkdf2Iterations,
+                HashAlgorithmName.SHA256,
+                Pbkdf2KeySize);
 
-            var combined = new byte[saltBytes.Length + passwordBytes.Length];
-            Buffer.BlockCopy(saltBytes, 0, combined, 0, saltBytes.Length);
-            Buffer.BlockCopy(passwordBytes, 0, combined, saltBytes.Length, passwordBytes.Length);
-
-            using var algorithm = SHA1.Create();
-            return Convert.ToBase64String(algorithm.ComputeHash(combined));
+            return Convert.ToBase64String(derived);
         }
 
         public static bool IsValidEmail(string email)

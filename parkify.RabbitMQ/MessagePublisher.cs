@@ -8,7 +8,7 @@ namespace parkify.RabbitMQ
 {
     public interface IMessagePublisher
     {
-        void PublishNotification(NotificationMessage message);
+        Task PublishNotificationAsync(NotificationMessage message, CancellationToken cancellationToken = default);
     }
 
     public class MessagePublisher : IMessagePublisher
@@ -22,12 +22,7 @@ namespace parkify.RabbitMQ
             _settings = settings;
         }
 
-        public void PublishNotification(NotificationMessage message)
-        {
-            PublishAsync(message).GetAwaiter().GetResult();
-        }
-
-        private async Task PublishAsync(NotificationMessage message)
+        public async Task PublishNotificationAsync(NotificationMessage message, CancellationToken cancellationToken = default)
         {
             using var channel = await _connection.CreateChannelAsync();
 
@@ -44,7 +39,8 @@ namespace parkify.RabbitMQ
                 routingKey: _settings.NotificationQueue,
                 mandatory: false,
                 basicProperties: properties,
-                body: body);
+                body: body,
+                cancellationToken: cancellationToken);
         }
     }
 }

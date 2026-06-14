@@ -46,20 +46,40 @@ namespace parkify.Service.Services
 
             consumer.ReceivedAsync += async (_, ea) =>
             {
-                try
-                {
-                    var json = Encoding.UTF8.GetString(ea.Body.ToArray());
-                    var message = JsonSerializer.Deserialize<NotificationMessage>(json);
+                const int maxAttempts = 4;
 
-                    if (message != null)
-                        await ProcessMessageAsync(message);
-
-                    await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-                }
-                catch (Exception ex)
+                for (var attempt = 1; attempt <= maxAttempts; attempt++)
                 {
-                    _logger.LogError(ex, "Greška pri obradi notifikacije");
-                    await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                    try
+                    {
+                        var json = Encoding.UTF8.GetString(ea.Body.ToArray());
+                        var message = JsonSerializer.Deserialize<NotificationMessage>(json);
+
+                        if (message != null)
+                            await ProcessMessageAsync(message);
+
+                        await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (attempt == maxAttempts)
+                        {
+                            _logger.LogError(ex, "Greška pri obradi notifikacije nakon {Attempt} pokušaja", attempt);
+                            await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                            return;
+                        }
+
+                        var delaySeconds = (int)Math.Pow(2, attempt - 1);
+                        _logger.LogWarning(
+                            ex,
+                            "Obrada notifikacije nije uspjela (pokušaj {Attempt}/{MaxAttempts}). Novi pokušaj za {DelaySeconds}s",
+                            attempt,
+                            maxAttempts,
+                            delaySeconds);
+
+                        await Task.Delay(TimeSpan.FromSeconds(delaySeconds), stoppingToken);
+                    }
                 }
             };
 
@@ -179,7 +199,6 @@ namespace parkify.Service.Services
 
         public override void Dispose()
         {
-            _channel?.CloseAsync().GetAwaiter().GetResult();
             _channel?.Dispose();
             base.Dispose();
         }

@@ -48,7 +48,7 @@ namespace parkify.Service.Services
         {
             var parkingZone = Context.ParkingZones.Find(request.ParkingZoneId);
             if (parkingZone == null)
-                throw new Exception("Ne postoji zona sa proslijeđenim ID-em.");
+                throw new UserException("Ne postoji zona sa proslijeđenim ID-em.");
 
             parkingZone.TotalSpots += 1;
             if (request.Type == (int)ParkingSpotType.Disabled)
@@ -106,7 +106,7 @@ namespace parkify.Service.Services
         {
             var entity = Context.ParkingSpots.Find(id);
             if (entity == null)
-                throw new Exception("Ne postoji mjesto sa proslijeđenim ID-em.");
+                throw new UserException("Ne postoji mjesto sa proslijeđenim ID-em.");
 
             entity.IsAvailable = isAvailable;
             entity.Modified = DateTime.UtcNow;
