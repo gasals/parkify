@@ -73,7 +73,7 @@ namespace parkify.Service.Database
                     PasswordSalt = userSalt,
                     PasswordHash = userHash,
                     IsAdmin = false,
-                    City = "Mostar"
+                    CityId = mostar.Id
                 };
 
                 context.Users.Add(user1);

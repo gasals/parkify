@@ -46,6 +46,11 @@ namespace parkify.Service.Services
                 query = query.Where(x => x.LastName == search.LastName);
             }
 
+            if (search?.CityId.HasValue == true)
+            {
+                query = query.Where(x => x.CityId == search.CityId);
+            }
+
             return query;
         }
 
@@ -62,6 +67,9 @@ namespace parkify.Service.Services
 
             if (Context.Users.Any(x => x.Email == request.Email))
                 throw new UserException("Email je već u upotrebi.");
+
+            if (request.CityId.HasValue && !Context.Cities.Any(x => x.Id == request.CityId.Value))
+                throw new UserException("Odabrani grad ne postoji.");
 
             entity.IsAdmin = false;
 
@@ -108,6 +116,9 @@ namespace parkify.Service.Services
 
             if (emailExists)
                 throw new UserException("Email je već zauzet.");
+
+            if (request.CityId.HasValue && !Context.Cities.Any(x => x.Id == request.CityId.Value))
+                throw new UserException("Odabrani grad ne postoji.");
 
             base.BeforeUpdate(request, entity);
         }

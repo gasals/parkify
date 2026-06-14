@@ -7,6 +7,7 @@ using parkify.RabbitMQ;
 using parkify.Service.Database;
 using parkify.Service.Extensions;
 using parkify.Service.Interfaces;
+using parkify.Service.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,8 @@ builder.Services.AddDbContext<ParkifyContext>(options =>
 
 builder.Services.AddMapster();
 builder.Services.AddParkifyCoreServices();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ITokenRevocationService, TokenRevocationService>();
 
 builder.Services.AddControllers(x =>
 {
@@ -52,11 +55,24 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?? Array.Empty<string>();
+
+if (allowedOrigins.Length == 0)
+{
+    allowedOrigins = new[]
+    {
+        "http://10.0.2.2:5050"
+    };
+}
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowConfiguredOrigins", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
@@ -85,6 +101,25 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = context =>
+        {
+            var revocationService = context.HttpContext.RequestServices.GetRequiredService<ITokenRevocationService>();
+            var rawAuthHeader = context.HttpContext.Request.Headers.Authorization.ToString();
+            var token = rawAuthHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                ? rawAuthHeader[7..].Trim()
+                : string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(token) && revocationService.IsTokenRevoked(token))
+            {
+                context.Fail("Token is revoked.");
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddRabbitMQ(builder.Configuration);
@@ -97,7 +132,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+app.UseCors("AllowConfiguredOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

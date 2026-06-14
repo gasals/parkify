@@ -63,6 +63,16 @@ namespace parkify.Service.Database
                 .Property(u => u.PasswordSalt)
                 .IsRequired();
 
+            modelBuilder.Entity<User>()
+                .Property(u => u.CityId)
+                .IsRequired(false);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.City)
+                .WithMany(c => c.Users)
+                .HasForeignKey(u => u.CityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<ParkingZone>()
                 .HasKey(p => p.Id);
 

@@ -7,6 +7,7 @@
         public double Latitude { get; set; }
         public double Longitude { get; set; }
 
+        public ICollection<User> Users { get; set; } = new List<User>();
         public ICollection<ParkingZone> ParkingZones { get; set; } = new List<ParkingZone>();
         public ICollection<Preference> Preferences { get; set; } = new List<Preference>();
     }

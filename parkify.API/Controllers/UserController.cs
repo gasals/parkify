@@ -15,9 +15,15 @@ namespace parkify.API.Controllers
     public class UsersController : BaseCRUDController<User, UserSearch, UserInsertRequest, UserUpdateRequest>
     {
         private readonly IConfiguration _configuration;
-        public UsersController(IUserService service, IConfiguration configuration) : base(service)
+        private readonly ITokenRevocationService _tokenRevocationService;
+
+        public UsersController(
+            IUserService service,
+            IConfiguration configuration,
+            ITokenRevocationService tokenRevocationService) : base(service)
         {
             _configuration = configuration;
+            _tokenRevocationService = tokenRevocationService;
         }
 
         [HttpPost("login")]
@@ -76,6 +82,30 @@ namespace parkify.API.Controllers
             }
 
             return Ok(CreateAuthResponse(user));
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public IActionResult Logout()
+        {
+            var rawAuthHeader = Request.Headers.Authorization.ToString();
+            if (!rawAuthHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { error = "Authorization header nije validan." });
+
+            var token = rawAuthHeader[7..].Trim();
+            if (string.IsNullOrWhiteSpace(token))
+                return BadRequest(new { error = "Token nije pronađen." });
+
+            var expiresAtUtc = DateTime.UtcNow.AddDays(7);
+            var expClaim = User.FindFirst("exp")?.Value;
+            if (long.TryParse(expClaim, out var expUnix))
+            {
+                expiresAtUtc = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+            }
+
+            _tokenRevocationService.RevokeToken(token, expiresAtUtc);
+
+            return Ok(new { message = "Uspješno ste odjavljeni." });
         }
 
         private object CreateAuthResponse(User user)
