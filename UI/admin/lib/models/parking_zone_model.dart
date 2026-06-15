@@ -37,7 +37,7 @@ class ParkingZone {
     this.spots,
   });
 
-  factory ParkingZone.fromJson(Map<String, dynamic> json) {
+  factory ParkingZone.fromJson(Map<String, Object?> json) {
     return ParkingZone(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
@@ -58,13 +58,14 @@ class ParkingZone {
       modified: json['modified'] != null
           ? DateTime.parse(json['modified'] as String)
           : null,
-      spots: (json['spots'] as List<dynamic>?)
-          ?.map((spot) => ParkingSpot.fromJson(spot as Map<String, dynamic>))
+        spots: (json['spots'] as List?)
+          ?.whereType<Map>()
+          .map((spot) => ParkingSpot.fromJson(spot.cast<String, Object?>()))
           .toList(),
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, Object?> toJson() {
     return {
       'id': id,
       'name': name,

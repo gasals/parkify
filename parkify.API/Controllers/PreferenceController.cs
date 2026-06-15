@@ -22,30 +22,16 @@ namespace parkify.API.Controllers
         [Authorize]
         public async Task<IActionResult> GetUserPreference(int userId)
         {
-            try
-            {
-                var preference = await _preferenceService.GetOrCreateUserPreference(userId);
-                return Ok(preference);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var preference = await _preferenceService.GetOrCreateUserPreference(userId);
+            return Ok(preference);
         }
 
         [HttpPut("user/{userId}")]
         [Authorize]
         public async Task<IActionResult> UpdateUserPreferences(int userId, [FromBody] PreferenceUpdateRequest request)
         {
-            try
-            {
-                var preference = await _preferenceService.UpdateUserPreferences(userId, request);
-                return Ok(preference);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var preference = await _preferenceService.UpdateUserPreferences(userId, request);
+            return Ok(preference);
         }
     }
 }

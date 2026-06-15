@@ -23,7 +23,7 @@ class User {
     this.modified,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) {
+  factory User.fromJson(Map<String, Object?> json) {
     return User(
       id: json['id'] as int? ?? 0,
       username: json['username'] as String? ?? '',
@@ -42,7 +42,7 @@ class User {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, Object?> toJson() {
     return {
       'id': id,
       'username': username,

@@ -1,6 +1,7 @@
 import 'package:admin/widgets/admin_dialog_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/request_models.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import '../widgets/common_widgets.dart';
@@ -245,12 +246,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     showDialog(
         context: context,
         builder: (_) => _AddUserDialog(
-              onConfirm: (data) async {
+              onConfirm: (request) async {
                 final ok = await Provider.of<UserProvider>(context, listen: false).createUser(
-                  username: data['username'], email: data['email'],
-                  password: data['password'], passwordConfirm: data['passwordConfirm'],
-                  firstName: data['firstName'], lastName: data['lastName'],
-                  address: data['address'], city: data['city'],
+                  username: request.username, email: request.email,
+                  password: request.password, passwordConfirm: request.passwordConfirm,
+                  firstName: request.firstName, lastName: request.lastName,
+                  address: request.address, city: request.city,
                 );
                 if (mounted) AdminSnackBar.show(context, 'Korisnik je kreiran', ok);
               },
@@ -261,7 +262,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 // ─── Add User Dialog ───────────────────────────────────────────────────────────
 
 class _AddUserDialog extends StatefulWidget {
-  final Future<void> Function(Map<String, dynamic>) onConfirm;
+  final Future<void> Function(UserCreateRequest) onConfirm;
   const _AddUserDialog({required this.onConfirm});
 
   @override
@@ -429,16 +430,18 @@ class _AddUserDialogState extends State<_AddUserDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     Navigator.pop(context);
-    await widget.onConfirm({
-      'username': _c['username']!.text.trim(),
-      'email': _c['email']!.text.trim(),
-      'password': _c['password']!.text,
-      'passwordConfirm': _c['passwordConfirm']!.text,
-      'firstName': _c['firstName']!.text.trim(),
-      'lastName': _c['lastName']!.text.trim(),
-      'address': _c['address']!.text.isEmpty ? null : _c['address']!.text.trim(),
-      'city': _c['city']!.text.isEmpty ? null : _c['city']!.text.trim(),
-    });
+    await widget.onConfirm(
+      UserCreateRequest(
+        username: _c['username']!.text.trim(),
+        email: _c['email']!.text.trim(),
+        password: _c['password']!.text,
+        passwordConfirm: _c['passwordConfirm']!.text,
+        firstName: _c['firstName']!.text.trim(),
+        lastName: _c['lastName']!.text.trim(),
+        address: _c['address']!.text.isEmpty ? null : _c['address']!.text.trim(),
+        city: _c['city']!.text.isEmpty ? null : _c['city']!.text.trim(),
+      ),
+    );
   }
 }
 

@@ -22,24 +22,28 @@ class Review {
     this.parkingZone,
   });
 
-  factory Review.fromJson(Map<String, dynamic> json) {
+  factory Review.fromJson(Map<String, Object?> json) {
     return Review(
-      id: json['id'] ?? 0,
-      parkingZoneId: json['parkingZoneId'] ?? 0,
-      userId: json['userId'] ?? 0,
-      rating: json['rating'] ?? 0,
-      reviewText: json['reviewText'],
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      parkingZoneId: (json['parkingZoneId'] as num?)?.toInt() ?? 0,
+      userId: (json['userId'] as num?)?.toInt() ?? 0,
+      rating: (json['rating'] as num?)?.toInt() ?? 0,
+      reviewText: json['reviewText'] as String?,
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
+          ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
-      author: json['author'] != null ? User.fromJson(json['author']) : null,
+      author: json['author'] is Map
+          ? User.fromJson((json['author'] as Map).cast<String, Object?>())
+          : null,
       parkingZone: json['parkingZone'] != null
-          ? ParkingZone.fromJson(json['parkingZone'])
+          ? ParkingZone.fromJson(
+              (json['parkingZone'] as Map).cast<String, Object?>(),
+            )
           : null,
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, Object?> toJson() {
     return {
       'id': id,
       'parkingZoneId': parkingZoneId,

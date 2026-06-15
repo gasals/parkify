@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_strings.dart';
 import '../constants/app_colors.dart';
+import '../models/request_models.dart';
 import '../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -56,18 +57,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.register({
-      'username': _usernameController.text,
-      'email': _emailController.text,
-      'firstName': _firstNameController.text,
-      'lastName': _lastNameController.text,
-      'address': _addressController.text.isEmpty
-          ? null
-          : _addressController.text,
-      'city': _cityController.text.isEmpty ? null : _cityController.text,
-      'password': _passwordController.text,
-      'passwordConfirm': _passwordConfirmController.text,
-    });
+    final success = await authProvider.register(
+      UserRegistrationRequest(
+        username: _usernameController.text,
+        email: _emailController.text,
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        address: _addressController.text.isEmpty
+            ? null
+            : _addressController.text,
+        city: _cityController.text.isEmpty ? null : _cityController.text,
+        password: _passwordController.text,
+        passwordConfirm: _passwordConfirmController.text,
+      ),
+    );
 
     if (success) {
       Navigator.of(context).pushReplacementNamed('/home');

@@ -6,6 +6,7 @@ namespace parkify.Service.Interfaces
 {
     public interface IPaymentService : ICRUDService<Payment, PaymentSearch, PaymentInsertRequest, PaymentUpdateRequest>
     {
+        Task<PaymentIntentCreateResponse> CreatePaymentWithIntent(PaymentInsertRequest request);
         Task<Payment> ConfirmPayment(int paymentId);
         Task<Payment> RefundPayment(int paymentId, string reason);
     }

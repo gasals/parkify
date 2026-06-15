@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
+import '../models/request_models.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 
@@ -25,14 +26,14 @@ class AuthProvider extends ChangeNotifier {
     try {
       final result = await ApiService.login(username, password);
 
-      if (result['isAdmin'] == true || result['isActive'] == false) {
+      if (result.isAdmin || !result.isActive) {
         _errorMessage =
             "Neuspješna prijava. Provjerite podatke ili kontaktirajte podršku.";
         notifyListeners();
         return false;
       }
 
-      await fetchAndSetUser(result['id']);
+      await fetchAndSetUser(result.id);
       _errorMessage = null;
       return true;
     } catch (e) {
@@ -49,8 +50,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> fetchAndSetUser(int userId) async {
     try {
-      final userData = await ApiService.getUserById(userId);
-      _user = User.fromJson(userData);
+      _user = await ApiService.getUserById(userId);
       notifyListeners();
     } catch (e) {
       _errorMessage = _messageFromError(
@@ -60,14 +60,14 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> register(Map<String, dynamic> userData) async {
+  Future<bool> register(UserRegistrationRequest request) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final result = await ApiService.register(userData);
-      await fetchAndSetUser(result['id']);
+      final result = await ApiService.register(request);
+      await fetchAndSetUser(result.id);
       _errorMessage = null;
       return true;
     } catch (e) {
@@ -102,15 +102,15 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final result = await ApiService.updateUser(
+      _user = await ApiService.updateUser(
         userId: user!.id,
-        email: email,
-        firstName: firstName,
-        lastName: lastName,
-        phoneNumber: phoneNumber,
+        request: UserUpdateRequestDto(
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          phoneNumber: phoneNumber,
+        ),
       );
-
-      _user = User.fromJson(result);
       notifyListeners();
       return true;
     } catch (e) {
@@ -140,9 +140,11 @@ class AuthProvider extends ChangeNotifier {
 
       final success = await ApiService.changePassword(
         userId: user!.id,
-        currentPassword: currentPassword,
-        password: password,
-        passwordConfirm: passwordConfirm,
+        request: ChangePasswordRequestDto(
+          currentPassword: currentPassword,
+          password: password,
+          passwordConfirm: passwordConfirm,
+        ),
       );
 
       notifyListeners();

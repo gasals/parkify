@@ -564,7 +564,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                     ),
                   ),
                 ),
-                if ((!reservation.isCheckedIn && reservation.status == 2) || (!reservation.isCheckedOut && reservation.status == 3)) ...[
+                if ((!reservation.isCheckedIn &&
+                        reservation.status == ReservationStatus.confirmed.value) ||
+                    (!reservation.isCheckedOut &&
+                        reservation.status == ReservationStatus.active.value)) ...[
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(

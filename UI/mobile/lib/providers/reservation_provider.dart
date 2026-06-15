@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
+import '../models/request_models.dart';
 import '../models/reservation_model.dart';
 import '../services/api_service.dart';
 
@@ -16,15 +17,14 @@ class ReservationProvider extends ChangeNotifier {
   bool get hasMore => _hasMore;
 
   Future<Reservation> createReservation(
-    Map<String, dynamic> reservationData,
+    ReservationCreateRequest request,
   ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final result = await ApiService.createReservation(reservationData);
-      final reservation = Reservation.fromJson(result);
+      final reservation = await ApiService.createReservation(request);
       _reservations.add(reservation);
       notifyListeners();
       return reservation;
@@ -53,11 +53,9 @@ class ReservationProvider extends ChangeNotifier {
         page: page,
       );
 
-      final newReservations = (result['results'] as List)
-          .map((e) => Reservation.fromJson(e as Map<String, dynamic>))
-          .toList();
+        final newReservations = result.results;
 
-      _totalCount = result['count'] ?? 0;
+        _totalCount = result.count;
 
       if (page == 1) {
         _reservations = newReservations;

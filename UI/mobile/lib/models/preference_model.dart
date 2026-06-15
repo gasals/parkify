@@ -19,17 +19,19 @@ class Preference {
     this.modified,
   });
 
-  factory Preference.fromJson(Map<String, dynamic> json) {
+  factory Preference.fromJson(Map<String, Object?> json) {
     return Preference(
-      id: json['id'] ?? 0,
-      userId: json['userId'] ?? 0,
-      prefersNearby: json['prefersNearby'] ?? true,
-      preferredCityId: json['preferredCityId'],
-      favoriteParkingZoneId: json['favoriteParkingZoneId'],
-      notifyAboutOffers: json['notifyAboutOffers'] ?? true,
-      created: DateTime.parse(json['created'] ?? DateTime.now().toString()),
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      userId: (json['userId'] as num?)?.toInt() ?? 0,
+      prefersNearby: json['prefersNearby'] as bool? ?? true,
+      preferredCityId: (json['preferredCityId'] as num?)?.toInt(),
+      favoriteParkingZoneId: (json['favoriteParkingZoneId'] as num?)?.toInt(),
+      notifyAboutOffers: json['notifyAboutOffers'] as bool? ?? true,
+      created: DateTime.parse(
+        json['created'] as String? ?? DateTime.now().toString(),
+      ),
       modified: json['modified'] != null
-          ? DateTime.parse(json['modified'])
+          ? DateTime.parse(json['modified'] as String)
           : null,
     );
   }

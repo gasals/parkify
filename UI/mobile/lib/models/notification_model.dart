@@ -25,7 +25,7 @@ class AppNotification {
     this.readDate,
   });
 
-  factory AppNotification.fromJson(Map<String, dynamic> json) {
+  factory AppNotification.fromJson(Map<String, Object?> json) {
     return AppNotification(
       id: json['id'] as int,
       userId: json['userId'] as int,

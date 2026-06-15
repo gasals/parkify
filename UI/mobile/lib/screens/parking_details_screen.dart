@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/providers/parking_zone_provider.dart';
 import 'package:mobile/screens/reservation_screen.dart';
-import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/parking_zone_model.dart';
 
@@ -129,7 +127,7 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
                               spotCode: '',
                               rowNumber: rowNumber,
                               columnNumber: columnNumber,
-                              type: 0,
+                              type: ParkingSpotType.regular.value,
                               isAvailable: false,
                             ),
                           );
@@ -145,7 +143,8 @@ class _ParkingDetailsScreenState extends State<ParkingDetailsScreen> {
 
                           final isSelected = _selectedSpot?.id == spot.id;
                           final isAvailable = spot.isAvailable;
-                          final isDisabled = spot.type == 2;
+                            final isDisabled =
+                              spot.type == ParkingSpotType.disabled.value;
 
                           return GestureDetector(
                             onTap: isAvailable

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/request_models.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 
@@ -26,18 +27,18 @@ class AuthProvider extends ChangeNotifier {
     try {
       final result = await ApiService.login(username, password);
 
-      if (result['isAdmin'] == false || result['isActive'] == false) {
+      if (!result.isAdmin || !result.isActive) {
         _errorMessage =
             "Neuspješna prijava. Provjerite podatke ili kontaktirajte podršku.";
         notifyListeners();
         return false;
       }
 
-      if (result.containsKey('token')) {
-        ApiService.setToken(result['token']);
+      if (result.token.isNotEmpty) {
+        ApiService.setToken(result.token);
       }
 
-      await fetchAndSetUser(result['id']);
+      await fetchAndSetUser(result.id);
 
       _isAuthenticated = true;
       _errorMessage = null;
@@ -58,8 +59,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> fetchAndSetUser(int userId) async {
     try {
-      final userData = await ApiService.getUserById(userId);
-      _user = User.fromJson(userData);
+      _user = await ApiService.getUserById(userId);
       notifyListeners();
     } catch (e) {
       _errorMessage = _messageFromError(
@@ -91,16 +91,16 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final result = await ApiService.updateUser(
+      _user = await ApiService.updateUser(
         userId: user!.id,
-        email: email,
-        firstName: firstName,
-        lastName: lastName,
-        address: address,
-        city: city,
+        request: UserUpdateRequestDto(
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          address: address,
+          city: city,
+        ),
       );
-
-      _user = User.fromJson(result);
       notifyListeners();
       return true;
     } catch (e) {

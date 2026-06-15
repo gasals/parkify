@@ -21,7 +21,7 @@ class ParkingSpot {
     this.modified,
   });
 
-  factory ParkingSpot.fromJson(Map<String, dynamic> json) {
+  factory ParkingSpot.fromJson(Map<String, Object?> json) {
     return ParkingSpot(
       id: json['id'] as int? ?? 0,
       spotCode: json['spotCode'] as String? ?? '',
@@ -40,19 +40,10 @@ class ParkingSpot {
   }
 
   String getTypeText() {
-    switch (type) {
-      case 0:
-        return 'Regular';
-      case 1:
-        return 'Invalidsko';
-      case 2:
-        return 'Pokriveno';
-      default:
-        return 'Unknown';
-    }
+    return ParkingSpotType.fromValue(type).label;
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, Object?> toJson() {
     return {
       'id': id,
       'spotCode': spotCode,
@@ -64,5 +55,23 @@ class ParkingSpot {
       'created': created.toIso8601String(),
       'modified': modified?.toIso8601String(),
     };
+  }
+}
+
+enum ParkingSpotType {
+  regular(1, 'Regular'),
+  disabled(2, 'Invalidsko'),
+  covered(3, 'Pokriveno');
+
+  final int value;
+  final String label;
+
+  const ParkingSpotType(this.value, this.label);
+
+  static ParkingSpotType fromValue(int value) {
+    return ParkingSpotType.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => ParkingSpotType.regular,
+    );
   }
 }

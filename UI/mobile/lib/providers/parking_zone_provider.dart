@@ -43,14 +43,8 @@ class ParkingZoneProvider extends ChangeNotifier {
         pageSize: pageSize,
         includeSpots: includeSpots,
       );
-
-      final resultsList = result['results'] as List? ?? [];
-
-      _parkingZones = resultsList
-          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
-          .toList();
-
-      _totalCount = result['count'] ?? 0;
+      _parkingZones = result.results;
+      _totalCount = result.count;
       _currentPage = page;
 
       notifyListeners();
@@ -70,8 +64,7 @@ class ParkingZoneProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.getParkingZoneById(id);
-      _selectedZone = ParkingZone.fromJson(result);
+      _selectedZone = await ApiService.getParkingZoneById(id);
       await getParkingSpots();
     } catch (e) {
       log('ParkingZoneProvider.getParkingZoneById error: $e');
@@ -93,9 +86,7 @@ class ParkingZoneProvider extends ChangeNotifier {
             count: count,
           );
 
-      _explainedRecommendedZones = explainedResult
-          .map((item) => ParkingZoneRecommendation.fromJson(item))
-          .toList();
+        _explainedRecommendedZones = explainedResult;
 
       _recommendedZones = _explainedRecommendedZones
           .map((item) => item.zone)
@@ -111,9 +102,7 @@ class ParkingZoneProvider extends ChangeNotifier {
           count: count,
         );
 
-        _recommendedZones = result
-            .map((zone) => ParkingZone.fromJson(zone))
-            .toList();
+        _recommendedZones = result;
 
         _explainedRecommendedZones = _recommendedZones
             .map(
@@ -144,9 +133,7 @@ class ParkingZoneProvider extends ChangeNotifier {
       final result = await ApiService.getParkingSpotsByZoneId(
         _selectedZone!.id,
       );
-      _selectedZone!.spots = (result['results'] as List)
-          .map((spot) => ParkingSpot.fromJson(spot as Map<String, dynamic>))
-          .toList();
+      _selectedZone!.spots = result.results;
     } catch (e) {
       log('ParkingZoneProvider.getParkingSpots error: $e');
       _errorMessage = 'Došlo je do greške pri učitavanju parking mjesta.';

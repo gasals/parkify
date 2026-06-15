@@ -1,28 +1,33 @@
 enum VehicleCategory {
-  am,
-  a1,
-  a2,
-  a,
-  b,
-  be,
-  c1,
-  c1e,
-  c,
-  ce,
-  d1,
-  d1e,
-  d,
-  de,
-  f,
-  g,
-  h;
+  am(1, 'AM'),
+  a1(2, 'A1'),
+  a2(3, 'A2'),
+  a(4, 'A'),
+  b(5, 'B'),
+  be(6, 'B E'),
+  c1(7, 'C1'),
+  c1e(8, 'C1 E'),
+  c(9, 'C'),
+  ce(10, 'C E'),
+  d1(11, 'D1'),
+  d1e(12, 'D1 E'),
+  d(13, 'D'),
+  de(14, 'D E'),
+  f(15, 'F'),
+  g(16, 'G'),
+  h(17, 'H');
+
+  final int value;
+  final String label;
+
+  const VehicleCategory(this.value, this.label);
 
   static VehicleCategory fromValue(int? value) {
-    if (value == null || value < 1 || value > VehicleCategory.values.length) {
-      return VehicleCategory.b;
-    }
-
-    return VehicleCategory.values[value - 1];
+    return VehicleCategory.values.firstWhere(
+      (category) => category.value == value,
+      orElse: () => VehicleCategory.b,
+    );
+  }
 }
 
 class Vehicle {
@@ -44,64 +49,29 @@ class Vehicle {
     this.modified,
   });
 
-  String get categoryLabel {
-    switch (category) {
-      case VehicleCategory.am:
-        return 'AM';
-      case VehicleCategory.a1:
-        return 'A1';
-      case VehicleCategory.a2:
-        return 'A2';
-      case VehicleCategory.a:
-        return 'A';
-      case VehicleCategory.b:
-        return 'B';
-      case VehicleCategory.be:
-        return 'B E';
-      case VehicleCategory.c1:
-        return 'C1';
-      case VehicleCategory.c1e:
-        return 'C1 E';
-      case VehicleCategory.c:
-        return 'C';
-      case VehicleCategory.ce:
-        return 'C E';
-      case VehicleCategory.d1:
-        return 'D1';
-      case VehicleCategory.d1e:
-        return 'D1 E';
-      case VehicleCategory.d:
-        return 'D';
-      case VehicleCategory.de:
-        return 'D E';
-      case VehicleCategory.f:
-        return 'F';
-      case VehicleCategory.g:
-        return 'G';
-      case VehicleCategory.h:
-        return 'H';
-    }
-  }
+  String get categoryLabel => category.label;
 
-  factory Vehicle.fromJson(Map<String, dynamic> json) {
+  factory Vehicle.fromJson(Map<String, Object?> json) {
     return Vehicle(
-      id: json['id'],
-      userId: json['userId'],
-      licensePlate: json['licensePlate'],
-      category: VehicleCategory.fromValue(json['category'] as int?),
-      model: json['model'],
-      created: DateTime.parse(json['created']),
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      userId: (json['userId'] as num?)?.toInt() ?? 0,
+      licensePlate: json['licensePlate'] as String? ?? '',
+      category: VehicleCategory.fromValue((json['category'] as num?)?.toInt()),
+      model: json['model'] as String? ?? '',
+      created: json['created'] != null
+          ? DateTime.parse(json['created'] as String)
+          : null,
       modified: json['modified'] != null
-          ? DateTime.parse(json['modified'])
+          ? DateTime.parse(json['modified'] as String)
           : null,
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, Object?> toJson() {
     return {
       'userId': userId,
       'licensePlate': licensePlate,
-      'category': category.index + 1,
+      'category': category.value,
       'model': model,
     };
   }

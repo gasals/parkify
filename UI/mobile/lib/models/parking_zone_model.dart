@@ -35,31 +35,32 @@ class ParkingZone {
     this.spots,
   });
 
-  factory ParkingZone.fromJson(Map<String, dynamic> json) {
+  factory ParkingZone.fromJson(Map<String, Object?> json) {
     return ParkingZone(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      address: json['address'] ?? '',
-      cityId: json['cityId'] ?? 0,
-      latitude: (json['latitude'] ?? 0.0).toDouble(),
-      longitude: (json['longitude'] ?? 0.0).toDouble(),
-      totalSpots: json['totalSpots'] ?? 0,
-      disabledSpots: json['disabledSpots'] ?? 0,
-      availableSpots: json['availableSpots'] ?? 0,
-      pricePerHour: (json['pricePerHour'] ?? 0.0).toDouble(),
-      dailyRate: (json['dailyRate'] ?? 0.0).toDouble(),
-      isActive: json['isActive'] ?? true,
-      isFavorite: json['isFavorite'] ?? false,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+      cityId: (json['cityId'] as num?)?.toInt() ?? 0,
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      totalSpots: (json['totalSpots'] as num?)?.toInt() ?? 0,
+      disabledSpots: (json['disabledSpots'] as num?)?.toInt() ?? 0,
+      availableSpots: (json['availableSpots'] as num?)?.toInt() ?? 0,
+      pricePerHour: (json['pricePerHour'] as num?)?.toDouble() ?? 0.0,
+      dailyRate: (json['dailyRate'] as num?)?.toDouble() ?? 0.0,
+      isActive: json['isActive'] as bool? ?? true,
+      isFavorite: json['isFavorite'] as bool? ?? false,
       spots: (json['spots'] as List?)
-          ?.map((spot) => ParkingSpot.fromJson(spot))
+          ?.whereType<Map>()
+          .map((spot) => ParkingSpot.fromJson(spot.cast<String, Object?>()))
           .toList(),
     )
-      ..averageRating = (json['averageRating'] ?? 0.0).toDouble()
-      ..reviewCount = json['reviewCount'] ?? 0;
+      ..averageRating = (json['averageRating'] as num?)?.toDouble() ?? 0.0
+      ..reviewCount = (json['reviewCount'] as num?)?.toInt() ?? 0;
   }
 
-  Map<String, dynamic> toJson() => {
+  Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
     'description': description,
@@ -99,19 +100,19 @@ class ParkingSpot {
     required this.isAvailable,
   });
 
-  factory ParkingSpot.fromJson(Map<String, dynamic> json) {
+  factory ParkingSpot.fromJson(Map<String, Object?> json) {
     return ParkingSpot(
-      id: json['id'] ?? 0,
-      parkingZoneId: json['parkingZoneId'] ?? 0,
-      spotCode: json['spotCode'] ?? '',
-      rowNumber: json['rowNumber'] ?? 0,
-      columnNumber: json['columnNumber'] ?? 0,
-      type: json['type'] ?? 1,
-      isAvailable: json['isAvailable'] ?? true,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      parkingZoneId: (json['parkingZoneId'] as num?)?.toInt() ?? 0,
+      spotCode: json['spotCode'] as String? ?? '',
+      rowNumber: (json['rowNumber'] as num?)?.toInt() ?? 0,
+      columnNumber: (json['columnNumber'] as num?)?.toInt() ?? 0,
+      type: (json['type'] as num?)?.toInt() ?? 1,
+      isAvailable: json['isAvailable'] as bool? ?? true,
     );
   }
 
-  Map<String, dynamic> toJson() => {
+  Map<String, Object?> toJson() => {
     'id': id,
     'parkingZoneId': parkingZoneId,
     'spotCode': spotCode,
@@ -120,4 +121,22 @@ class ParkingSpot {
     'type': type,
     'isAvailable': isAvailable,
   };
+}
+
+enum ParkingSpotType {
+  regular(1, 'Regular'),
+  disabled(2, 'Invalidsko'),
+  covered(3, 'Pokriveno');
+
+  final int value;
+  final String label;
+
+  const ParkingSpotType(this.value, this.label);
+
+  static ParkingSpotType fromValue(int value) {
+    return ParkingSpotType.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => ParkingSpotType.regular,
+    );
+  }
 }

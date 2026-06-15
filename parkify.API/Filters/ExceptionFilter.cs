@@ -14,11 +14,23 @@ namespace parkify.API.Filters
         }
         public override void OnException(ExceptionContext context)
         {
-            if (context.Exception is UserException)
+            if (context.Exception is NotFoundException)
+            {
+                _logger.LogWarning(context.Exception, context.Exception.Message);
+                context.ModelState.AddModelError("notFound", context.Exception.Message);
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+            }
+            else if (context.Exception is BusinessException || context.Exception is UserException)
             {
                 _logger.LogWarning(context.Exception, context.Exception.Message);
                 context.ModelState.AddModelError("userError", context.Exception.Message);
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            }
+            else if (context.Exception is UnauthorizedAccessException)
+            {
+                _logger.LogWarning(context.Exception, context.Exception.Message);
+                context.ModelState.AddModelError("forbidden", context.Exception.Message);
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
             }
             else
             {

@@ -4,6 +4,7 @@ using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using parkify.Model.Constants;
 
 namespace parkify.API.Controllers
 {
@@ -14,7 +15,7 @@ namespace parkify.API.Controllers
         }
 
         [HttpGet("report/pdf")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = AppRoles.Admin)]
         public IActionResult GetAdminReportPdf([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var pdfBytes = (_service as IReservationService)!.GenerateAdminReportPdf(from, to);
@@ -23,7 +24,7 @@ namespace parkify.API.Controllers
         }
 
         [HttpGet("report/finance/pdf")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = AppRoles.Admin)]
         public IActionResult GetFinanceReportPdf([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int? userId)
         {
             var pdfBytes = (_service as IReservationService)!.GenerateFinanceReportPdf(from, to, userId);

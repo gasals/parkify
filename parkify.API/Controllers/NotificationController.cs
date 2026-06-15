@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using parkify.Model.Constants;
 using parkify.Model.Helpers;
 using parkify.Model.Models;
 using parkify.Model.Requests;
@@ -29,7 +30,7 @@ namespace parkify.API.Controllers
             => base.GetById(id);
 
         [HttpPost("send")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = AppRoles.Admin)]
         public async Task<IActionResult> SendToUser([FromBody] NotificationInsertRequest request)
         {
             await _notificationService.SendToUser(request);
@@ -37,7 +38,7 @@ namespace parkify.API.Controllers
         }
 
         [HttpPost("send-all")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = AppRoles.Admin)]
         public async Task<IActionResult> SendToAll([FromBody] NotificationInsertRequest request)
         {
             await _notificationService.SendToAll(request);

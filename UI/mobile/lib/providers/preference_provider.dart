@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
 import '../models/preference_model.dart';
+import '../models/request_models.dart';
 import '../services/api_service.dart';
 
 class PreferenceProvider extends ChangeNotifier {
@@ -18,8 +19,7 @@ class PreferenceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.getUserPreference(userId: userId);
-      _userPreference = Preference.fromJson(result);
+      _userPreference = await ApiService.getUserPreference(userId: userId);
       notifyListeners();
     } catch (e) {
       log('PreferenceProvider.loadUserPreference error: $e');
@@ -43,14 +43,13 @@ class PreferenceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final updateData = {'favoriteParkingZoneId': parkingZoneId};
-
       final result = await ApiService.updateUserPreferences(
         userId: userId,
-        preferences: updateData,
+        request: PreferenceUpdateRequest(
+          favoriteParkingZoneId: parkingZoneId,
+        ),
       );
-
-      _userPreference = Preference.fromJson(result);
+      _userPreference = result;
       notifyListeners();
     } catch (e) {
       log('PreferenceProvider.updateFavoriteParking error: $e');
@@ -75,14 +74,11 @@ class PreferenceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final updateData = {'preferredCityId': cityId};
-
       final result = await ApiService.updateUserPreferences(
         userId: userId,
-        preferences: updateData,
+        request: PreferenceUpdateRequest(preferredCityId: cityId),
       );
-
-      _userPreference = Preference.fromJson(result);
+      _userPreference = result;
       notifyListeners();
     } catch (e) {
       log('PreferenceProvider.updatePreferredCity error: $e');
@@ -110,22 +106,16 @@ class PreferenceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final data = <String, dynamic>{};
-
-      if (prefersNearby != null) data['prefersNearby'] = prefersNearby;
-      if (preferredCityId != null) data['preferredCityId'] = preferredCityId;
-      if (favoriteParkingZoneId != null) {
-        data['favoriteParkingZoneId'] = favoriteParkingZoneId;
-      }
-      if (notifyAboutOffers != null)
-        data['notifyAboutOffers'] = notifyAboutOffers;
-
       final result = await ApiService.updateUserPreferences(
         userId: userId,
-        preferences: data,
+        request: PreferenceUpdateRequest(
+          prefersNearby: prefersNearby,
+          preferredCityId: preferredCityId,
+          favoriteParkingZoneId: favoriteParkingZoneId,
+          notifyAboutOffers: notifyAboutOffers,
+        ),
       );
-
-      _userPreference = Preference.fromJson(result);
+      _userPreference = result;
       notifyListeners();
     } catch (e) {
       log('PreferenceProvider.updatePreference error: $e');

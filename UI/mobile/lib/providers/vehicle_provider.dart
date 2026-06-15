@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
+import '../models/request_models.dart';
 import '../models/vehicle_model.dart';
 import '../services/api_service.dart';
 
@@ -20,11 +21,7 @@ class VehicleProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final result = await ApiService.getUserVehicles(userId);
-      final resultsList = result['results'] as List? ?? [];
-
-      _vehicles = resultsList
-          .map((vehicle) => Vehicle.fromJson(vehicle as Map<String, dynamic>))
-          .toList();
+      _vehicles = result.results;
 
       if (_vehicles.isNotEmpty && _selectedVehicle == null) {
         _selectedVehicle = _vehicles.first;
@@ -87,15 +84,15 @@ class VehicleProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.updateVehicle(
+      final updatedVehicle = await ApiService.updateVehicle(
         vehicleId: vehicleId,
-        userId: userId,
-        licensePlate: licensePlate,
-        model: model,
-        category: category,
+        request: VehicleUpdateRequest(
+          userId: userId,
+          licensePlate: licensePlate,
+          model: model,
+          category: category,
+        ),
       );
-
-      final updatedVehicle = Vehicle.fromJson(result);
 
       final index = _vehicles.indexWhere((v) => v.id == vehicleId);
       if (index != -1) {

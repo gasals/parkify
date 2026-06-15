@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using parkify.Model.Constants;
 using parkify.Model.Helpers;
 using parkify.Model.Models;
 using parkify.Model.Requests;
@@ -15,14 +16,14 @@ namespace parkify.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = AppRoles.Admin)]
         public override ParkingSpot Insert(ParkingSpotInsertRequest request)
         {
             return base.Insert(request);
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = AppRoles.Admin)]
         public override ParkingSpot Update(int id, ParkingSpotUpdateRequest request)
         {
             return base.Update(id, request);
@@ -41,7 +42,7 @@ namespace parkify.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = AppRoles.Admin)]
         public IActionResult Delete(int id)
         {
             return Ok((_service as IParkingSpotService)!.Delete(id));

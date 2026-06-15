@@ -6,6 +6,7 @@ import 'package:mobile/providers/notification_provider.dart';
 import 'package:mobile/providers/payment_provider.dart';
 import 'package:mobile/providers/preference_provider.dart';
 import 'package:mobile/providers/review_provider.dart';
+import 'package:mobile/services/deep_link_service.dart';
 import 'package:mobile/providers/vehicle_provider.dart';
 import 'package:mobile/providers/wallet_provider.dart';
 import 'package:mobile/screens/notifications_screen.dart';
@@ -21,6 +22,8 @@ import 'screens/home_screen.dart';
 import 'screens/my_reservations_screen.dart';
 import 'screens/settings_screen.dart';
 
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -34,6 +37,8 @@ void main() async {
       'Stripe publishable key nije konfigurisan. Pokreni aplikaciju sa --dart-define=STRIPE_PUBLISHABLE_KEY=... da omogućiš plaćanja.',
     );
   }
+
+  await DeepLinkService.instance.init(navigatorKey: appNavigatorKey);
 
   runApp(MyApp());
 }
@@ -58,6 +63,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
+        navigatorKey: appNavigatorKey,
         title: AppStrings.appName,
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,

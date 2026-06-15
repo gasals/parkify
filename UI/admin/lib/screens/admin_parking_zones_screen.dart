@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import '../models/request_models.dart';
 import '../models/city_model.dart';
 import '../models/parking_zone_model.dart';
+import '../models/parking_spot_model.dart';
 import '../providers/parking_zone_provider.dart';
 import '../widgets/common_widgets.dart';
 
@@ -299,12 +301,17 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
       barrierDismissible: false,
       builder: (_) => _AddZoneDialog(
         allCities: _allCities,
-        onConfirm: (data) async {
+        onConfirm: (request) async {
           final p = Provider.of<ParkingZoneProvider>(context, listen: false);
           final ok = await p.createParkingZone(
-            name: data['name'], description: data['desc'], address: data['addr'],
-            city: data['city'], latitude: data['lat'], longitude: data['lon'],
-            pricePerHour: data['price'], dailyRate: data['daily'],
+            name: request.name,
+            description: request.description,
+            address: request.address,
+            city: request.city,
+            latitude: request.latitude,
+            longitude: request.longitude,
+            pricePerHour: request.pricePerHour,
+            dailyRate: request.dailyRate,
           );
           if (mounted) AdminSnackBar.show(context, 'Zona je kreirana', ok);
         },
@@ -379,7 +386,7 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
 
 class _AddZoneDialog extends StatefulWidget {
   final List<City> allCities;
-  final Future<void> Function(Map<String, dynamic>) onConfirm;
+  final Future<void> Function(ParkingZoneCreateRequest) onConfirm;
   const _AddZoneDialog({required this.allCities, required this.onConfirm});
 
   @override
@@ -698,16 +705,18 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
 
     setState(() => _isLoading = true);
     Navigator.pop(context);
-    await widget.onConfirm({
-      'name':  _nameCtrl.text.trim(),
-      'desc':  _descCtrl.text.trim(),
-      'addr':  _addrCtrl.text.trim(),
-      'city':  _selectedCity!.name,
-      'lat':   _pickedLocation!.latitude,
-      'lon':   _pickedLocation!.longitude,
-      'price': double.parse(_priceCtrl.text.trim().replaceAll(',', '.')),
-      'daily': double.tryParse(_dailyCtrl.text.trim().replaceAll(',', '.')),
-    });
+    await widget.onConfirm(
+      ParkingZoneCreateRequest(
+        name: _nameCtrl.text.trim(),
+        description: _descCtrl.text.trim(),
+        address: _addrCtrl.text.trim(),
+        city: _selectedCity!.name,
+        latitude: _pickedLocation!.latitude,
+        longitude: _pickedLocation!.longitude,
+        pricePerHour: double.parse(_priceCtrl.text.trim().replaceAll(',', '.')),
+        dailyRate: double.tryParse(_dailyCtrl.text.trim().replaceAll(',', '.')),
+      ),
+    );
   }
 }
 
@@ -985,10 +994,14 @@ class _SpotsGridDialog extends StatelessWidget {
                           itemBuilder: (context, index) {
                             final row = (index ~/ maxCol) + 1;
                             final col = (index % maxCol) + 1;
-                            final spot = spots.cast<dynamic>().firstWhere(
-                              (s) => s.rowNumber == row && s.columnNumber == col,
-                              orElse: () => null,
-                            );
+                            ParkingSpot? spot;
+                            for (final current in spots) {
+                              if (current.rowNumber == row &&
+                                  current.columnNumber == col) {
+                                spot = current;
+                                break;
+                              }
+                            }
                             if (spot == null) {
                               return Container(decoration: BoxDecoration(
                                 color: Colors.grey[50], borderRadius: BorderRadius.circular(8),
@@ -1020,11 +1033,16 @@ class _SpotsGridDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildSpotItem(BuildContext context, dynamic spot, ParkingZoneProvider p) {
+  Widget _buildSpotItem(BuildContext context, ParkingSpot spot, ParkingZoneProvider p) {
     Color baseColor = Colors.green;
     IconData icon   = Icons.directions_car;
-    if (spot.type == 2) { baseColor = Colors.blue; icon = Icons.accessible; }
-    else if (spot.type == 3) { baseColor = Colors.orange; icon = Icons.umbrella; }
+    if (spot.type == ParkingSpotType.disabled.value) {
+      baseColor = Colors.blue;
+      icon = Icons.accessible;
+    } else if (spot.type == ParkingSpotType.covered.value) {
+      baseColor = Colors.orange;
+      icon = Icons.umbrella;
+    }
 
     return Stack(clipBehavior: Clip.none, children: [
       InkWell(
@@ -1040,7 +1058,7 @@ class _SpotsGridDialog extends StatelessWidget {
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(icon, color: baseColor, size: 24),
             const SizedBox(height: 2),
-            FittedBox(child: Text(spot.spotCode ?? '',
+            FittedBox(child: Text(spot.spotCode,
                 style: TextStyle(color: baseColor, fontWeight: FontWeight.bold, fontSize: 10))),
           ]),
         ),
@@ -1079,7 +1097,7 @@ class _SpotsGridDialog extends StatelessWidget {
     final formKey = GlobalKey<FormState>();
     final rowCtrl  = TextEditingController();
     final colCtrl  = TextEditingController();
-    int typeVal = 1;
+    int typeVal = ParkingSpotType.regular.value;
 
     String? reqInt(String? v, String label) {
       if (v == null || v.trim().isEmpty) return '$label je obavezan';
@@ -1122,11 +1140,11 @@ class _SpotsGridDialog extends StatelessWidget {
                     value: typeVal,
                     isExpanded: true,
                     decoration: _spotInputDec('Tip mjesta', Icons.category_outlined),
-                    items: const [
-                      DropdownMenuItem(value: 1, child: Text('Regular', style: TextStyle(fontSize: 13))),
-                      DropdownMenuItem(value: 2, child: Text('Invalidsko', style: TextStyle(fontSize: 13))),
+                    items: [
+                      DropdownMenuItem(value: ParkingSpotType.regular.value, child: Text('Regular', style: TextStyle(fontSize: 13))),
+                      DropdownMenuItem(value: ParkingSpotType.disabled.value, child: Text('Invalidsko', style: TextStyle(fontSize: 13))),
                     ],
-                    onChanged: (v) => ss(() => typeVal = v ?? 1),
+                    onChanged: (v) => ss(() => typeVal = v ?? ParkingSpotType.regular.value),
                   ),
                 ]),
               ),
@@ -1155,11 +1173,14 @@ class _SpotsGridDialog extends StatelessWidget {
     );
   }
 
-  void _showEditSpotDialog(BuildContext context, dynamic spot, ParkingZoneProvider p) {
+  void _showEditSpotDialog(BuildContext context, ParkingSpot spot, ParkingZoneProvider p) {
     final formKey = GlobalKey<FormState>();
     final rowCtrl  = TextEditingController(text: spot.rowNumber?.toString());
     final colCtrl  = TextEditingController(text: spot.columnNumber?.toString());
-    int typeVal = (spot.type >= 1 && spot.type <= 3) ? spot.type : 1;
+    int typeVal = (spot.type >= ParkingSpotType.regular.value &&
+            spot.type <= ParkingSpotType.covered.value)
+        ? spot.type
+        : ParkingSpotType.regular.value;
 
     String? reqInt(String? v, String label) {
       if (v == null || v.trim().isEmpty) return '$label je obavezan';
@@ -1202,11 +1223,11 @@ class _SpotsGridDialog extends StatelessWidget {
                     value: typeVal,
                     isExpanded: true,
                     decoration: _spotInputDec('Tip mjesta', Icons.category_outlined),
-                    items: const [
-                      DropdownMenuItem(value: 1, child: Text('Regular', style: TextStyle(fontSize: 13))),
-                      DropdownMenuItem(value: 2, child: Text('Invalidsko', style: TextStyle(fontSize: 13))),
+                    items: [
+                      DropdownMenuItem(value: ParkingSpotType.regular.value, child: Text('Regular', style: TextStyle(fontSize: 13))),
+                      DropdownMenuItem(value: ParkingSpotType.disabled.value, child: Text('Invalidsko', style: TextStyle(fontSize: 13))),
                     ],
-                    onChanged: (v) => ss(() => typeVal = v ?? 1),
+                    onChanged: (v) => ss(() => typeVal = v ?? ParkingSpotType.regular.value),
                   ),
                 ]),
               ),
@@ -1247,7 +1268,7 @@ class _SpotsGridDialog extends StatelessWidget {
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
   );
 
-  void _showToggleSpotDialog(BuildContext context, dynamic spot, ParkingZoneProvider p) {
+  void _showToggleSpotDialog(BuildContext context, ParkingSpot spot, ParkingZoneProvider p) {
     showDialog(
       context: context,
       builder: (_) => AdminConfirmDialog(
@@ -1264,7 +1285,7 @@ class _SpotsGridDialog extends StatelessWidget {
     );
   }
 
-  void _showDeleteSpotDialog(BuildContext context, dynamic spot, ParkingZoneProvider p) {
+  void _showDeleteSpotDialog(BuildContext context, ParkingSpot spot, ParkingZoneProvider p) {
     showDialog(
       context: context,
       builder: (_) => AdminConfirmDialog(

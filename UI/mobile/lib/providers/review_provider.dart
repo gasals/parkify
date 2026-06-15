@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'package:mobile/models/review_model.dart';
 import 'package:mobile/providers/auth_provider.dart';
+import '../models/request_models.dart';
 import '../services/api_service.dart';
 
 class ReviewProvider extends ChangeNotifier {
@@ -36,11 +37,7 @@ class ReviewProvider extends ChangeNotifier {
         pageSize: pageSize,
       );
 
-      final reviewsList = (result['results'] as List)
-          .map((e) => Review.fromJson(e as Map<String, dynamic>))
-          .toList();
-
-      _reviews = reviewsList;
+        _reviews = result.results;
       _calculateAverageRating();
 
       final currentUserId = authProvider.user?.id;
@@ -73,14 +70,14 @@ class ReviewProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final data = {
-        'parkingZoneId': parkingZoneId,
-        'userId': userId,
-        'rating': rating,
-        'reviewText': reviewText,
-      };
-      final result = await ApiService.createReview(data);
-      final review = Review.fromJson(result);
+      final review = await ApiService.createReview(
+        ReviewUpsertRequest(
+          parkingZoneId: parkingZoneId,
+          userId: userId,
+          rating: rating,
+          reviewText: reviewText,
+        ),
+      );
       _reviews.insert(0, review);
       _userReview = review;
       _calculateAverageRating();
@@ -105,7 +102,7 @@ class ReviewProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await ApiService.updateReview(
+      final updatedReview = await ApiService.updateReview(
         reviewId: reviewId,
         rating: rating,
         reviewText: reviewText,
@@ -113,16 +110,7 @@ class ReviewProvider extends ChangeNotifier {
 
       final index = _reviews.indexWhere((r) => r.id == reviewId);
       if (index != -1) {
-        _reviews[index] = Review(
-          id: _reviews[index].id,
-          parkingZoneId: _reviews[index].parkingZoneId,
-          userId: _reviews[index].userId,
-          rating: rating,
-          reviewText: reviewText,
-          createdAt: _reviews[index].createdAt,
-          author: _reviews[index].author,
-          parkingZone: _reviews[index].parkingZone,
-        );
+        _reviews[index] = updatedReview;
         _userReview = _reviews[index];
         _calculateAverageRating();
       }

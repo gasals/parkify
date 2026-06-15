@@ -15,22 +15,22 @@ class City {
     this.modified,
   });
 
-  factory City.fromJson(Map<String, dynamic> json) {
+  factory City.fromJson(Map<String, Object?> json) {
     return City(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      latitude: (json['latitude'] ?? 0.0).toDouble(),
-      longitude: (json['longitude'] ?? 0.0).toDouble(),
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: json['name'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       created: json['created'] != null
-          ? DateTime.parse(json['created'])
+          ? DateTime.parse(json['created'] as String)
           : DateTime.now(),
       modified: json['modified'] != null
-          ? DateTime.parse(json['modified'])
+          ? DateTime.parse(json['modified'] as String)
           : null,
     );
   }
 
-  Map<String, dynamic> toJson() => {
+  Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
     'latitude': latitude,

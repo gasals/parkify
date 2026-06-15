@@ -24,11 +24,8 @@ class CityProvider extends ChangeNotifier {
         page: page,
         pageSize: pageSize,
       );
-      final resultsList = result['results'] as List? ?? [];
 
-      _cities = resultsList
-          .map((city) => City.fromJson(city as Map<String, dynamic>))
-          .toList();
+      _cities = result.results;
 
       _errorMessage = null;
       notifyListeners();
@@ -44,8 +41,7 @@ class CityProvider extends ChangeNotifier {
 
   Future<City?> getCityById(int cityId) async {
     try {
-      final result = await ApiService.getCityById(cityId);
-      _selectedCity = City.fromJson(result);
+      _selectedCity = await ApiService.getCityById(cityId);
       notifyListeners();
       return _selectedCity;
     } catch (e) {

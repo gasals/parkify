@@ -1,7 +1,7 @@
 class AppUrls {
     static const String baseUrl = String.fromEnvironment(
         'PARKIFY_API_BASE_URL',
-        defaultValue: 'http://10.0.2.2:5050/api',
+        defaultValue: 'http://192.168.31.65:5050/api',
     );
 
   static const String users = '$baseUrl/users';

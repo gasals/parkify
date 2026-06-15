@@ -47,7 +47,7 @@ class Reservation {
     this.checkOutTime,
   });
 
-  factory Reservation.fromJson(Map<String, dynamic> json) {
+  factory Reservation.fromJson(Map<String, Object?> json) {
     final start = DateTime.parse(json['reservationStart'] as String? ?? '');
     final end = DateTime.parse(json['reservationEnd'] as String? ?? '');
     final duration =
@@ -88,7 +88,7 @@ class Reservation {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, Object?> toJson() {
     return {
       'id': id,
       'reservationCode': reservationCode,

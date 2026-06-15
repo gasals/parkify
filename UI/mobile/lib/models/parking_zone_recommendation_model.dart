@@ -11,16 +11,16 @@ class ParkingZoneRecommendation {
     required this.reasons,
   });
 
-  factory ParkingZoneRecommendation.fromJson(Map<String, dynamic> json) {
-    final zoneJson = Map<String, dynamic>.from(
-      (json['zone'] ?? json['Zone'] ?? <String, dynamic>{}) as Map,
+  factory ParkingZoneRecommendation.fromJson(Map<String, Object?> json) {
+    final zoneJson = Map<String, Object?>.from(
+      (json['zone'] ?? json['Zone'] ?? <String, Object?>{}) as Map,
     );
 
     final rawReasons = (json['reasons'] ?? json['Reasons']) as List?;
 
     return ParkingZoneRecommendation(
       zone: ParkingZone.fromJson(zoneJson),
-      score: (json['score'] ?? json['Score'] ?? 0.0).toDouble(),
+      score: ((json['score'] ?? json['Score']) as num?)?.toDouble() ?? 0.0,
       reasons:
           rawReasons
               ?.map((reason) => reason?.toString() ?? '')

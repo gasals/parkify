@@ -23,22 +23,22 @@ class User {
     this.isAdmin = false,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) {
+  factory User.fromJson(Map<String, Object?> json) {
     return User(
-      id: json['id'] ?? 0,
-      username: json['username'] ?? '',
-      email: json['email'] ?? '',
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
-      address: json['address'],
-      city: json['city'],
-      phoneNumber: json['phoneNumber'],
-      isActive: json['isActive'] ?? true,
-      isAdmin: json['isAdmin'] ?? false,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      username: json['username'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      firstName: json['firstName'] as String? ?? '',
+      lastName: json['lastName'] as String? ?? '',
+      address: json['address'] as String?,
+      city: json['city'] as String?,
+      phoneNumber: json['phoneNumber'] as String?,
+      isActive: json['isActive'] as bool? ?? true,
+      isAdmin: json['isAdmin'] as bool? ?? false,
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, Object?> toJson() {
     return {
       'id': id,
       'username': username,

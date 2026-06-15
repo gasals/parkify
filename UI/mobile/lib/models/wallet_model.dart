@@ -13,19 +13,19 @@ class Wallet {
     this.modified,
   });
 
-  factory Wallet.fromJson(Map<String, dynamic> json) {
+  factory Wallet.fromJson(Map<String, Object?> json) {
     return Wallet(
-      id: json['id'],
-      userId: json['userId'],
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      userId: (json['userId'] as num?)?.toInt() ?? 0,
       balance: (json['balance'] as num).toDouble(),
-      created: DateTime.parse(json['created']),
+      created: DateTime.parse(json['created'] as String),
       modified: json['modified'] != null
-          ? DateTime.parse(json['modified'])
+          ? DateTime.parse(json['modified'] as String)
           : null,
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, Object?> toJson() {
     return {'userId': userId, 'balance': balance};
   }
 }
@@ -47,15 +47,17 @@ class WalletTransaction {
     this.modified,
   });
 
-  factory WalletTransaction.fromJson(Map<String, dynamic> json) {
+  factory WalletTransaction.fromJson(Map<String, Object?> json) {
     return WalletTransaction(
-      id: json['id'],
-      walletId: json['walletId'],
-      amount: json['amount'].toDouble(),
-      type: WalletTransactionType.fromValue(json['type']),
-      created: DateTime.parse(json['created']),
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      walletId: (json['walletId'] as num?)?.toInt() ?? 0,
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      type: WalletTransactionType.fromValue(
+        (json['type'] as num?)?.toInt() ?? WalletTransactionType.deposit.value,
+      ),
+      created: DateTime.parse(json['created'] as String),
       modified: json['modified'] != null
-          ? DateTime.parse(json['modified'])
+          ? DateTime.parse(json['modified'] as String)
           : null,
     );
   }

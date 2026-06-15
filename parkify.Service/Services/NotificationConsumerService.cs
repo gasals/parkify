@@ -61,7 +61,36 @@ namespace parkify.Service.Services
                         await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
                         return;
                     }
-                    catch (Exception ex)
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    catch (JsonException ex)
+                    {
+                        _logger.LogError(ex, "Neispravan format notifikacione poruke. DeliveryTag: {DeliveryTag}", ea.DeliveryTag);
+                        await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                        return;
+                    }
+                    catch (DbUpdateException ex)
+                    {
+                        if (attempt == maxAttempts)
+                        {
+                            _logger.LogError(ex, "Greška pri spremanju notifikacije nakon {Attempt} pokušaja", attempt);
+                            await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                            return;
+                        }
+
+                        var delaySeconds = (int)Math.Pow(2, attempt - 1);
+                        _logger.LogWarning(
+                            ex,
+                            "Spremanje notifikacije nije uspjelo (pokušaj {Attempt}/{MaxAttempts}). Novi pokušaj za {DelaySeconds}s",
+                            attempt,
+                            maxAttempts,
+                            delaySeconds);
+
+                        await Task.Delay(TimeSpan.FromSeconds(delaySeconds), stoppingToken);
+                    }
+                    catch (InvalidOperationException ex)
                     {
                         if (attempt == maxAttempts)
                         {

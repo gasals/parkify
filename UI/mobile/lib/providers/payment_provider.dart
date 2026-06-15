@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import '../constants/stripe_keys.dart';
+import '../models/api_models.dart';
 import '../models/payment_model.dart';
+import '../models/request_models.dart';
 import '../services/api_service.dart';
 
 class PaymentProvider extends ChangeNotifier {
@@ -20,7 +22,7 @@ class PaymentProvider extends ChangeNotifier {
     return ApiService.userFriendlyError(error, fallback: fallback);
   }
 
-  Future<Payment> createPayment({
+  Future<PaymentIntentResult> createPayment({
     int? reservationId,
     int? walletId,
     required int userId,
@@ -31,15 +33,14 @@ class PaymentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.createPayment(
-        reservationId: reservationId,
-        walletId: walletId,
-        userId: userId,
-        amount: amount,
+      final payment = await ApiService.createPayment(
+        PaymentCreateRequest(
+          reservationId: reservationId,
+          walletId: walletId,
+          userId: userId,
+          amount: amount,
+        ),
       );
-
-      final payment = Payment.fromJson(result);
-      _payments.add(payment);
       notifyListeners();
       return payment;
     } catch (e) {
@@ -104,7 +105,7 @@ class PaymentProvider extends ChangeNotifier {
       await ApiService.confirmPayment(paymentId: paymentId);
       final index = _payments.indexWhere((p) => p.id == paymentId);
       if (index != -1) {
-        _payments[index].status = 3;
+        _payments[index].status = PaymentStatus.completed.value;
       }
       notifyListeners();
       return true;
@@ -129,9 +130,7 @@ class PaymentProvider extends ChangeNotifier {
 
     try {
       final result = await ApiService.getPayments(userId: userId);
-      _payments = (result['results'] as List)
-          .map((e) => Payment.fromJson(e as Map<String, dynamic>))
-          .toList();
+      _payments = result.results;
       notifyListeners();
     } catch (e) {
       log('PaymentProvider.getUserPayments error: $e');
@@ -158,7 +157,7 @@ class PaymentProvider extends ChangeNotifier {
       await ApiService.refundPayment(paymentId: paymentId, reason: reason);
       final index = _payments.indexWhere((p) => p.id == paymentId);
       if (index != -1) {
-        _payments[index].status = 5;
+        _payments[index].status = PaymentStatus.refunded.value;
       }
       notifyListeners();
       return true;
@@ -183,10 +182,7 @@ class PaymentProvider extends ChangeNotifier {
 
     try {
       final result = await ApiService.getPayments(walletId: walletId);
-
-      _walletPayments = (result['results'] as List)
-          .map((e) => Payment.fromJson(e as Map<String, dynamic>))
-          .toList();
+      _walletPayments = result.results;
 
       _errorMessage = null;
     } catch (e) {

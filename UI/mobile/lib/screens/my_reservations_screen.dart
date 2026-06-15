@@ -259,9 +259,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             Row(
               children: [
                 const SizedBox(width: 8),
-                if (reservation.status == 1 ||
-                    reservation.status == 2 &&
-                        reservation.reservationStart.isAfter(DateTime.now()))
+                if (reservation.status == ReservationStatus.pending.value ||
+                  reservation.status == ReservationStatus.confirmed.value &&
+                    reservation.reservationStart.isAfter(DateTime.now()))
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _cancelReservation(context, reservation),

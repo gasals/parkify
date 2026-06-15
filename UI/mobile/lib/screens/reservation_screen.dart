@@ -7,6 +7,7 @@ import 'package:mobile/services/api_service.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/reservation_model.dart';
+import '../models/request_models.dart';
 import '../models/parking_zone_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/reservation_provider.dart';
@@ -173,17 +174,16 @@ class _ReservationScreenState extends State<ReservationScreen> {
         throw Exception('Molimo odaberite vozilo prije rezervacije.');
       }
 
-      final reservationData = {
-        'userId': authProvider.user!.id,
-        'parkingZoneId': widget.parkingZone.id,
-        'parkingSpotId': widget.parkingSpot.id,
-        'reservationStart': _startTime.toIso8601String(),
-        'reservationEnd': _endTime.toIso8601String(),
-        'vehicleLicensePlate': licensePlate,
-      };
-
       final reservation = await reservationProvider.createReservation(
-        reservationData,
+        ReservationCreateRequest(
+          userId: authProvider.user!.id,
+          parkingZoneId: widget.parkingZone.id,
+          parkingSpotId: widget.parkingSpot.id,
+          reservationStart: _startTime,
+          reservationEnd: _endTime,
+          vehicleLicensePlate: licensePlate,
+          requiresDisabledSpot: false,
+        ),
       );
       createdReservation = reservation;
 

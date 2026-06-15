@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
+import '../models/request_models.dart';
 import '../services/api_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
@@ -28,15 +29,8 @@ class NotificationProvider extends ChangeNotifier {
         isRead: isRead,
         page: 1,
       );
-      final resultsList = result['results'] as List? ?? [];
-
-      _notifications = resultsList
-          .map(
-            (notification) =>
-                AppNotification.fromJson(notification as Map<String, dynamic>),
-          )
-          .toList();
-      final totalCount = (result['count'] ?? result['totalCount'] ?? 0) as int;
+      _notifications = result.results;
+      final totalCount = result.count;
       _totalPages = (totalCount / _pageSize).ceil().clamp(1, 9999);
     } catch (e) {
       debugPrint('fetchNotifications error: $e');
@@ -59,13 +53,7 @@ class NotificationProvider extends ChangeNotifier {
         page: _currentPage,
         pageSize: _pageSize,
       );
-      final resultsList = result['results'] as List? ?? [];
-      _notifications.addAll(
-        resultsList.map(
-          (notification) =>
-              AppNotification.fromJson(notification as Map<String, dynamic>),
-        ),
-      );
+      _notifications.addAll(result.results);
     } catch (_) {
       _currentPage--;
     } finally {
@@ -82,7 +70,7 @@ class NotificationProvider extends ChangeNotifier {
         page: 1,
         pageSize: 1,
       );
-      _unreadCount = result['totalCount'] as int;
+      _unreadCount = result.count;
       notifyListeners();
     } catch (_) {}
   }
@@ -116,13 +104,15 @@ class NotificationProvider extends ChangeNotifier {
     required int channel,
   }) async {
     try {
-      await ApiService.sendNotification({
-        'userId': userId,
-        'title': title,
-        'message': message,
-        'type': type,
-        'channel': channel,
-      });
+      await ApiService.sendNotification(
+        NotificationSendRequest(
+          userId: userId,
+          title: title,
+          message: message,
+          type: type,
+          channel: channel,
+        ),
+      );
       return true;
     } catch (e) {
       debugPrint('sendToUser error: $e');
@@ -137,12 +127,14 @@ class NotificationProvider extends ChangeNotifier {
     required int channel,
   }) async {
     try {
-      await ApiService.sendNotificationToAll({
-        'title': title,
-        'message': message,
-        'type': type,
-        'channel': channel,
-      });
+      await ApiService.sendNotificationToAll(
+        NotificationSendRequest(
+          title: title,
+          message: message,
+          type: type,
+          channel: channel,
+        ),
+      );
       return true;
     } catch (e) {
       debugPrint('sendToAll error: $e');

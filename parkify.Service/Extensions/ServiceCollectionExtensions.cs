@@ -8,6 +8,7 @@ namespace parkify.Service.Extensions
     {
         public static IServiceCollection AddParkifyCoreServices(this IServiceCollection services)
         {
+            services.AddScoped<IAuthTokenService, AuthTokenService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IParkingZoneService, ParkingZoneService>();
             services.AddScoped<IParkingSpotService, ParkingSpotService>();

@@ -2,6 +2,14 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:typed_data';
 import 'package:admin/constants/app_urls.dart';
+import 'package:admin/models/api_models.dart';
+import 'package:admin/models/city_model.dart';
+import 'package:admin/models/notification_model.dart';
+import 'package:admin/models/parking_spot_model.dart';
+import 'package:admin/models/parking_zone_model.dart';
+import 'package:admin/models/request_models.dart';
+import 'package:admin/models/reservation_model.dart';
+import 'package:admin/models/user_model.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
@@ -26,21 +34,22 @@ class ApiService {
     try {
       final decoded = jsonDecode(body);
 
-      if (decoded is Map<String, dynamic>) {
-        final error = decoded['error'];
+      if (decoded is Map) {
+        final decodedMap = decoded.cast<String, Object?>();
+        final error = decodedMap['error'];
         if (error is String && error.isNotEmpty) return error;
 
-        final message = decoded['message'];
+        final message = decodedMap['message'];
         if (message is String && message.isNotEmpty) return message;
 
-        final title = decoded['title'];
+        final title = decodedMap['title'];
         if (title is String && title.isNotEmpty) return title;
 
-        final errors = decoded['errors'];
-        if (errors is Map<String, dynamic>) {
+        final errors = decodedMap['errors'];
+        if (errors is Map) {
           final messages = <String>[];
 
-          errors.forEach((_, value) {
+          errors.cast<Object?, Object?>().forEach((_, value) {
             if (value is List) {
               messages.addAll(value.whereType<String>());
             } else if (value is String && value.isNotEmpty) {
@@ -73,15 +82,24 @@ class ApiService {
     throw Exception(_messageFromError(error, fallback));
   }
 
-  static Future<Map<String, dynamic>> _handleResponse(
+  static Map<String, Object?> _parseJsonMap(String body) {
+    final decoded = jsonDecode(body);
+    if (decoded is Map) {
+      return decoded.cast<String, Object?>();
+    }
+
+    throw Exception('Neispravan format server odgovora.');
+  }
+
+  static Future<Map<String, Object?>> _handleObjectResponse(
     http.Response response,
   ) async {
     if (response.statusCode == 200 || response.statusCode == 201) {
       if (response.body.isEmpty) {
-        return <String, dynamic>{};
+        return <String, Object?>{};
       }
 
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      return _parseJsonMap(response.body);
     } else if (response.statusCode == 401 || response.statusCode == 403) {
       throw Exception(
         _messageFromBody(response.body, fallback: 'Neautorizovan pristup'),
@@ -91,6 +109,22 @@ class ApiService {
     throw Exception(
       _messageFromBody(response.body, fallback: 'Greška: ${response.statusCode}'),
     );
+  }
+
+  static Future<T> _handleModelResponse<T>(
+    http.Response response,
+    T Function(Map<String, Object?> json) fromJson,
+  ) async {
+    final json = await _handleObjectResponse(response);
+    return fromJson(json);
+  }
+
+  static Future<PagedResponse<T>> _handlePagedResponse<T>(
+    http.Response response,
+    T Function(Map<String, Object?> json) fromJson,
+  ) async {
+    final json = await _handleObjectResponse(response);
+    return PagedResponse<T>.fromJson(json, fromJson);
   }
 
   static Future<Uint8List> _handleBytesResponse(
@@ -107,7 +141,7 @@ class ApiService {
   static Future<Map<String, String>> _buildQueryParams({
     int? page,
     int? pageSize,
-    Map<String, dynamic>? filters,
+    Map<String, Object?>? filters,
   }) async {
     final params = <String, String>{};
 
@@ -130,7 +164,7 @@ class ApiService {
         endpoint,
       ).replace(queryParameters: params.isNotEmpty ? params : null);
 
-  static Future<Map<String, dynamic>> login(
+  static Future<AuthSession> login(
     String username,
     String password,
   ) async {
@@ -143,19 +177,19 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, AuthSession.fromJson);
     } catch (e) {
       log('Admin ApiService.login error: $e');
       _throwWithMessage(e, 'Login greška');
     }
   }
 
-  static Future<Map<String, dynamic>> getUserById(int userId) async {
+  static Future<User> getUserById(int userId) async {
     try {
       final response = await http
           .get(Uri.parse('${AppUrls.users}/$userId'), headers: _getHeaders())
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, User.fromJson);
     } catch (e) {
       log('Admin ApiService.getUserById error: $e');
       _throwWithMessage(e, 'Greška pri preuzimanju korisnika');
@@ -179,14 +213,14 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      await _handleResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       log('Admin ApiService.changePassword error: $e');
       _throwWithMessage(e, 'Greška pri promjeni lozinke');
     }
   }
 
-  static Future<Map<String, dynamic>> searchUsers({
+  static Future<PagedResponse<User>> searchUsers({
     String? username,
     String? email,
     String? firstName,
@@ -209,14 +243,14 @@ class ApiService {
       final response = await http
           .get(_buildUri(AppUrls.users, params), headers: _getHeaders())
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handlePagedResponse(response, User.fromJson);
     } catch (e) {
       log('Admin ApiService.searchUsers error: $e');
       _throwWithMessage(e, 'Greška pri pretrazi korisnika');
     }
   }
 
-  static Future<Map<String, dynamic>> getAllUsers({
+  static Future<PagedResponse<User>> getAllUsers({
     int page = 1,
     int pageSize = 1000,
   }) async {
@@ -225,80 +259,51 @@ class ApiService {
       final response = await http
           .get(_buildUri(AppUrls.users, params), headers: _getHeaders())
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handlePagedResponse(response, User.fromJson);
     } catch (e) {
       log('Admin ApiService.getAllUsers error: $e');
       _throwWithMessage(e, 'Greška pri preuzimanju korisnika');
     }
   }
 
-  static Future<Map<String, dynamic>> createUser({
-    required String username,
-    required String email,
-    required String password,
-    required String passwordConfirm,
-    required String firstName,
-    required String lastName,
-    String? address,
-    String? city,
-  }) async {
+  static Future<User> createUser(UserCreateRequest request) async {
     try {
       final response = await http
           .post(
             Uri.parse(AppUrls.users),
             headers: _getHeaders(),
-            body: jsonEncode({
-              'username': username,
-              'email': email,
-              'password': password,
-              'passwordConfirm': passwordConfirm,
-              'firstName': firstName,
-              'lastName': lastName,
-              'address': address ?? '',
-              'city': city ?? '',
-            }),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, User.fromJson);
     } catch (e) {
       log('Admin ApiService.createUser error: $e');
       _throwWithMessage(e, 'Greška pri kreiranju korisnika');
     }
   }
 
-  static Future<Map<String, dynamic>> updateUser({
+  static Future<User> updateUser({
     required int userId,
-    String? email,
-    String? firstName,
-    String? lastName,
-    String? address,
-    String? city,
+    required UserUpdateRequestDto request,
   }) async {
     try {
-      final body = <String, dynamic>{};
-      if (email != null) body['email'] = email;
-      if (firstName != null) body['firstName'] = firstName;
-      if (lastName != null) body['lastName'] = lastName;
-      if (address != null) body['address'] = address;
-      if (city != null) body['city'] = city;
-
       final response = await http
           .put(
             Uri.parse('${AppUrls.users}/$userId'),
             headers: _getHeaders(),
-            body: jsonEncode(body),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, User.fromJson);
     } catch (e) {
       log('Admin ApiService.updateUser error: $e');
       _throwWithMessage(e, 'Greška pri ažuriranju korisnika');
     }
   }
 
-  static Future<Map<String, dynamic>> toggleUserActive({
+  static Future<User> toggleUserActive({
     required int userId,
     required bool isActive,
   }) async {
@@ -307,18 +312,20 @@ class ApiService {
           .put(
             Uri.parse('${AppUrls.users}/$userId'),
             headers: _getHeaders(),
-            body: jsonEncode({'isActive': isActive}),
+            body: jsonEncode(
+              UserUpdateRequestDto(isActive: isActive).toJson(),
+            ),
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, User.fromJson);
     } catch (e) {
       log('Admin ApiService.toggleUserActive error: $e');
       _throwWithMessage(e, 'Greška pri promjeni statusa');
     }
   }
 
-  static Future<Map<String, dynamic>> getAllCities({
+  static Future<PagedResponse<City>> getAllCities({
     int page = 1,
     int pageSize = 100,
   }) async {
@@ -327,26 +334,26 @@ class ApiService {
       final response = await http
           .get(_buildUri(AppUrls.cities, params), headers: _getHeaders())
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handlePagedResponse(response, City.fromJson);
     } catch (e) {
       log('Admin ApiService.getAllCities error: $e');
       _throwWithMessage(e, 'Greška pri preuzimanju gradova');
     }
   }
 
-  static Future<Map<String, dynamic>> getCityById({required int cityId}) async {
+  static Future<City> getCityById({required int cityId}) async {
     try {
       final response = await http
           .get(Uri.parse('${AppUrls.cities}/$cityId'), headers: _getHeaders())
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, City.fromJson);
     } catch (e) {
       log('Admin ApiService.getCityById error: $e');
       _throwWithMessage(e, 'Greška pri preuzimanju grada');
     }
   }
 
-  static Future<Map<String, dynamic>> searchCities({String? name}) async {
+  static Future<PagedResponse<City>> searchCities({String? name}) async {
     try {
       final params = await _buildQueryParams(
         pageSize: 1000,
@@ -355,63 +362,47 @@ class ApiService {
       final response = await http
           .get(_buildUri(AppUrls.cities, params), headers: _getHeaders())
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handlePagedResponse(response, City.fromJson);
     } catch (e) {
       log('Admin ApiService.searchCities error: $e');
       _throwWithMessage(e, 'Greška pri pretrazi gradova');
     }
   }
 
-  static Future<Map<String, dynamic>> createCity({
-    required String name,
-    required double latitude,
-    required double longitude,
-  }) async {
+  static Future<City> createCity(CityUpsertRequest request) async {
     try {
       final response = await http
           .post(
             Uri.parse(AppUrls.cities),
             headers: _getHeaders(),
-            body: jsonEncode({
-              'name': name,
-              'latitude': latitude,
-              'longitude': longitude,
-            }),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, City.fromJson);
     } catch (e) {
       log('Admin ApiService.createCity error: $e');
       _throwWithMessage(e, 'Greška pri kreiranju grada');
     }
   }
 
-  static Future<Map<String, dynamic>> updateCity({
+  static Future<City> updateCity({
     required int cityId,
-    String? name,
-    double? latitude,
-    double? longitude,
+    required CityUpsertRequest request,
   }) async {
     try {
-      final body = <String, dynamic>{};
-      if (name != null) body['name'] = name;
-      if (latitude != null) body['latitude'] = latitude;
-      if (longitude != null) body['longitude'] = longitude;
-
       final response = await http
           .put(
             Uri.parse('${AppUrls.cities}/$cityId'),
             headers: _getHeaders(),
-            body: jsonEncode(body),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, City.fromJson);
     } catch (e) {
       log('Admin ApiService.updateCity error: $e');
       _throwWithMessage(e, 'Greška pri ažuriranju grada');
     }
   }
-
   static Future<void> deleteCity(int cityId) async {
     try {
       final response = await http
@@ -420,14 +411,14 @@ class ApiService {
             headers: _getHeaders(),
           )
           .timeout(_timeout);
-      await _handleResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       log('Admin ApiService.deleteCity error: $e');
       _throwWithMessage(e, 'Greška pri brisanju grada');
     }
   }
 
-  static Future<Map<String, dynamic>> searchParkingZones({
+  static Future<PagedResponse<ParkingZone>> searchParkingZones({
     String? name,
     int? cityId,
     int page = 1,
@@ -444,82 +435,46 @@ class ApiService {
       final response = await http
           .get(_buildUri(AppUrls.parkingZones, params), headers: _getHeaders())
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handlePagedResponse(response, ParkingZone.fromJson);
     } catch (e) {
       log('Admin ApiService.searchZones error: $e');
       _throwWithMessage(e, 'Greška pri pretrazi parking zona');
     }
   }
 
-  static Future<Map<String, dynamic>> createParkingZone({
-    required String name,
-    required String description,
-    required String address,
-    required String city,
-    required double latitude,
-    required double longitude,
-    required double pricePerHour,
-    double? dailyRate,
-  }) async {
+  static Future<ParkingZone> createParkingZone(
+    ParkingZoneCreateRequest request,
+  ) async {
     try {
       final response = await http
           .post(
             Uri.parse(AppUrls.parkingZones),
             headers: _getHeaders(),
-            body: jsonEncode({
-              'name': name,
-              'description': description,
-              'address': address,
-              'city': city,
-              'latitude': latitude,
-              'longitude': longitude,
-              'pricePerHour': pricePerHour,
-              'dailyRate': dailyRate ?? 0,
-              'isActive': false,
-            }),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, ParkingZone.fromJson);
     } catch (e) {
       log('Admin ApiService.createZone error: $e');
       _throwWithMessage(e, 'Greška pri kreiranju zone');
     }
   }
 
-  static Future<Map<String, dynamic>> updateParkingZone({
+  static Future<ParkingZone> updateParkingZone({
     required int zoneId,
-    String? name,
-    String? description,
-    String? address,
-    int? cityId,
-    double? latitude,
-    double? longitude,
-    double? pricePerHour,
-    double? dailyRate,
-    bool? isActive,
+    required ParkingZoneUpdateRequest request,
   }) async {
     try {
-      final body = <String, dynamic>{};
-      if (name != null) body['name'] = name;
-      if (description != null) body['description'] = description;
-      if (address != null) body['address'] = address;
-      if (cityId != null) body['cityId'] = cityId;
-      if (latitude != null) body['latitude'] = latitude;
-      if (longitude != null) body['longitude'] = longitude;
-      if (pricePerHour != null) body['pricePerHour'] = pricePerHour;
-      if (dailyRate != null) body['dailyRate'] = dailyRate;
-      if (isActive != null) body['isActive'] = isActive;
-
       final response = await http
           .put(
             Uri.parse('${AppUrls.parkingZones}/$zoneId'),
             headers: _getHeaders(),
-            body: jsonEncode(body),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, ParkingZone.fromJson);
     } catch (e) {
       log('Admin ApiService.updateZone error: $e');
       _throwWithMessage(e, 'Greška pri ažuriranju zone');
@@ -535,67 +490,46 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      await _handleResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       log('Admin ApiService.deleteZone error: $e');
       _throwWithMessage(e, 'Greška pri brisanju zone');
     }
   }
 
-  static Future<Map<String, dynamic>> createParkingSpot({
-    required int parkingZoneId,
-    required int type,
-    required int? rowNumber,
-    required int? columnNumber,
-    required bool isAvailable,
-  }) async {
+  static Future<ParkingSpot> createParkingSpot(
+    ParkingSpotCreateRequest request,
+  ) async {
     try {
       final response = await http
           .post(
             Uri.parse(AppUrls.parkingSpots),
             headers: _getHeaders(),
-            body: jsonEncode({
-              'parkingZoneId': parkingZoneId,
-              'type': type,
-              'rowNumber': rowNumber,
-              'columnNumber': columnNumber,
-              'isAvailable': isAvailable,
-            }),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, ParkingSpot.fromJson);
     } catch (e) {
       log('Admin ApiService.addSpot error: $e');
       _throwWithMessage(e, 'Greška pri dodavanju spota');
     }
   }
 
-  static Future<Map<String, dynamic>> updateParkingSpot({
+  static Future<ParkingSpot> updateParkingSpot({
     required int spotId,
-    String? spotCode,
-    int? type,
-    int? rowNumber,
-    int? columnNumber,
-    bool? isAvailable,
+    required ParkingSpotUpdateRequest request,
   }) async {
     try {
-      final body = <String, dynamic>{};
-      if (spotCode != null) body['spotCode'] = spotCode;
-      if (type != null) body['type'] = type;
-      if (rowNumber != null) body['rowNumber'] = rowNumber;
-      if (columnNumber != null) body['columnNumber'] = columnNumber;
-      if (isAvailable != null) body['isAvailable'] = isAvailable;
-
       final response = await http
           .put(
             Uri.parse('${AppUrls.parkingSpots}/$spotId'),
             headers: _getHeaders(),
-            body: jsonEncode(body),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, ParkingSpot.fromJson);
     } catch (e) {
       log('Admin ApiService.updateSpot error: $e');
       _throwWithMessage(e, 'Greška pri ažuriranju spota');
@@ -611,14 +545,14 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      await _handleResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       log('Admin ApiService.deleteSpot error: $e');
       _throwWithMessage(e, 'Greška pri brisanju mjesta');
     }
   }
 
-  static Future<Map<String, dynamic>> toggleParkingSpotActive({
+  static Future<ParkingSpot> toggleParkingSpotActive({
     required int spotId,
     required bool isAvailable,
   }) async {
@@ -627,18 +561,20 @@ class ApiService {
           .put(
             Uri.parse('${AppUrls.parkingSpots}/$spotId'),
             headers: _getHeaders(),
-            body: jsonEncode({'isAvailable': isAvailable}),
+            body: jsonEncode(
+              ParkingSpotUpdateRequest(isAvailable: isAvailable).toJson(),
+            ),
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, ParkingSpot.fromJson);
     } catch (e) {
       log('Admin ApiService.toggleSpotActive error: $e');
       _throwWithMessage(e, 'Greška pri promjeni statusa spota');
     }
   }
 
-  static Future<Map<String, dynamic>> searchReservations({
+  static Future<PagedResponse<Reservation>> searchReservations({
     int? userId,
     int? parkingZoneId,
     int? status,
@@ -659,7 +595,7 @@ class ApiService {
       final response = await http
           .get(_buildUri(AppUrls.reservations, params), headers: _getHeaders())
           .timeout(_timeout);
-      return await _handleResponse(response);
+      return await _handlePagedResponse(response, Reservation.fromJson);
     } catch (e) {
       log('Admin ApiService.searchReservations error: $e');
       _throwWithMessage(e, 'Greška pri pretrazi rezervacija');
@@ -716,7 +652,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> updateReservationStatus(
+  static Future<Reservation> updateReservationStatus(
     int reservationId,
     int status,
   ) async {
@@ -730,14 +666,14 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, Reservation.fromJson);
     } catch (e) {
       log('Admin ApiService.updateReservationStatus error: $e');
       _throwWithMessage(e, 'Greška pri ažuriranju statusa');
     }
   }
 
-  static Future<Map<String, dynamic>> checkInReservation(
+  static Future<Reservation> checkInReservation(
     int reservationId,
   ) async {
     try {
@@ -753,14 +689,14 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, Reservation.fromJson);
     } catch (e) {
       log('Admin ApiService.checkIn error: $e');
       _throwWithMessage(e, 'Greška pri check-in-u');
     }
   }
 
-  static Future<Map<String, dynamic>> checkOutReservation(
+  static Future<Reservation> checkOutReservation(
     int reservationId,
   ) async {
     try {
@@ -776,13 +712,13 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handleModelResponse(response, Reservation.fromJson);
     } catch (e) {
       _throwWithMessage(e, 'Greška pri check-out-u');
     }
   }
 
-  static Future<Map<String, dynamic>> getNotifications({
+  static Future<PagedResponse<AppNotification>> getNotifications({
     int? userId,
     bool? isRead,
     int page = 1,
@@ -802,39 +738,39 @@ class ApiService {
           .get(_buildUri(AppUrls.notifications, params), headers: _getHeaders())
           .timeout(_timeout);
 
-      return await _handleResponse(response);
+      return await _handlePagedResponse(response, AppNotification.fromJson);
     } catch (e) {
       _throwWithMessage(e, 'Greška pri učitavanju notifikacija');
     }
   }
 
-  static Future<void> sendNotification(Map<String, dynamic> body) async {
+  static Future<void> sendNotification(NotificationSendRequest request) async {
     try {
       final response = await http
           .post(
             Uri.parse('${AppUrls.notifications}/send'),
             headers: _getHeaders(),
-            body: jsonEncode(body),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
 
-      await _handleResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       _throwWithMessage(e, 'Greška pri slanju notifikacije');
     }
   }
 
-  static Future<void> sendNotificationToAll(Map<String, dynamic> body) async {
+  static Future<void> sendNotificationToAll(NotificationSendRequest request) async {
     try {
       final response = await http
           .post(
             Uri.parse('${AppUrls.notifications}/send-all'),
             headers: _getHeaders(),
-            body: jsonEncode(body),
+            body: jsonEncode(request.toJson()),
           )
           .timeout(_timeout);
 
-      await _handleResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       _throwWithMessage(e, 'Greška pri slanju notifikacija svima');
     }
@@ -849,7 +785,7 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      await _handleResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       _throwWithMessage(e, 'Greška pri označavanju notifikacije');
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/city_model.dart';
 import '../models/parking_zone_model.dart';
+import '../models/request_models.dart';
 import '../services/api_service.dart';
 
 class ParkingZoneProvider extends ChangeNotifier {
@@ -43,19 +44,13 @@ class ParkingZoneProvider extends ChangeNotifier {
         includeSpots: includeSpots,
       );
 
-      final resultsList = result['results'] as List? ?? [];
-
       if (page == 1) {
         _parkingZones = [];
       }
 
-      _parkingZones.addAll(
-        resultsList
-            .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
-            .toList(),
-      );
+      _parkingZones.addAll(result.results);
 
-      _totalCount = result['count'] ?? 0;
+      _totalCount = result.count;
       _currentPage = page;
       _totalPages = (_totalCount / pageSize).ceil();
 
@@ -86,18 +81,18 @@ class ParkingZoneProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final result = await ApiService.createParkingZone(
-        name: name,
-        description: description,
-        address: address,
-        city: city,
-        latitude: latitude,
-        longitude: longitude,
-        pricePerHour: pricePerHour,
-        dailyRate: dailyRate,
+      final newZone = await ApiService.createParkingZone(
+        ParkingZoneCreateRequest(
+          name: name,
+          description: description,
+          address: address,
+          city: city,
+          latitude: latitude,
+          longitude: longitude,
+          pricePerHour: pricePerHour,
+          dailyRate: dailyRate,
+        ),
       );
-
-      final newZone = ParkingZone.fromJson(result);
       _parkingZones.insert(0, newZone);
 
       notifyListeners();
@@ -131,20 +126,20 @@ class ParkingZoneProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final result = await ApiService.updateParkingZone(
+      final updatedZone = await ApiService.updateParkingZone(
         zoneId: zoneId,
-        name: name,
-        description: description,
-        address: address,
-        cityId: cityId,
-        latitude: latitude,
-        longitude: longitude,
-        pricePerHour: pricePerHour,
-        dailyRate: dailyRate,
-        isActive: isActive,
+        request: ParkingZoneUpdateRequest(
+          name: name,
+          description: description,
+          address: address,
+          cityId: cityId,
+          latitude: latitude,
+          longitude: longitude,
+          pricePerHour: pricePerHour,
+          dailyRate: dailyRate,
+          isActive: isActive,
+        ),
       );
-
-      final updatedZone = ParkingZone.fromJson(result);
       final index = _parkingZones.indexWhere((z) => z.id == zoneId);
       if (index != -1) {
         _parkingZones[index] = updatedZone;
@@ -176,11 +171,13 @@ class ParkingZoneProvider extends ChangeNotifier {
       notifyListeners();
 
       await ApiService.createParkingSpot(
-        parkingZoneId: parkingZoneId,
-        type: type,
-        rowNumber: rowNumber,
-        columnNumber: columnNumber,
-        isAvailable: isAvailable,
+        ParkingSpotCreateRequest(
+          parkingZoneId: parkingZoneId,
+          type: type,
+          rowNumber: rowNumber,
+          columnNumber: columnNumber,
+          isAvailable: isAvailable,
+        ),
       );
 
       final index = _parkingZones.indexWhere((z) => z.id == parkingZoneId);
@@ -189,12 +186,7 @@ class ParkingZoneProvider extends ChangeNotifier {
           page: 1,
           pageSize: 1000,
         );
-
-        final zones =
-            (response['results'] as List?)
-                ?.map((z) => ParkingZone.fromJson(z as Map<String, dynamic>))
-                .toList() ??
-            [];
+        final zones = response.results;
 
         final updatedZone = zones.firstWhere(
           (z) => z.id == parkingZoneId,
@@ -232,11 +224,13 @@ class ParkingZoneProvider extends ChangeNotifier {
 
       await ApiService.updateParkingSpot(
         spotId: spotId,
-        spotCode: spotCode,
-        type: type,
-        rowNumber: rowNumber,
-        columnNumber: columnNumber,
-        isAvailable: isAvailable,
+        request: ParkingSpotUpdateRequest(
+          spotCode: spotCode,
+          type: type,
+          rowNumber: rowNumber,
+          columnNumber: columnNumber,
+          isAvailable: isAvailable,
+        ),
       );
 
       await searchParkingZones(includeSpots: true);
@@ -307,11 +301,7 @@ class ParkingZoneProvider extends ChangeNotifier {
         name: name,
         pageSize: 1000,
       );
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       _errorMessage = _messageFromError(
         e,
@@ -324,11 +314,7 @@ class ParkingZoneProvider extends ChangeNotifier {
   Future<List<City>> searchCitiesLive({String? name}) async {
     try {
       final result = await ApiService.searchCities(name: name);
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((city) => City.fromJson(city as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       _errorMessage = _messageFromError(
         e,

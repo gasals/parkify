@@ -43,39 +43,41 @@ class Reservation {
     this.checkOutTime,
   });
 
-  factory Reservation.fromJson(Map<String, dynamic> json) {
+  factory Reservation.fromJson(Map<String, Object?> json) {
     return Reservation(
-      id: json['id'] ?? 0,
-      reservationCode: json['reservationCode'] ?? '',
-      userId: json['userId'] ?? 0,
-      parkingZoneId: json['parkingZoneId'] ?? 0,
-      parkingSpotId: json['parkingSpotId'] ?? 0,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      reservationCode: json['reservationCode'] as String? ?? '',
+      userId: (json['userId'] as num?)?.toInt() ?? 0,
+      parkingZoneId: (json['parkingZoneId'] as num?)?.toInt() ?? 0,
+      parkingSpotId: (json['parkingSpotId'] as num?)?.toInt() ?? 0,
       reservationStart: DateTime.parse(
-        json['reservationStart'] ?? DateTime.now().toString(),
+        json['reservationStart'] as String? ?? DateTime.now().toString(),
       ),
       reservationEnd: DateTime.parse(
-        json['reservationEnd'] ?? DateTime.now().toString(),
+        json['reservationEnd'] as String? ?? DateTime.now().toString(),
       ),
-      durationInHours: json['durationInHours'] ?? 0,
-      status: json['status'] ?? 1,
-      isCheckedIn: json['isCheckedIn'] ?? false,
-      isCheckedOut: json['isCheckedOut'] ?? false,
-      calculatedPrice: (json['calculatedPrice'] ?? 0).toDouble(),
+      durationInHours: (json['durationInHours'] as num?)?.toInt() ?? 0,
+      status: (json['status'] as num?)?.toInt() ?? 1,
+      isCheckedIn: json['isCheckedIn'] as bool? ?? false,
+      isCheckedOut: json['isCheckedOut'] as bool? ?? false,
+      calculatedPrice: (json['calculatedPrice'] as num?)?.toDouble() ?? 0.0,
       discountAmount: json['discountAmount'] != null
-          ? (json['discountAmount']).toDouble()
+          ? (json['discountAmount'] as num).toDouble()
           : null,
-      finalPrice: (json['finalPrice'] ?? 0).toDouble(),
-      requiresDisabledSpot: json['requiresDisabledSpot'] ?? false,
-      notes: json['notes'] ?? '',
-      created: DateTime.parse(json['created'] ?? DateTime.now().toString()),
+      finalPrice: (json['finalPrice'] as num?)?.toDouble() ?? 0.0,
+      requiresDisabledSpot: json['requiresDisabledSpot'] as bool? ?? false,
+      notes: json['notes'] as String? ?? '',
+      created: DateTime.parse(
+        json['created'] as String? ?? DateTime.now().toString(),
+      ),
       modified: json['modified'] != null
-          ? DateTime.parse(json['modified'])
+          ? DateTime.parse(json['modified'] as String)
           : null,
       checkInTime: json['checkInTime'] != null
-          ? DateTime.parse(json['checkInTime'])
+          ? DateTime.parse(json['checkInTime'] as String)
           : null,
       checkOutTime: json['checkOutTime'] != null
-          ? DateTime.parse(json['checkOutTime'])
+          ? DateTime.parse(json['checkOutTime'] as String)
           : null,
     );
   }

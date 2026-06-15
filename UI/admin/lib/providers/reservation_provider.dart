@@ -40,19 +40,13 @@ class ReservationProvider extends ChangeNotifier {
         pageSize: pageSize,
       );
 
-      final resultsList = result['results'] as List? ?? [];
-
       if (page == 1) {
         _reservations = [];
       }
 
-      _reservations.addAll(
-        resultsList
-            .map((res) => Reservation.fromJson(res as Map<String, dynamic>))
-            .toList(),
-      );
+      _reservations.addAll(result.results);
 
-      _totalCount = result['count'] ?? 0;
+      _totalCount = result.count;
       _currentPage = page;
       _totalPages = (_totalCount / pageSize).ceil();
 
@@ -112,8 +106,9 @@ class ReservationProvider extends ChangeNotifier {
 
   Future<bool> checkInReservation(int reservationId) async {
     try {
-      final result = await ApiService.checkInReservation(reservationId);
-      final updatedReservation = Reservation.fromJson(result);
+      final updatedReservation = await ApiService.checkInReservation(
+        reservationId,
+      );
 
       final index = _reservations.indexWhere((r) => r.id == reservationId);
       if (index != -1) {
@@ -132,8 +127,9 @@ class ReservationProvider extends ChangeNotifier {
 
   Future<bool> checkOutReservation(int reservationId) async {
     try {
-      final result = await ApiService.checkOutReservation(reservationId);
-      final updatedReservation = Reservation.fromJson(result);
+      final updatedReservation = await ApiService.checkOutReservation(
+        reservationId,
+      );
 
       final index = _reservations.indexWhere((r) => r.id == reservationId);
       if (index != -1) {
@@ -153,11 +149,7 @@ class ReservationProvider extends ChangeNotifier {
   Future<List<User>> getAllUsersList({int pageSize = 1000}) async {
     try {
       final result = await ApiService.getAllUsers(pageSize: pageSize);
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((user) => User.fromJson(user as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       log('Admin ReservationProvider.getAllUsersList error: $e');
       _errorMessage = 'Došlo je do greške pri preuzimanju korisnika.';
@@ -172,11 +164,7 @@ class ReservationProvider extends ChangeNotifier {
         email: email,
         pageSize: 1000,
       );
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((user) => User.fromJson(user as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       log('Admin ReservationProvider.searchUsersLive error: $e');
       _errorMessage = 'Došlo je do greške pri pretrazi korisnika.';
@@ -189,11 +177,7 @@ class ReservationProvider extends ChangeNotifier {
   }) async {
     try {
       final result = await ApiService.searchParkingZones(pageSize: pageSize);
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       log('Admin ReservationProvider.getAllParkingZonesList error: $e');
       _errorMessage = 'Došlo je do greške pri preuzimanju parking zona.';
@@ -207,11 +191,7 @@ class ReservationProvider extends ChangeNotifier {
         name: name,
         pageSize: 1000,
       );
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((zone) => ParkingZone.fromJson(zone as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       log('Admin ReservationProvider.searchParkingZonesLive error: $e');
       _errorMessage = 'Došlo je do greške pri pretrazi parking zona.';

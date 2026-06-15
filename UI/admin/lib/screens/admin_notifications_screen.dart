@@ -18,15 +18,15 @@ class AdminNotificationsScreen extends StatefulWidget {
 class _AdminNotificationsScreenState
     extends State<AdminNotificationsScreen> {
   static const Map<int, String> _notificationTypeLabels = {
-    1: 'Uspjeh rezervacije',
-    2: 'Podsjetnik',
-    3: 'Plaćanje',
-    4: 'Greška',
-    5: 'Parking zona',
-    6: 'Ponuda',
-    7: 'Otkazivanje',
-    8: 'Prijava',
-    9: 'Blokada',
+    _NotificationTypes.reservationConfirmed: 'Uspjeh rezervacije',
+    _NotificationTypes.reservationReminder: 'Podsjetnik',
+    _NotificationTypes.paymentSuccess: 'Plaćanje',
+    _NotificationTypes.paymentFailure: 'Greška',
+    _NotificationTypes.availabilityNotice: 'Parking zona',
+    _NotificationTypes.specialOffer: 'Ponuda',
+    _NotificationTypes.reservationCancelled: 'Otkazivanje',
+    _NotificationTypes.checkInReminder: 'Prijava',
+    _NotificationTypes.parkingFull: 'Blokada',
   };
 
   final ScrollController _scrollController = ScrollController();
@@ -292,24 +292,24 @@ class _NotificationCard extends StatelessWidget {
   final String username;
   const _NotificationCard({required this.notification, required this.username});
 
-  static const _typeData = {
-    1: (Icons.check_circle_outline, Color(0xFF10B981)),
-    2: (Icons.alarm_outlined, Color(0xFFF59E0B)),
-    3: (Icons.payment_outlined, Color(0xFF3B82F6)),
-    4: (Icons.error_outline, Color(0xFFEF4444)),
-    5: (Icons.local_parking, Color(0xFF6366F1)),
-    6: (Icons.local_offer_outlined, Color(0xFFF59E0B)),
-    7: (Icons.cancel_outlined, Color(0xFFEF4444)),
-    8: (Icons.login_outlined, Color(0xFF14B8A6)),
-    9: (Icons.block_outlined, Colors.grey),
+  static const Map<int, ({IconData icon, Color color})> _typeData = {
+    _NotificationTypes.reservationConfirmed: (icon: Icons.check_circle_outline, color: Color(0xFF10B981)),
+    _NotificationTypes.reservationReminder: (icon: Icons.alarm_outlined, color: Color(0xFFF59E0B)),
+    _NotificationTypes.paymentSuccess: (icon: Icons.payment_outlined, color: Color(0xFF3B82F6)),
+    _NotificationTypes.paymentFailure: (icon: Icons.error_outline, color: Color(0xFFEF4444)),
+    _NotificationTypes.availabilityNotice: (icon: Icons.local_parking, color: Color(0xFF6366F1)),
+    _NotificationTypes.specialOffer: (icon: Icons.local_offer_outlined, color: Color(0xFFF59E0B)),
+    _NotificationTypes.reservationCancelled: (icon: Icons.cancel_outlined, color: Color(0xFFEF4444)),
+    _NotificationTypes.checkInReminder: (icon: Icons.login_outlined, color: Color(0xFF14B8A6)),
+    _NotificationTypes.parkingFull: (icon: Icons.block_outlined, color: Colors.grey),
   };
 
   @override
   Widget build(BuildContext context) {
     final td = _typeData[notification.type] ??
-        (Icons.notifications_outlined, Colors.grey);
-    final tIcon = (td as dynamic).$1 as IconData;
-    final tColor = (td as dynamic).$2 as Color;
+      (icon: Icons.notifications_outlined, color: Colors.grey);
+    final tIcon = td.icon;
+    final tColor = td.color;
 
     return Card(
       elevation: 0,
@@ -474,21 +474,21 @@ class _SendNotificationDialogState
   final _titleCtrl   = TextEditingController();
   final _messageCtrl = TextEditingController();
 
-  int _selectedType    = 1;
-  int _selectedChannel = 1;
+  int _selectedType = _NotificationTypes.reservationConfirmed;
+  int _selectedChannel = _NotificationChannels.inApp;
   int? _selectedUserId;
   bool _isLoading = false;
 
   static const _types = [
-    (1, 'Potvrda rezervacije',     Icons.check_circle_outline),
-    (2, 'Podsjetnik za rezervaciju', Icons.alarm_outlined),
-    (3, 'Plaćanje uspješno',       Icons.payment_outlined),
-    (4, 'Plaćanje neuspješno',     Icons.error_outline),
-    (5, 'Obavijest o dostupnosti', Icons.local_parking),
-    (6, 'Posebna ponuda',          Icons.local_offer_outlined),
-    (7, 'Otkazana rezervacija',    Icons.cancel_outlined),
-    (8, 'Check-in podsjetnik',     Icons.login_outlined),
-    (9, 'Parking pun',             Icons.block_outlined),
+    (_NotificationTypes.reservationConfirmed, 'Potvrda rezervacije', Icons.check_circle_outline),
+    (_NotificationTypes.reservationReminder, 'Podsjetnik za rezervaciju', Icons.alarm_outlined),
+    (_NotificationTypes.paymentSuccess, 'Plaćanje uspješno', Icons.payment_outlined),
+    (_NotificationTypes.paymentFailure, 'Plaćanje neuspješno', Icons.error_outline),
+    (_NotificationTypes.availabilityNotice, 'Obavijest o dostupnosti', Icons.local_parking),
+    (_NotificationTypes.specialOffer, 'Posebna ponuda', Icons.local_offer_outlined),
+    (_NotificationTypes.reservationCancelled, 'Otkazana rezervacija', Icons.cancel_outlined),
+    (_NotificationTypes.checkInReminder, 'Check-in podsjetnik', Icons.login_outlined),
+    (_NotificationTypes.parkingFull, 'Parking pun', Icons.block_outlined),
   ];
 
   @override
@@ -553,7 +553,7 @@ class _SendNotificationDialogState
                     _label('Kanal slanja'),
                     const SizedBox(height: 8),
                     _buildChannelSelector(),
-                    if (_selectedChannel != 1) ...[
+                    if (_selectedChannel != _NotificationChannels.inApp) ...[
                       const SizedBox(height: 12),
                       _buildEmailNote(),
                     ],
@@ -638,11 +638,11 @@ class _SendNotificationDialogState
   Widget _buildChannelSelector() {
     return Row(
       children: [
-        _ChannelOption(value: 1, label: 'In-App', icon: Icons.phone_android, selected: _selectedChannel == 1, onTap: () => setState(() => _selectedChannel = 1)),
+        _ChannelOption(value: _NotificationChannels.inApp, label: 'In-App', icon: Icons.phone_android, selected: _selectedChannel == _NotificationChannels.inApp, onTap: () => setState(() => _selectedChannel = _NotificationChannels.inApp)),
         const SizedBox(width: 8),
-        _ChannelOption(value: 2, label: 'Email', icon: Icons.email_outlined, selected: _selectedChannel == 2, onTap: () => setState(() => _selectedChannel = 2)),
+        _ChannelOption(value: _NotificationChannels.email, label: 'Email', icon: Icons.email_outlined, selected: _selectedChannel == _NotificationChannels.email, onTap: () => setState(() => _selectedChannel = _NotificationChannels.email)),
         const SizedBox(width: 8),
-        _ChannelOption(value: 3, label: 'Oboje', icon: Icons.all_inclusive, selected: _selectedChannel == 3, onTap: () => setState(() => _selectedChannel = 3)),
+        _ChannelOption(value: _NotificationChannels.both, label: 'Oboje', icon: Icons.all_inclusive, selected: _selectedChannel == _NotificationChannels.both, onTap: () => setState(() => _selectedChannel = _NotificationChannels.both)),
       ],
     );
   }
@@ -757,4 +757,22 @@ class _ChannelOption extends StatelessWidget {
       ),
     );
   }
+}
+
+class _NotificationChannels {
+  static const int inApp = 1;
+  static const int email = 2;
+  static const int both = 3;
+}
+
+class _NotificationTypes {
+  static const int reservationConfirmed = 1;
+  static const int reservationReminder = 2;
+  static const int paymentSuccess = 3;
+  static const int paymentFailure = 4;
+  static const int availabilityNotice = 5;
+  static const int specialOffer = 6;
+  static const int reservationCancelled = 7;
+  static const int checkInReminder = 8;
+  static const int parkingFull = 9;
 }

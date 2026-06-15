@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/city_model.dart';
+import '../models/request_models.dart';
 import '../services/api_service.dart';
 
 class CityProvider extends ChangeNotifier {
@@ -23,11 +24,7 @@ class CityProvider extends ChangeNotifier {
         page: page,
         pageSize: pageSize,
       );
-      final resultsList = result['results'] as List? ?? [];
-
-      _cities = resultsList
-          .map((city) => City.fromJson(city as Map<String, dynamic>))
-          .toList();
+      _cities = result.results;
 
       notifyListeners();
     } catch (e) {
@@ -42,11 +39,7 @@ class CityProvider extends ChangeNotifier {
   Future<List<City>> searchCities({String? name}) async {
     try {
       final result = await ApiService.searchCities(name: name);
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((city) => City.fromJson(city as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       _errorMessage = e.toString();
       return [];
@@ -55,8 +48,7 @@ class CityProvider extends ChangeNotifier {
 
   Future<City?> getCityById(int cityId) async {
     try {
-      final result = await ApiService.getCityById(cityId: cityId);
-      _selectedCity = City.fromJson(result);
+      _selectedCity = await ApiService.getCityById(cityId: cityId);
       notifyListeners();
       return _selectedCity;
     } catch (e) {
@@ -71,12 +63,13 @@ class CityProvider extends ChangeNotifier {
     required double longitude,
   }) async {
     try {
-      final result = await ApiService.createCity(
-        name: name,
-        latitude: latitude,
-        longitude: longitude,
+      final city = await ApiService.createCity(
+        CityUpsertRequest(
+          name: name,
+          latitude: latitude,
+          longitude: longitude,
+        ),
       );
-      final city = City.fromJson(result);
       _cities.insert(0, city);
       notifyListeners();
       return city;
@@ -94,13 +87,14 @@ class CityProvider extends ChangeNotifier {
     double? longitude,
   }) async {
     try {
-      final result = await ApiService.updateCity(
+      final updatedCity = await ApiService.updateCity(
         cityId: cityId,
-        name: name,
-        latitude: latitude,
-        longitude: longitude,
+        request: CityUpsertRequest(
+          name: name,
+          latitude: latitude,
+          longitude: longitude,
+        ),
       );
-      final updatedCity = City.fromJson(result);
       final index = _cities.indexWhere((city) => city.id == cityId);
       if (index != -1) {
         _cities[index] = updatedCity;

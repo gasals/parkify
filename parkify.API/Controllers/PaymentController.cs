@@ -4,7 +4,6 @@ using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
-using Stripe;
 
 namespace parkify.API.Controllers
 {
@@ -14,86 +13,38 @@ namespace parkify.API.Controllers
     {
         private readonly IPaymentService _paymentService;
 
-        public PaymentsController(IPaymentService service, IConfiguration configuration) : base(service)
+        public PaymentsController(IPaymentService service) : base(service)
         {
             _paymentService = service;
-            StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
         }
 
         [HttpPost("create-with-intent")]
         [Authorize]
         public async Task<IActionResult> CreatePaymentWithIntent([FromBody] PaymentInsertRequest request)
         {
-            try
-            {
-                var options = new PaymentIntentCreateOptions
-                {
-                    Amount = (long)(request.Amount * 100),
-                    Currency = "bam",
-                    PaymentMethodTypes = new List<string> { "card" },
-                    Metadata = new Dictionary<string, string>
-                    {
-                        { "reservationId", request.ReservationId.ToString() },
-                        { "userId", request.UserId.ToString() }
-                    }
-                };
-
-                var service = new PaymentIntentService();
-                var paymentIntent = await service.CreateAsync(options);
-
-                request.StripePaymentIntentId = paymentIntent.Id;
-
-                var payment = _paymentService.Insert(request);
-
-                return Ok(new
-                {
-                    payment.Id,
-                    payment.PaymentCode,
-                    paymentIntent.ClientSecret,
-                    payment.StripePaymentIntentId,
-                    payment.Amount,
-                    payment.Status
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _paymentService.CreatePaymentWithIntent(request);
+            return Ok(result);
         }
 
         [HttpPut("{id}/confirm")]
         [Authorize]
         public async Task<IActionResult> ConfirmPayment(int id)
         {
-            try
-            {
-                var payment = await _paymentService.ConfirmPayment(id);
-                return Ok(payment);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var payment = await _paymentService.ConfirmPayment(id);
+            return Ok(payment);
         }
 
         [HttpPut("{id}/refund")]
         [Authorize]
         public async Task<IActionResult> RefundPayment(int id, [FromBody] RefundRequest request)
         {
-            try
+            if (string.IsNullOrWhiteSpace(request?.Reason))
             {
-                if (string.IsNullOrWhiteSpace(request?.Reason))
-                {
-                    return BadRequest(new { error = "Razlog refundacije je obavezan." });
-                }
+                return BadRequest(new { error = "Razlog refundacije je obavezan." });
+            }
 
-                var payment = await _paymentService.RefundPayment(id, request.Reason);
-                return Ok(payment);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var payment = await _paymentService.RefundPayment(id, request.Reason);
+            return Ok(payment);
         }
     }
 

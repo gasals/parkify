@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
+import '../models/request_models.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 
@@ -45,19 +46,13 @@ class UserProvider extends ChangeNotifier {
         pageSize: pageSize,
       );
 
-      final resultsList = result['results'] as List? ?? [];
-
       if (page == 1) {
         _users = [];
       }
 
-      _users.addAll(
-        resultsList
-            .map((user) => User.fromJson(user as Map<String, dynamic>))
-            .toList(),
-      );
+      _users.addAll(result.results);
 
-      _totalCount = result['count'] ?? 0;
+      _totalCount = result.count;
       _currentPage = page;
       _totalPages = (_totalCount / pageSize).ceil();
 
@@ -89,18 +84,18 @@ class UserProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final result = await ApiService.createUser(
-        username: username,
-        email: email,
-        password: password,
-        passwordConfirm: passwordConfirm,
-        firstName: firstName,
-        lastName: lastName,
-        address: address,
-        city: city,
+      final newUser = await ApiService.createUser(
+        UserCreateRequest(
+          username: username,
+          email: email,
+          password: password,
+          passwordConfirm: passwordConfirm,
+          firstName: firstName,
+          lastName: lastName,
+          address: address,
+          city: city,
+        ),
       );
-
-      final newUser = User.fromJson(result);
       _users.insert(0, newUser);
 
       notifyListeners();
@@ -131,16 +126,16 @@ class UserProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final result = await ApiService.updateUser(
+      final updatedUser = await ApiService.updateUser(
         userId: userId,
-        email: email,
-        firstName: firstName,
-        lastName: lastName,
-        address: address,
-        city: city,
+        request: UserUpdateRequestDto(
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          address: address,
+          city: city,
+        ),
       );
-
-      final updatedUser = User.fromJson(result);
       final index = _users.indexWhere((u) => u.id == userId);
       if (index != -1) {
         _users[index] = updatedUser;
@@ -170,12 +165,10 @@ class UserProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final result = await ApiService.toggleUserActive(
+      final updatedUser = await ApiService.toggleUserActive(
         userId: userId,
         isActive: isActive,
       );
-
-      final updatedUser = User.fromJson(result);
       final index = _users.indexWhere((u) => u.id == userId);
       if (index != -1) {
         _users[index] = updatedUser;
@@ -200,11 +193,7 @@ class UserProvider extends ChangeNotifier {
   Future<List<User>> getAllUsersList({int pageSize = 1000}) async {
     try {
       final result = await ApiService.getAllUsers(pageSize: pageSize);
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((user) => User.fromJson(user as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       log('Admin UserProvider.getAllUsersList error: $e');
       _errorMessage = _messageFromError(
@@ -222,11 +211,7 @@ class UserProvider extends ChangeNotifier {
         email: email,
         pageSize: 1000,
       );
-      final resultsList = result['results'] as List? ?? [];
-
-      return resultsList
-          .map((user) => User.fromJson(user as Map<String, dynamic>))
-          .toList();
+      return result.results;
     } catch (e) {
       log('Admin UserProvider.searchUsersLive error: $e');
       _errorMessage = _messageFromError(

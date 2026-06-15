@@ -21,6 +21,7 @@ builder.Services.AddDbContext<ParkifyContext>(options =>
 builder.Services.AddMapster();
 builder.Services.AddParkifyCoreServices();
 builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITokenRevocationService, TokenRevocationService>();
 
 builder.Services.AddControllers(x =>
@@ -72,6 +73,14 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowConfiguredOrigins", policy =>
     {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+            return;
+        }
+
         policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader();
