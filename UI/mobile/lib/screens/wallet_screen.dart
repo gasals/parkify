@@ -4,6 +4,7 @@ import '../constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../providers/wallet_provider.dart';
 import '../providers/payment_provider.dart';
+import '../services/api_service.dart';
 import 'package:intl/intl.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -236,8 +237,7 @@ class _WalletFormSheetState extends State<WalletFormSheet> {
   bool _isLoading = false;
 
   String _messageFromError(Object error, String fallback) {
-    final message = error.toString().replaceFirst('Exception: ', '').trim();
-    return message.isEmpty ? fallback : message;
+    return ApiService.userFriendlyError(error, fallback: fallback);
   }
 
   void _showError(String message) {

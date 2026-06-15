@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
 import '../models/parking_zone_model.dart';
+import '../models/parking_zone_recommendation_model.dart';
 import '../services/api_service.dart';
 
 class ParkingZoneProvider extends ChangeNotifier {
   List<ParkingZone> _parkingZones = [];
   List<ParkingZone> _recommendedZones = [];
+  List<ParkingZoneRecommendation> _explainedRecommendedZones = [];
   ParkingZone? _selectedZone;
   bool _isLoading = false;
   String? _errorMessage;
@@ -14,6 +16,12 @@ class ParkingZoneProvider extends ChangeNotifier {
 
   List<ParkingZone> get parkingZones => _parkingZones;
   List<ParkingZone> get recommendedZones => _recommendedZones;
+  List<ParkingZoneRecommendation> get explainedRecommendedZones =>
+      _explainedRecommendedZones;
+  ParkingZoneRecommendation? get topRecommendation =>
+      _explainedRecommendedZones.isNotEmpty
+      ? _explainedRecommendedZones.first
+      : null;
   ParkingZone? get selectedZone => _selectedZone;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -79,17 +87,49 @@ class ParkingZoneProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await ApiService.getRecommendedParkingZones(
-        userId: userId,
-        count: count,
-      );
+      final explainedResult =
+          await ApiService.getExplainedRecommendedParkingZones(
+            userId: userId,
+            count: count,
+          );
 
-      _recommendedZones = result
-          .map((zone) => ParkingZone.fromJson(zone))
+      _explainedRecommendedZones = explainedResult
+          .map((item) => ParkingZoneRecommendation.fromJson(item))
+          .toList();
+
+      _recommendedZones = _explainedRecommendedZones
+          .map((item) => item.zone)
           .toList();
     } catch (e) {
-      log('ParkingZoneProvider.getRecommendedZones error: $e');
-      _errorMessage = 'Došlo je do greške pri učitavanju preporučenih zona.';
+      log(
+        'ParkingZoneProvider.getRecommendedZones explained endpoint error: $e',
+      );
+
+      try {
+        final result = await ApiService.getRecommendedParkingZones(
+          userId: userId,
+          count: count,
+        );
+
+        _recommendedZones = result
+            .map((zone) => ParkingZone.fromJson(zone))
+            .toList();
+
+        _explainedRecommendedZones = _recommendedZones
+            .map(
+              (zone) => ParkingZoneRecommendation(
+                zone: zone,
+                score: 0,
+                reasons: const [],
+              ),
+            )
+            .toList();
+      } catch (fallbackError) {
+        log(
+          'ParkingZoneProvider.getRecommendedZones fallback error: $fallbackError',
+        );
+        _errorMessage = 'Došlo je do greške pri učitavanju preporučenih zona.';
+      }
     } finally {
       notifyListeners();
     }

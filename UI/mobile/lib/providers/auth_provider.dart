@@ -14,8 +14,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
 
   String _messageFromError(Object error, String fallback) {
-    final message = error.toString().replaceFirst('Exception: ', '').trim();
-    return message.isEmpty ? fallback : message;
+    return ApiService.userFriendlyError(error, fallback: fallback);
   }
 
   Future<bool> login(String username, String password) async {
@@ -129,6 +128,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> changePassword({
+    required String currentPassword,
     required String password,
     required String passwordConfirm,
   }) async {
@@ -140,6 +140,7 @@ class AuthProvider extends ChangeNotifier {
 
       final success = await ApiService.changePassword(
         userId: user!.id,
+        currentPassword: currentPassword,
         password: password,
         passwordConfirm: passwordConfirm,
       );

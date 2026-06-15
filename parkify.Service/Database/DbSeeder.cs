@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using parkify.Model.Models;
 
 namespace parkify.Service.Database
 {
@@ -174,7 +175,7 @@ namespace parkify.Service.Database
                 {
                     UserId = user1.Id,
                     LicensePlate = "E12-K-345",
-                    Category = "B",
+                    Category = VehicleCategory.B,
                     Model = "VW Golf"
                 };
 

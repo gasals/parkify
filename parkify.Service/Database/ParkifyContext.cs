@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using parkify.Model.Models;
 
 namespace parkify.Service.Database
 {
@@ -285,6 +286,10 @@ namespace parkify.Service.Database
 
             modelBuilder.Entity<Vehicle>()
                 .Property(r => r.LicensePlate)
+                .IsRequired();
+
+            modelBuilder.Entity<Vehicle>()
+                .Property(r => r.Category)
                 .IsRequired();
 
             modelBuilder.Entity<Vehicle>()

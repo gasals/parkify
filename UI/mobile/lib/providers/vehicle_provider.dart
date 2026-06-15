@@ -44,7 +44,7 @@ class VehicleProvider extends ChangeNotifier {
   Future<bool> addVehicle({
     required int userId,
     required String licensePlate,
-    required String category,
+    required VehicleCategory category,
     required String model,
   }) async {
     _isLoading = true;
@@ -80,7 +80,7 @@ class VehicleProvider extends ChangeNotifier {
     required int userId,
     required String licensePlate,
     required String model,
-    required String category,
+    required VehicleCategory category,
   }) async {
     _isLoading = true;
     _errorMessage = null;

@@ -13,12 +13,15 @@ class ChangePasswordSheet extends StatefulWidget {
 class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
   final _formKey = GlobalKey<FormState>();
 
+  late TextEditingController _currentPasswordController;
   late TextEditingController _passwordController;
   late TextEditingController _passwordConfirmController;
 
+  bool _showCurrentPassword = false;
   bool _showPassword = false;
   bool _showPasswordConfirm = false;
   bool _isLoading = false;
+  String? _submitError;
 
   static final _upperCase  = RegExp(r'[A-Z]');
   static final _digit      = RegExp(r'\d');
@@ -27,15 +30,22 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
   @override
   void initState() {
     super.initState();
+    _currentPasswordController = TextEditingController();
     _passwordController        = TextEditingController();
     _passwordConfirmController = TextEditingController();
   }
 
   @override
   void dispose() {
+    _currentPasswordController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     super.dispose();
+  }
+
+  String? _validateCurrentPassword(String? v) {
+    if (v == null || v.isEmpty) return 'Trenutna lozinka je obavezna';
+    return null;
   }
 
   String? _validatePassword(String? v) {
@@ -102,12 +112,42 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
               const SizedBox(height: 16),
 
               TextFormField(
+                controller: _currentPasswordController,
+                obscureText: !_showCurrentPassword,
+                enabled: !_isLoading,
+                validator: _validateCurrentPassword,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                onChanged: (_) {
+                  if (_submitError != null) {
+                    setState(() => _submitError = null);
+                  }
+                },
+                decoration: InputDecoration(
+                  labelText: 'Trenutna lozinka',
+                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _showCurrentPassword ? Icons.visibility : Icons.visibility_off,
+                      color: AppColors.primary,
+                    ),
+                    onPressed: () =>
+                        setState(() => _showCurrentPassword = !_showCurrentPassword),
+                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
                 controller: _passwordController,
                 obscureText: !_showPassword,
                 enabled: !_isLoading,
                 validator: _validatePassword,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 onChanged: (_) {
+                  if (_submitError != null) {
+                    setState(() => _submitError = null);
+                  }
                   if (_passwordConfirmController.text.isNotEmpty) {
                     _formKey.currentState?.validate();
                   }
@@ -133,6 +173,11 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                 enabled: !_isLoading,
                 validator: _validateConfirm,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
+                onChanged: (_) {
+                  if (_submitError != null) {
+                    setState(() => _submitError = null);
+                  }
+                },
                 decoration: InputDecoration(
                   labelText: 'Potvrdi lozinku',
                   prefixIcon: const Icon(Icons.lock, color: AppColors.primary),
@@ -148,6 +193,23 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
                 ),
               ),
               const SizedBox(height: 24),
+
+              if (_submitError != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.withOpacity(0.35)),
+                  ),
+                  child: Text(
+                    _submitError!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               Row(
                 children: [
@@ -185,28 +247,36 @@ class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
   Future<void> _changePassword() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _submitError = null;
+    });
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final success = await authProvider.changePassword(
+        currentPassword: _currentPasswordController.text,
         password: _passwordController.text,
         passwordConfirm: _passwordConfirmController.text,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(success
-              ? 'Lozinka uspješno promijenjena'
-              : 'Došlo je do greške. Pokušajte ponovno.'),
-          backgroundColor: success ? Colors.green : Colors.red,
-        ));
-        if (success) Navigator.of(context).pop();
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Lozinka uspješno promijenjena'),
+            backgroundColor: Colors.green,
+          ));
+          Navigator.of(context).pop();
+        } else {
+          setState(() {
+            _submitError =
+                authProvider.errorMessage ?? 'Došlo je do greške. Pokušajte ponovno.';
+          });
+        }
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Došlo je do greške. Pokušajte ponovno.'),
-          backgroundColor: Colors.red,
-        ));
+        setState(() {
+          _submitError = 'Došlo je do greške. Pokušajte ponovno.';
+        });
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

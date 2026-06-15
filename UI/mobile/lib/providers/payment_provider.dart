@@ -17,8 +17,7 @@ class PaymentProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   String _messageFromError(Object error, String fallback) {
-    final message = error.toString().replaceFirst('Exception: ', '').trim();
-    return message.isEmpty ? fallback : message;
+    return ApiService.userFriendlyError(error, fallback: fallback);
   }
 
   Future<Payment> createPayment({

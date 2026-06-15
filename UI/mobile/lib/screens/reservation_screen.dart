@@ -3,6 +3,7 @@ import 'package:mobile/providers/payment_provider.dart';
 import 'package:mobile/providers/vehicle_provider.dart';
 import 'package:mobile/providers/wallet_provider.dart';
 import 'package:mobile/services/navigation_service.dart';
+import 'package:mobile/services/api_service.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/reservation_model.dart';
@@ -239,7 +240,12 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          content: Text(
+            ApiService.userFriendlyError(
+              e,
+              fallback: 'Došlo je do greške pri kreiranju rezervacije.',
+            ),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -535,7 +541,15 @@ class _ReservationScreenState extends State<ReservationScreen> {
       destinationName: widget.parkingZone.name,
     ).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Greška prilikom pokretanja navigacije: $error'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            ApiService.userFriendlyError(
+              error,
+              fallback: 'Greška pri pokretanju navigacije.',
+            ),
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     });
   }

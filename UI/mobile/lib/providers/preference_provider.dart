@@ -23,7 +23,10 @@ class PreferenceProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       log('PreferenceProvider.loadUserPreference error: $e');
-      _errorMessage = 'Došlo je do greške pri učitavanju postavki.';
+      _errorMessage = ApiService.userFriendlyError(
+        e,
+        fallback: 'Došlo je do greške pri učitavanju postavki.',
+      );
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -51,8 +54,12 @@ class PreferenceProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       log('PreferenceProvider.updateFavoriteParking error: $e');
-      _errorMessage = 'Došlo je do greške pri ažuriranju postavki.';
+      _errorMessage = ApiService.userFriendlyError(
+        e,
+        fallback: 'Došlo je do greške pri ažuriranju postavki.',
+      );
       notifyListeners();
+      throw Exception(_errorMessage);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -79,8 +86,12 @@ class PreferenceProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       log('PreferenceProvider.updatePreferredCity error: $e');
-      _errorMessage = 'Došlo je do greške pri ažuriranju postavki.';
+      _errorMessage = ApiService.userFriendlyError(
+        e,
+        fallback: 'Došlo je do greške pri ažuriranju postavki.',
+      );
       notifyListeners();
+      throw Exception(_errorMessage);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -118,8 +129,12 @@ class PreferenceProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       log('PreferenceProvider.updatePreference error: $e');
-      _errorMessage = 'Došlo je do greške pri ažuriranju postavki.';
+      _errorMessage = ApiService.userFriendlyError(
+        e,
+        fallback: 'Došlo je do greške pri ažuriranju postavki.',
+      );
       notifyListeners();
+      throw Exception(_errorMessage);
     } finally {
       _isLoading = false;
       notifyListeners();

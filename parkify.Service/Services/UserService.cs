@@ -101,6 +101,13 @@ namespace parkify.Service.Services
         {
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
+                if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+                    throw new UserException("Trenutna lozinka je obavezna.");
+
+                var currentHash = GenerateHash(entity.PasswordSalt, request.CurrentPassword);
+                if (currentHash != entity.PasswordHash)
+                    throw new UserException("Trenutna lozinka nije ispravna.");
+
                 if (request.Password != request.PasswordConfirm)
                     throw new UserException("Lozinka i potvrda lozinke se ne podudaraju.");
 

@@ -59,19 +59,60 @@ class ApiService {
         return decoded;
       }
     } catch (_) {
-      if (body.isNotEmpty) return body;
+      // Ignore invalid/non-JSON response bodies and use fallback text.
     }
 
     return fallback;
   }
 
-  static String _messageFromError(Object error, String fallback) {
+  static bool _isTechnicalErrorMessage(String message) {
+    final lower = message.toLowerCase();
+
+    const technicalPatterns = [
+      'clientexception',
+      'socketexception',
+      'failed host lookup',
+      'connection refused',
+      'connection reset',
+      'connection closed',
+      'handshakeexception',
+      'os error',
+      'xmlhttprequest error',
+      'formatexception',
+      'nosuchmethoderror',
+      'null check operator used on a null value',
+      "type '",
+    ];
+
+    return technicalPatterns.any(lower.contains);
+  }
+
+  static String userFriendlyError(Object error, {required String fallback}) {
     final message = error.toString().replaceFirst('Exception: ', '').trim();
-    return message.isEmpty ? fallback : message;
+
+    if (message.isEmpty) {
+      return fallback;
+    }
+
+    final lower = message.toLowerCase();
+
+    if (lower.contains('timeout') || lower.contains('timed out')) {
+      return 'Zahtjev je istekao. Provjerite konekciju i pokušajte ponovo.';
+    }
+
+    if (_isTechnicalErrorMessage(message)) {
+      return 'Došlo je do problema sa mrežom ili serverom. Pokušajte ponovo.';
+    }
+
+    if (message.length > 220) {
+      return fallback;
+    }
+
+    return message;
   }
 
   static Never _throwWithMessage(Object error, String fallback) {
-    throw Exception(_messageFromError(error, fallback));
+    throw Exception(userFriendlyError(error, fallback: fallback));
   }
 
   static Future<Map<String, dynamic>> _handleResponse(
@@ -91,7 +132,10 @@ class ApiService {
     }
 
     throw Exception(
-      _messageFromBody(response.body, fallback: 'Greška: ${response.statusCode}'),
+      _messageFromBody(
+        response.body,
+        fallback: 'Greška: ${response.statusCode}',
+      ),
     );
   }
 
@@ -147,7 +191,8 @@ class ApiService {
     Map<String, dynamic> userData,
   ) async {
     try {
-      final sanitizedData = Map<String, dynamic>.from(userData)..remove('isAdmin');
+      final sanitizedData = Map<String, dynamic>.from(userData)
+        ..remove('isAdmin');
 
       final response = await http
           .post(
@@ -172,10 +217,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getUserById(int userId) async {
     try {
       final response = await http
-          .get(
-            Uri.parse('${AppUrls.users}/$userId'),
-            headers: _getHeaders(),
-          )
+          .get(Uri.parse('${AppUrls.users}/$userId'), headers: _getHeaders())
           .timeout(_timeout);
 
       return await _handleResponse(response);
@@ -217,11 +259,16 @@ class ApiService {
 
   static Future<bool> changePassword({
     required int userId,
+    required String currentPassword,
     required String password,
     required String passwordConfirm,
   }) async {
     try {
-      final body = {'password': password, 'passwordConfirm': passwordConfirm};
+      final body = {
+        'currentPassword': currentPassword,
+        'password': password,
+        'passwordConfirm': passwordConfirm,
+      };
 
       final response = await http
           .put(
@@ -319,12 +366,99 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      final body = await _handleResponse(response);
-      return (body as List)
-          .map((zone) => Map<String, dynamic>.from(zone as Map))
-          .toList();
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isEmpty) {
+          return <Map<String, dynamic>>[];
+        }
+
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is List) {
+          return decoded
+              .map((zone) => Map<String, dynamic>.from(zone as Map))
+              .toList();
+        }
+
+        if (decoded is Map<String, dynamic>) {
+          final results = decoded['results'];
+          if (results is List) {
+            return results
+                .map((zone) => Map<String, dynamic>.from(zone as Map))
+                .toList();
+          }
+        }
+
+        return <Map<String, dynamic>>[];
+      }
+
+      if (response.statusCode == 401) {
+        _token = null;
+      }
+
+      throw Exception(
+        _messageFromBody(
+          response.body,
+          fallback: 'Greška: ${response.statusCode}',
+        ),
+      );
     } catch (e) {
       log('ApiService.getRecommendedParkingZones error: $e');
+      _throwWithMessage(e, 'Greška pri učitavanju preporučenih zona');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>>
+  getExplainedRecommendedParkingZones({
+    required int userId,
+    int count = 5,
+  }) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(
+              '${AppUrls.parkingZones}/recommendations/$userId/explained?count=$count',
+            ),
+            headers: _getHeaders(),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isEmpty) {
+          return <Map<String, dynamic>>[];
+        }
+
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is List) {
+          return decoded
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .toList();
+        }
+
+        if (decoded is Map<String, dynamic>) {
+          final results = decoded['results'];
+          if (results is List) {
+            return results
+                .map((item) => Map<String, dynamic>.from(item as Map))
+                .toList();
+          }
+        }
+
+        return <Map<String, dynamic>>[];
+      }
+
+      if (response.statusCode == 401) {
+        _token = null;
+      }
+
+      throw Exception(
+        _messageFromBody(
+          response.body,
+          fallback: 'Greška: ${response.statusCode}',
+        ),
+      );
+    } catch (e) {
+      log('ApiService.getExplainedRecommendedParkingZones error: $e');
       _throwWithMessage(e, 'Greška pri učitavanju preporučenih zona');
     }
   }
@@ -665,14 +799,14 @@ class ApiService {
     required int userId,
     required String licensePlate,
     required String model,
-    required String category,
+    required VehicleCategory category,
   }) async {
     try {
       final body = {
         'userId': userId,
         'licensePlate': licensePlate,
         'model': model,
-        'category': category,
+        'category': category.index + 1,
       };
 
       final response = await http
@@ -732,10 +866,7 @@ class ApiService {
       final params = await _buildQueryParams(
         page: page,
         pageSize: pageSize,
-        filters: {
-          'userId': userId,
-          'isRead': isRead,
-        },
+        filters: {'userId': userId, 'isRead': isRead},
       );
 
       final response = await http

@@ -15,6 +15,7 @@ class PreferencesSheet extends StatefulWidget {
 class _PreferencesSheetState extends State<PreferencesSheet> {
   int? _selectedCityId;
   bool _isLoading = false;
+  String? _submitError;
 
   @override
   void initState() {
@@ -76,7 +77,10 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
                         value: city.id,
                         groupValue: _selectedCityId,
                         onChanged: (value) {
-                          setState(() => _selectedCityId = value);
+                          setState(() {
+                            _selectedCityId = value;
+                            _submitError = null;
+                          });
                         },
                         title: Row(
                           children: [
@@ -112,6 +116,23 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
               },
             ),
             const SizedBox(height: 24),
+
+            if (_submitError != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.withOpacity(0.35)),
+                ),
+                child: Text(
+                  _submitError!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             Row(
               children: [
@@ -153,24 +174,22 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
 
   Future<void> _savePreference() async {
     if (_selectedCityId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Odaberi grad'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() => _submitError = 'Odaberi grad.');
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _submitError = null;
+    });
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final prefProvider = Provider.of<PreferenceProvider>(
+      context,
+      listen: false,
+    );
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final prefProvider = Provider.of<PreferenceProvider>(
-        context,
-        listen: false,
-      );
-
       await prefProvider.updatePreferredCity(
         userId: authProvider.user!.id,
         cityId: _selectedCityId!,
@@ -184,9 +203,10 @@ class _PreferencesSheetState extends State<PreferencesSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška prilikom ažuriranja preferentnog grada.'), backgroundColor: Colors.red),
-        );
+        setState(() {
+          _submitError = prefProvider.errorMessage ??
+              'Greška prilikom ažuriranja preferentnog grada.';
+        });
       }
     } finally {
       if (mounted) {

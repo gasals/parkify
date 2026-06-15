@@ -31,33 +31,40 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startNotificationHeartbeat();
-      _loadInitialData();
+      unawaited(_loadInitialData());
     });
   }
 
-  void _loadInitialData() {
+  Future<void> _loadInitialData() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.id ?? 0;
 
     if (mounted) {
-      Provider.of<ReservationProvider>(
+      final reservationProvider = Provider.of<ReservationProvider>(
         context,
         listen: false,
-      ).getUserReservations(userId: userId);
-      Provider.of<PreferenceProvider>(
+      );
+      final preferenceProvider = Provider.of<PreferenceProvider>(
         context,
         listen: false,
-      ).loadUserPreference(userId: userId);
-      Provider.of<CityProvider>(context, listen: false).getAllCities();
-      Provider.of<ParkingZoneProvider>(
+      );
+      final cityProvider = Provider.of<CityProvider>(context, listen: false);
+      final parkingZoneProvider = Provider.of<ParkingZoneProvider>(
         context,
         listen: false,
-      ).getRecommendedZones(userId: userId);
+      );
+      final notificationProvider = Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      );
 
-      Provider.of<NotificationProvider>(
-        context,
-        listen: false,
-      ).fetchUnreadCount(userId);
+      await Future.wait([
+        reservationProvider.getUserReservations(userId: userId),
+        preferenceProvider.loadUserPreference(userId: userId),
+        cityProvider.getAllCities(),
+        parkingZoneProvider.getRecommendedZones(userId: userId),
+        notificationProvider.fetchUnreadCount(userId),
+      ]);
     }
   }
 

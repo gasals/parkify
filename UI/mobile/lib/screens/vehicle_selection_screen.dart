@@ -11,13 +11,29 @@ class VehicleSelectionScreen extends StatefulWidget {
 }
 
 class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
-  IconData _getIconForCategory(String category) {
+  IconData _getIconForCategory(VehicleCategory category) {
     switch (category) {
-      case 'A': return Icons.motorcycle;
-      case 'B': return Icons.directions_car;
-      case 'C': return Icons.local_shipping;
-      case 'D': return Icons.directions_bus;
-      default:  return Icons.directions_car;
+      case VehicleCategory.am:
+      case VehicleCategory.a1:
+      case VehicleCategory.a2:
+      case VehicleCategory.a:
+        return Icons.motorcycle;
+      case VehicleCategory.b:
+      case VehicleCategory.be:
+        return Icons.directions_car;
+      case VehicleCategory.c1:
+      case VehicleCategory.c1e:
+      case VehicleCategory.c:
+      case VehicleCategory.ce:
+      case VehicleCategory.f:
+      case VehicleCategory.g:
+      case VehicleCategory.h:
+        return Icons.local_shipping;
+      case VehicleCategory.d1:
+      case VehicleCategory.d1e:
+      case VehicleCategory.d:
+      case VehicleCategory.de:
+        return Icons.directions_bus;
     }
   }
 
@@ -105,7 +121,7 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                             color: isSelected ? AppColors.primary : Colors.black,
                           ),
                         ),
-                        subtitle: Text('${vehicle.model} - ${vehicle.category}'),
+                        subtitle: Text('${vehicle.model} - ${vehicle.categoryLabel}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -154,7 +170,7 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
 
   late TextEditingController _licensePlateController;
   late TextEditingController _modelController;
-  late String _category;
+  late VehicleCategory _category;
   bool _isLoading = false;
 
   static final _plateRegex = RegExp(
@@ -170,7 +186,7 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
         TextEditingController(text: widget.vehicle?.licensePlate ?? '');
     _modelController =
         TextEditingController(text: widget.vehicle?.model ?? '');
-    _category = widget.vehicle?.category ?? 'B';
+    _category = widget.vehicle?.category ?? VehicleCategory.b;
   }
 
   @override
@@ -264,15 +280,79 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
               ),
               const SizedBox(height: 16),
 
-              DropdownButtonFormField<String>(
+              DropdownButtonFormField<VehicleCategory>(
                 value: _category,
                 validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Kategorija je obavezna' : null,
+                    v == null ? 'Kategorija je obavezna' : null,
                 items: const [
-                  DropdownMenuItem(value: 'A', child: Text('A — Motocikl')),
-                  DropdownMenuItem(value: 'B', child: Text('B — Osobni automobil')),
-                  DropdownMenuItem(value: 'C', child: Text('C — Teretno vozilo')),
-                  DropdownMenuItem(value: 'D', child: Text('D — Autobus')),
+                  DropdownMenuItem(
+                    value: VehicleCategory.am,
+                    child: Text('AM'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.a1,
+                    child: Text('A1'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.a2,
+                    child: Text('A2'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.a,
+                    child: Text('A'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.b,
+                    child: Text('B'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.be,
+                    child: Text('B E'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.c1,
+                    child: Text('C1'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.c1e,
+                    child: Text('C1 E'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.c,
+                    child: Text('C'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.ce,
+                    child: Text('C E'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.d1,
+                    child: Text('D1'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.d1e,
+                    child: Text('D1 E'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.d,
+                    child: Text('D'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.de,
+                    child: Text('D E'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.f,
+                    child: Text('F'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.g,
+                    child: Text('G'),
+                  ),
+                  DropdownMenuItem(
+                    value: VehicleCategory.h,
+                    child: Text('H'),
+                  ),
                 ],
                 onChanged: _isLoading
                     ? null

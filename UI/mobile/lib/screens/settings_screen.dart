@@ -198,15 +198,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.near_me,
                 title: 'Preferiram blizu mene',
                 value: pref?.prefersNearby ?? false,
-                onChanged: (value) {
+                onChanged: (value) async {
                   final authProvider = Provider.of<AuthProvider>(
                     context,
                     listen: false,
                   );
-                  prefProvider.updatePreference(
-                    userId: authProvider.user!.id,
-                    prefersNearby: value,
-                  );
+                  try {
+                    await prefProvider.updatePreference(
+                      userId: authProvider.user!.id,
+                      prefersNearby: value,
+                    );
+                  } catch (_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            prefProvider.errorMessage ??
+                                'Greška pri ažuriranju preference.',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
               const SizedBox(height: 12),
@@ -215,15 +229,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.notifications,
                 title: 'Obavijesti o ponudama',
                 value: pref?.notifyAboutOffers ?? false,
-                onChanged: (value) {
+                onChanged: (value) async {
                   final authProvider = Provider.of<AuthProvider>(
                     context,
                     listen: false,
                   );
-                  prefProvider.updatePreference(
-                    userId: authProvider.user!.id,
-                    notifyAboutOffers: value,
-                  );
+                  try {
+                    await prefProvider.updatePreference(
+                      userId: authProvider.user!.id,
+                      notifyAboutOffers: value,
+                    );
+                  } catch (_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            prefProvider.errorMessage ??
+                                'Greška pri ažuriranju preference.',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
             ],

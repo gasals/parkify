@@ -41,6 +41,13 @@ namespace parkify.Service.Services
 
         public List<ParkingZone> GetRecommendations(int userId, int count = 5)
         {
+            return GetRecommendationsWithExplanation(userId, count)
+                .Select(x => x.Zone)
+                .ToList();
+        }
+
+        public List<ParkingZoneRecommendation> GetRecommendationsWithExplanation(int userId, int count = 5)
+        {
             var take = Math.Clamp(count, 1, 20);
 
             var zones = Context.ParkingZones
@@ -50,7 +57,7 @@ namespace parkify.Service.Services
 
             if (!zones.Any())
             {
-                return new List<ParkingZone>();
+                return new List<ParkingZoneRecommendation>();
             }
 
             var preference = Context.Preferences
@@ -93,7 +100,7 @@ namespace parkify.Service.Services
                         ? avgRating
                         : 0;
 
-                    var score = CalculateRecommendationScore(
+                    var breakdown = CalculateRecommendationBreakdown(
                         zone,
                         preference,
                         referenceZone,
@@ -101,13 +108,18 @@ namespace parkify.Service.Services
                         userRatings.TryGetValue(zone.Id, out var userRating) ? userRating : 0,
                         mappedZone.AverageRating);
 
-                    return new ZoneRecommendationResult(mappedZone, score);
+                    return new ZoneRecommendationResult(mappedZone, breakdown.Score, breakdown.Reasons);
                 })
                 .OrderByDescending(x => x.Score)
                 .ThenByDescending(x => x.Zone.AverageRating)
                 .ThenByDescending(x => x.Zone.AvailableSpots)
                 .Take(take)
-                .Select(x => x.Zone)
+                .Select(x => new ParkingZoneRecommendation
+                {
+                    Zone = x.Zone,
+                    Score = Math.Round(x.Score, 2),
+                    Reasons = x.Reasons
+                })
                 .ToList();
 
             return rankedZones;
@@ -145,7 +157,7 @@ namespace parkify.Service.Services
             return Mapper.Map<ParkingZone>(entity);
         }
 
-        private double CalculateRecommendationScore(
+        private RecommendationBreakdown CalculateRecommendationBreakdown(
             Database.ParkingZone zone,
             Database.Preference? preference,
             Database.ParkingZone? referenceZone,
@@ -154,33 +166,66 @@ namespace parkify.Service.Services
             double averageRating)
         {
             var score = 0d;
+            var reasons = new List<string>();
 
             if (preference?.FavoriteParkingZoneId == zone.Id)
             {
                 score += 90;
+                reasons.Add("Zona je vaš favorit.");
             }
 
             if (preference?.PreferredCityId == zone.CityId)
             {
                 score += 35;
+                reasons.Add("Zona je u vašem preferiranom gradu.");
             }
 
-            score += Math.Min(36, reservationCount * 12);
-            score += averageRating * 6;
-            score += userRating * 5;
+            var historyScore = Math.Min(36, reservationCount * 12);
+            if (historyScore > 0)
+            {
+                score += historyScore;
+                reasons.Add($"Ranije ste koristili ovu zonu {reservationCount} put(a).");
+            }
+
+            if (averageRating > 0)
+            {
+                var ratingScore = averageRating * 6;
+                score += ratingScore;
+                reasons.Add($"Zona ima dobru prosječnu ocjenu ({averageRating:0.##}).");
+            }
+
+            if (userRating > 0)
+            {
+                var userRatingScore = userRating * 5;
+                score += userRatingScore;
+                reasons.Add($"Ranije ste ovoj zoni dali ocjenu {userRating}.");
+            }
 
             if (zone.TotalSpots > 0)
             {
-                score += ((double)zone.AvailableSpots / zone.TotalSpots) * 10;
+                var availabilityScore = ((double)zone.AvailableSpots / zone.TotalSpots) * 10;
+                score += availabilityScore;
+
+                if (zone.AvailableSpots > 0)
+                {
+                    reasons.Add($"Trenutno je dostupno {zone.AvailableSpots} od {zone.TotalSpots} mjesta.");
+                }
             }
 
             if (zone.PricePerHour <= 0)
             {
                 score += 5;
+                reasons.Add("Zona ima besplatno parkiranje po satu.");
             }
             else
             {
-                score += Math.Max(0, 5 - ((double)zone.PricePerHour / 2));
+                var priceScore = Math.Max(0, 5 - ((double)zone.PricePerHour / 2));
+                score += priceScore;
+
+                if (priceScore > 0)
+                {
+                    reasons.Add($"Cijena po satu je povoljna ({zone.PricePerHour:0.##}).");
+                }
             }
 
             if (preference?.PrefersNearby == true && referenceZone != null)
@@ -191,10 +236,18 @@ namespace parkify.Service.Services
                     zone.Latitude,
                     zone.Longitude);
 
-                score += Math.Max(0, 15 - distanceKm);
+                var nearbyScore = Math.Max(0, 15 - distanceKm);
+                score += nearbyScore;
+
+                reasons.Add($"Udaljenost od vaše referentne zone je oko {distanceKm:0.##} km.");
             }
 
-            return score;
+            if (!reasons.Any())
+            {
+                reasons.Add("Preporuka je formirana na osnovu opće popularnosti i dostupnosti.");
+            }
+
+            return new RecommendationBreakdown(score, reasons);
         }
 
         private static double CalculateDistanceInKilometers(
@@ -222,6 +275,8 @@ namespace parkify.Service.Services
             return degrees * (Math.PI / 180);
         }
 
-        private sealed record ZoneRecommendationResult(ParkingZone Zone, double Score);
+        private sealed record RecommendationBreakdown(double Score, List<string> Reasons);
+
+        private sealed record ZoneRecommendationResult(ParkingZone Zone, double Score, List<string> Reasons);
     }
 }

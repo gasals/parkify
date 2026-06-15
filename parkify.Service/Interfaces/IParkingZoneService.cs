@@ -8,5 +8,6 @@ namespace parkify.Service.Interfaces
     {
         ParkingZone Delete(int id);
         List<ParkingZone> GetRecommendations(int userId, int count = 5);
+        List<ParkingZoneRecommendation> GetRecommendationsWithExplanation(int userId, int count = 5);
     }
 }
