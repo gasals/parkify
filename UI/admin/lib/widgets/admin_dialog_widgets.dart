@@ -65,7 +65,7 @@ class AdminDialogFooter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Colors.white,
         borderRadius:
             const BorderRadius.vertical(bottom: Radius.circular(20)),
         border: Border(top: BorderSide(color: Colors.grey[200]!)),
@@ -87,6 +87,10 @@ class AdminFormField extends StatelessWidget {
   final int maxLines;
   final bool obscureText;
   final String? hint;
+  final String? Function(String?)? validator;
+  final AutovalidateMode autovalidateMode;
+  final bool enabled;
+  final ValueChanged<String>? onChanged;
 
   const AdminFormField({
     required this.controller,
@@ -96,26 +100,40 @@ class AdminFormField extends StatelessWidget {
     this.maxLines = 1,
     this.obscureText = false,
     this.hint,
+    this.validator,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
+    this.enabled = true,
+    this.onChanged,
     Key? key,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
       obscureText: obscureText,
+      validator: validator,
+      autovalidateMode: autovalidateMode,
+      enabled: enabled,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
+        errorMaxLines: 6,
+        errorStyle: const TextStyle(
+          fontSize: 12,
+          height: 1.25,
+          overflow: TextOverflow.visible,
+        ),
         labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
         hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
         prefixIcon: icon != null
             ? Icon(icon, size: 18, color: Colors.grey[500])
             : null,
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[200]!),
@@ -143,6 +161,8 @@ class AdminDropdownField<T> extends StatelessWidget {
   final List<T> items;
   final String Function(T) labelBuilder;
   final ValueChanged<T?> onChanged;
+  final String? Function(T?)? validator;
+  final AutovalidateMode autovalidateMode;
 
   const AdminDropdownField({
     required this.value,
@@ -151,6 +171,8 @@ class AdminDropdownField<T> extends StatelessWidget {
     required this.items,
     required this.labelBuilder,
     required this.onChanged,
+    this.validator,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
     Key? key,
   }) : super(key: key);
 
@@ -160,11 +182,17 @@ class AdminDropdownField<T> extends StatelessWidget {
       value: value,
       hint: Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
       decoration: InputDecoration(
+        errorMaxLines: 6,
+        errorStyle: const TextStyle(
+          fontSize: 12,
+          height: 1.25,
+          overflow: TextOverflow.visible,
+        ),
         prefixIcon: icon != null
             ? Icon(icon, size: 18, color: Colors.grey[500])
             : null,
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[200]!),
@@ -181,6 +209,8 @@ class AdminDropdownField<T> extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       ),
       isExpanded: true,
+      validator: validator,
+      autovalidateMode: autovalidateMode,
       items: items
           .map((item) => DropdownMenuItem<T>(
                 value: item,

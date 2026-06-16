@@ -157,6 +157,37 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> changeUserPassword({
+    required int userId,
+    required String password,
+    required String passwordConfirm,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await ApiService.changePassword(
+        userId: userId,
+        password: password,
+        passwordConfirm: passwordConfirm,
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      log('Admin UserProvider.changeUserPassword error: $e');
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri promjeni lozinke korisnika.',
+      );
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> toggleUserActive({
     required int userId,
     required bool isActive,

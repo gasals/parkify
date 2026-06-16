@@ -33,6 +33,14 @@ class AdminDesktopApp extends StatelessWidget {
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6366F1)),
+          inputDecorationTheme: const InputDecorationTheme(
+            errorMaxLines: 6,
+            errorStyle: TextStyle(
+              fontSize: 12,
+              height: 1.25,
+              overflow: TextOverflow.visible,
+            ),
+          ),
         ),
         home: _buildHome(),
         debugShowCheckedModeBanner: false,

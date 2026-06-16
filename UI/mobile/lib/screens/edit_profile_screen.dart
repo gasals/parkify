@@ -44,7 +44,9 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
 
   String? _validateEmail(String? v) {
     if (v == null || v.trim().isEmpty) return 'Email je obavezan';
-    if (!_emailRegex.hasMatch(v.trim())) return 'Unesite ispravan email';
+    if (!_emailRegex.hasMatch(v.trim())) {
+      return 'Unesite validan email u formatu: korisnik@domena.tld';
+    }
     return null;
   }
 
@@ -57,7 +59,9 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
 
   String? _validatePhone(String? v) {
     if (v == null || v.trim().isEmpty) return null;
-    if (!_phoneRegex.hasMatch(v.trim())) return 'Unesite ispravan broj telefona';
+    if (!_phoneRegex.hasMatch(v.trim())) {
+      return 'Unesite validan broj telefona (dozvoljeno: +, cifre, razmak i -; 6-20 znakova)';
+    }
     return null;
   }
 

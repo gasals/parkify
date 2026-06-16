@@ -111,28 +111,7 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
           decoration: SearchFieldDecoration.buildInputDecoration(labelText: 'Naziv zone', icon: Icons.map_outlined),
         )),
         const SizedBox(width: 12),
-        // FIX: isti stil kao status dropdown na rezervacijama
-        Expanded(
-          child: DropdownButtonFormField<City>(
-            value: _selectedFilterCity,
-            isExpanded: true,
-            decoration: SearchFieldDecoration.buildInputDecoration(
-              labelText: 'Grad',
-              icon: Icons.location_city,
-            ),
-            items: [
-              const DropdownMenuItem<City>(
-                value: null,
-                child: Text('Svi gradovi', style: TextStyle(color: Colors.grey, fontSize: 13)),
-              ),
-              ..._allCities.map((c) => DropdownMenuItem(
-                value: c,
-                child: Text(c.name, style: const TextStyle(fontSize: 13)),
-              )),
-            ],
-            onChanged: (c) => setState(() => _selectedFilterCity = c),
-          ),
-        ),
+        Expanded(child: _buildCityAutocomplete()),
         const SizedBox(width: 12),
         CommonButtons.buildClearButton(onPressed: _clearSearch),
         const SizedBox(width: 12),
@@ -140,6 +119,40 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
         const SizedBox(width: 12),
         CommonButtons.buildAddButton(onPressed: _showAddZoneDialog, label: 'Dodaj zonu'),
       ]),
+    );
+  }
+
+  Widget _buildCityAutocomplete() {
+    return Autocomplete<City>(
+      optionsBuilder: (val) {
+        if (val.text.isEmpty) return [];
+        return _allCities.where((c) =>
+            c.name.toLowerCase().contains(val.text.toLowerCase()));
+      },
+      onSelected: (c) => setState(() => _selectedFilterCity = c),
+      displayStringForOption: (c) => c.name,
+      fieldViewBuilder: (ctx, fc, fn, oec) => TextField(
+        controller: fc,
+        focusNode: fn,
+        onEditingComplete: oec,
+        onChanged: (v) async {
+          if (v.isEmpty) {
+            setState(() => _selectedFilterCity = null);
+            return;
+          }
+
+          setState(() => _selectedFilterCity = null);
+          final r = await Provider.of<ParkingZoneProvider>(ctx, listen: false)
+              .searchCitiesLive(name: v);
+          if (mounted) {
+            setState(() => _allCities = r);
+          }
+        },
+        decoration: SearchFieldDecoration.buildInputDecoration(
+          labelText: 'Grad',
+          icon: Icons.location_city,
+        ),
+      ),
     );
   }
 
@@ -434,7 +447,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
   String? _reqPrice(String? v) {
     if (v == null || v.trim().isEmpty) return 'Cijena po satu je obavezna';
     final d = double.tryParse(v.trim().replaceAll(',', '.'));
-    if (d == null) return 'Unesite ispravan broj';
+    if (d == null) return 'Unesite decimalni broj u formatu: 2.50';
     if (d <= 0) return 'Cijena mora biti ve\u0107a od 0';
     if (d > 999) return 'Cijena ne smije biti ve\u0107a od 999';
     return null;
@@ -443,7 +456,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
   String? _optDaily(String? v) {
     if (v == null || v.trim().isEmpty) return 'Cijena po danu je obavezna';
     final d = double.tryParse(v.trim().replaceAll(',', '.'));
-    if (d == null) return 'Unesite ispravan broj';
+    if (d == null) return 'Unesite decimalni broj u formatu: 15.00';
     if (d <= 0) return 'Cijena mora biti ve\u0107a od 0';
     if (d > 9999) return 'Cijena ne smije biti ve\u0107a od 9999';
     return null;
@@ -485,7 +498,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(child: _formField(_nameCtrl, 'Naziv zone', Icons.local_parking, validator: _reqName)),
           const SizedBox(width: 12),
           // FIX: isti stil kao status dropdown na rezervacijama
@@ -497,7 +510,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
                 labelText: 'Grad *',
                 labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
                 prefixIcon: Icon(Icons.location_city, size: 18, color: Colors.grey[500]),
-                filled: true, fillColor: Colors.grey[50],
+                filled: true, fillColor: Colors.white,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kPrimary, width: 2)),
@@ -524,7 +537,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
         const SizedBox(height: 12),
         _formField(_descCtrl, 'Opis (opcionalno)', Icons.notes, maxLines: 2, validator: _optDesc),
         const SizedBox(height: 12),
-        Row(children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(child: _formField(_priceCtrl, 'Cijena/sat (KM)', Icons.access_time,
               keyboard: TextInputType.number, validator: _reqPrice)),
           const SizedBox(width: 12),
@@ -600,7 +613,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
         prefixIcon: Icon(icon, size: 18, color: Colors.grey[500]),
-        filled: true, fillColor: Colors.grey[50],
+        filled: true, fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kPrimary, width: 2)),
@@ -769,7 +782,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
   String? _reqPrice(String? v) {
     if (v == null || v.trim().isEmpty) return 'Cijena je obavezna';
     final d = double.tryParse(v.trim().replaceAll(',', '.'));
-    if (d == null) return 'Unesite ispravan broj';
+    if (d == null) return 'Unesite decimalni broj u formatu: 2.50';
     if (d <= 0) return 'Cijena mora biti ve\u0107a od 0';
     return null;
   }
@@ -777,7 +790,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
   String? _optDaily(String? v) {
     if (v == null || v.trim().isEmpty) return 'Cijena po danu je obavezna';
     final d = double.tryParse(v.trim().replaceAll(',', '.'));
-    if (d == null) return 'Unesite ispravan broj';
+    if (d == null) return 'Unesite decimalni broj u formatu: 15.00';
     if (d <= 0) return 'Cijena mora biti ve\u0107a od 0';
     return null;
   }
@@ -795,7 +808,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(children: [
-                Row(children: [
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Expanded(child: _field(_nameCtrl, 'Naziv', Icons.local_parking, validator: _reqName)),
                   const SizedBox(width: 12),
                   Expanded(
@@ -807,7 +820,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
                         labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
                         prefixIcon: Icon(Icons.location_city, size: 18, color: Colors.grey[500]),
                         filled: true,
-                        fillColor: Colors.grey[50],
+                        fillColor: Colors.white,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kPrimary, width: 2)),
@@ -824,7 +837,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
                 const SizedBox(height: 12),
                 _field(_addrCtrl, 'Adresa', Icons.pin_drop_outlined, validator: _reqAddr),
                 const SizedBox(height: 12),
-                Row(children: [
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Expanded(child: _field(_priceCtrl, 'Cijena/sat (KM)', Icons.access_time,
                       keyboard: TextInputType.number, validator: _reqPrice)),
                   const SizedBox(width: 12),
@@ -912,7 +925,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
         prefixIcon: Icon(icon, size: 18, color: Colors.grey[500]),
-        filled: true, fillColor: Colors.grey[50],
+        filled: true, fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kPrimary, width: 2)),
@@ -1102,7 +1115,7 @@ class _SpotsGridDialog extends StatelessWidget {
     String? reqInt(String? v, String label) {
       if (v == null || v.trim().isEmpty) return '$label je obavezan';
       final n = int.tryParse(v.trim());
-      if (n == null) return 'Unesite cijeli broj';
+      if (n == null) return 'Unesite cijeli broj u formatu: 1';
       if (n < 1) return '$label mora biti najmanje 1';
       if (n > 50) return '$label ne smije biti ve\u0107i od 50';
       return null;
@@ -1185,7 +1198,7 @@ class _SpotsGridDialog extends StatelessWidget {
     String? reqInt(String? v, String label) {
       if (v == null || v.trim().isEmpty) return '$label je obavezan';
       final n = int.tryParse(v.trim());
-      if (n == null) return 'Unesite cijeli broj';
+      if (n == null) return 'Unesite cijeli broj u formatu: 1';
       if (n < 1) return '$label mora biti najmanje 1';
       if (n > 50) return '$label ne smije biti ve\u0107i od 50';
       return null;
@@ -1260,7 +1273,7 @@ class _SpotsGridDialog extends StatelessWidget {
     labelText: label,
     labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
     prefixIcon: Icon(icon, size: 18, color: Colors.grey[500]),
-    filled: true, fillColor: Colors.grey[50],
+    filled: true, fillColor: Colors.white,
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kPrimary, width: 2)),

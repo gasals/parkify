@@ -230,6 +230,7 @@ class _CityDialog extends StatefulWidget {
 }
 
 class _CityDialogState extends State<_CityDialog> {
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _latitudeController;
   late final TextEditingController _longitudeController;
@@ -263,15 +264,54 @@ class _CityDialogState extends State<_CityDialog> {
     super.dispose();
   }
 
-  Future<void> _save() async {
-    final name = _nameController.text.trim();
-    final latitude = double.tryParse(_latitudeController.text.trim());
-    final longitude = double.tryParse(_longitudeController.text.trim());
+  String? _validateName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Naziv grada je obavezan';
+    }
+    if (value.trim().length < 2 || value.trim().length > 80) {
+      return 'Naziv grada mora imati 2-80 znakova';
+    }
+    return null;
+  }
 
-    if (name.length < 2 || latitude == null || longitude == null) {
-      SnackBarHelper.showError(context, 'Unesite validan naziv i koordinate grada.');
+  String? _validateLatitude(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Latitude je obavezan';
+    }
+    final latitude = double.tryParse(value.trim().replaceAll(',', '.'));
+    if (latitude == null) {
+      return 'Unesite validan decimalni broj za latitude (format: 43.8563)';
+    }
+    if (latitude < -90 || latitude > 90) {
+      return 'Latitude mora biti u rasponu od -90 do 90';
+    }
+    return null;
+  }
+
+  String? _validateLongitude(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Longitude je obavezan';
+    }
+    final longitude = double.tryParse(value.trim().replaceAll(',', '.'));
+    if (longitude == null) {
+      return 'Unesite validan decimalni broj za longitude (format: 18.4131)';
+    }
+    if (longitude < -180 || longitude > 180) {
+      return 'Longitude mora biti u rasponu od -180 do 180';
+    }
+    return null;
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    final name = _nameController.text.trim();
+    final latitude =
+        double.parse(_latitudeController.text.trim().replaceAll(',', '.'));
+    final longitude =
+        double.parse(_longitudeController.text.trim().replaceAll(',', '.'));
 
     setState(() => _isSaving = true);
     final provider = context.read<CityProvider>();
@@ -322,12 +362,16 @@ class _CityDialogState extends State<_CityDialog> {
             ),
             Padding(
               padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
                   AdminFormField(
                     controller: _nameController,
                     label: 'Naziv grada',
                     icon: Icons.location_city_outlined,
+                    validator: _validateName,
+                    enabled: !_isSaving,
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -338,6 +382,8 @@ class _CityDialogState extends State<_CityDialog> {
                           label: 'Latitude',
                           icon: Icons.my_location_outlined,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: _validateLatitude,
+                          enabled: !_isSaving,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -347,6 +393,8 @@ class _CityDialogState extends State<_CityDialog> {
                           label: 'Longitude',
                           icon: Icons.explore_outlined,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: _validateLongitude,
+                          enabled: !_isSaving,
                         ),
                       ),
                     ],
@@ -399,7 +447,8 @@ class _CityDialogState extends State<_CityDialog> {
                       ),
                     ],
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
             AdminDialogFooter(

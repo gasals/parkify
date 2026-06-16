@@ -543,7 +543,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                 '${reservation.reservationStart.year}'),
             _infoRow(Icons.access_time, 'Vrijeme',
                 '${reservation.reservationStart.hour.toString().padLeft(2, '0')}:'
-                '${reservation.reservationStart.minute.toString().padLeft(2, '0')}'),
+              '${reservation.reservationStart.minute.toString().padLeft(2, '0')}'
+              ' - '
+              '${reservation.reservationEnd.hour.toString().padLeft(2, '0')}:'
+              '${reservation.reservationEnd.minute.toString().padLeft(2, '0')}'),
             _infoRow(Icons.monetization_on, 'Cijena',
                 '${reservation.finalPrice} BAM'),
             const Spacer(),

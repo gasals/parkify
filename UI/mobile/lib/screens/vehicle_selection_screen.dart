@@ -173,10 +173,6 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
   late VehicleCategory _category;
   bool _isLoading = false;
 
-  static final _plateRegex = RegExp(
-    r'^[A-ZČĆŠĐŽ0-9]{1,3}[\s\-]?[A-ZČĆŠĐŽ0-9]{1,3}[\s\-]?[A-ZČĆŠĐŽ0-9]{1,4}$',
-    caseSensitive: false,
-  );
   static final _modelRegex = RegExp(r'^[A-Za-z0-9\s\-\.]{2,50}$');
 
   @override
@@ -200,10 +196,10 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
     if (v == null || v.trim().isEmpty) return 'Registracija je obavezna';
     final clean = v.trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
     if (clean.length < 4 || clean.length > 8) {
-      return 'Registracija mora imati između 4 i 8 znakova';
+      return 'Registracija mora imati 4-8 znakova (primjer: A00K000)';
     }
     if (!RegExp(r'^[A-Z0-9]+$').hasMatch(clean)) {
-      return 'Registracija smije sadržavati samo slova i brojeve';
+      return 'Registracija smije sadržavati samo velika slova A-Z i brojeve 0-9';
     }
     return null;
   }
@@ -213,7 +209,7 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
     if (v.trim().length < 2) return 'Model mora imati najmanje 2 znaka';
     if (v.trim().length > 50) return 'Model ne smije imati više od 50 znakova';
     if (!_modelRegex.hasMatch(v.trim())) {
-      return 'Model sadrži nedozvoljene znakove';
+      return 'Model smije sadržavati slova, brojeve, razmak i crticu';
     }
     return null;
   }

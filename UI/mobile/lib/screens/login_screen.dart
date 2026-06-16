@@ -10,9 +10,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   bool _obscurePassword = true;
+
+  static final _usernameRegex = RegExp(r'^[A-Za-z0-9_\.]{3,30}$');
 
   @override
   void dispose() {
@@ -22,16 +25,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login(BuildContext context) async {
-    if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppStrings.fillAllFields)));
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final success = await authProvider.login(
-      usernameController.text,
+      usernameController.text.trim(),
       passwordController.text,
     );
 
@@ -71,57 +71,67 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 48),
 
-                    TextField(
-                      controller: usernameController,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.username,
-                        prefixIcon: Icon(
-                          Icons.person,
-                          color: AppColors.primary,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: AppColors.primary,
-                            width: 2,
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: usernameController,
+                            validator: _validateUsername,
+                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            decoration: InputDecoration(
+                              labelText: AppStrings.username,
+                              prefixIcon: Icon(
+                                Icons.person,
+                                color: AppColors.primary,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: AppColors.primary,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-
-                    TextField(
-                      controller: passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.password,
-                        prefixIcon: Icon(Icons.lock, color: AppColors.primary),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: AppColors.primary,
+                          SizedBox(height: 16),
+                          TextFormField(
+                            controller: passwordController,
+                            obscureText: _obscurePassword,
+                            validator: _validatePassword,
+                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            decoration: InputDecoration(
+                              labelText: AppStrings.password,
+                              prefixIcon: Icon(Icons.lock, color: AppColors.primary),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: AppColors.primary,
+                                ),
+                                onPressed: () {
+                                  setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  );
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: AppColors.primary,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
                           ),
-                          onPressed: () {
-                            setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            );
-                          },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: AppColors.primary,
-                            width: 2,
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                     SizedBox(height: 24),
@@ -175,5 +185,22 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       ),
     );
+  }
+
+  String? _validateUsername(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Korisničko ime je obavezno';
+    }
+    if (!_usernameRegex.hasMatch(value.trim())) {
+      return 'Unesite korisničko ime u formatu: 3-30 znakova (slova, brojevi, _ ili .)';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Lozinka je obavezna';
+    }
+    return null;
   }
 }

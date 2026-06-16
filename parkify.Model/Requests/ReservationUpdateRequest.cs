@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace parkify.Model.Requests
 {
     public class ReservationUpdateRequest
     {
+        [Range(1, 6, ErrorMessage = "Status mora biti između 1 i 6.")]
         public int? Status { get; set; }
         public bool? IsCheckedIn { get; set; }
         public bool? IsCheckedOut { get; set; }

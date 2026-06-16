@@ -253,7 +253,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   firstName: request.firstName, lastName: request.lastName,
                   address: request.address, city: request.city,
                 );
-                if (mounted) AdminSnackBar.show(context, 'Korisnik je kreiran', ok);
+                if (mounted) {
+                  AdminSnackBar.show(
+                    context,
+                    'Korisnik je uspješno kreiran.',
+                    ok,
+                  );
+                }
               },
             ));
   }
@@ -300,16 +306,18 @@ class _AddUserDialogState extends State<_AddUserDialog> {
 
   String? _reqEmail(String? v) {
     if (v == null || v.trim().isEmpty) return 'Email je obavezan';
-    if (!_emailRegex.hasMatch(v.trim())) return 'Unesite ispravan email';
+    if (!_emailRegex.hasMatch(v.trim())) {
+      return 'Unesite validan email u formatu: korisnik@domena.tld';
+    }
     return null;
   }
 
   String? _reqPassword(String? v) {
     if (v == null || v.isEmpty) return 'Lozinka je obavezna';
-    if (v.length < 8) return 'Najmanje 8 znakova';
-    if (!_upperCase.hasMatch(v)) return 'Najmanje jedno veliko slovo';
-    if (!_digit.hasMatch(v)) return 'Najmanje jedan broj';
-    if (!_specialChar.hasMatch(v)) return 'Najmanje jedan poseban znak';
+    if (v.length < 8) return 'Lozinka mora imati najmanje 8 znakova';
+    if (!_upperCase.hasMatch(v)) return 'Lozinka mora imati najmanje jedno veliko slovo (A-Z)';
+    if (!_digit.hasMatch(v)) return 'Lozinka mora imati najmanje jedan broj (0-9)';
+    if (!_specialChar.hasMatch(v)) return 'Lozinka mora imati najmanje jedan poseban znak (npr. !@#)';
     return null;
   }
 
@@ -321,7 +329,9 @@ class _AddUserDialogState extends State<_AddUserDialog> {
 
   String? _reqName(String? v, String label) {
     if (v == null || v.trim().isEmpty) return '$label je obavezno';
-    if (!_nameRegex.hasMatch(v.trim())) return '$label sadrži nedozvoljene znakove (2–50 znakova)';
+    if (!_nameRegex.hasMatch(v.trim())) {
+      return '$label smije sadržavati samo slova, razmak, apostrof i crticu (2-50 znakova)';
+    }
     return null;
   }
 
@@ -349,26 +359,26 @@ class _AddUserDialogState extends State<_AddUserDialog> {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(children: [
-                    Row(children: [
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Expanded(child: _field('username', 'Korisničko ime', Icons.alternate_email, validator: _reqUsername)),
                       const SizedBox(width: 12),
                       Expanded(child: _field('email', 'Email', Icons.email_outlined, keyboard: TextInputType.emailAddress, validator: _reqEmail)),
                     ]),
                     const SizedBox(height: 12),
-                    Row(children: [
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Expanded(child: _field('password', 'Lozinka', Icons.lock_outline, obscure: true, validator: _reqPassword,
                           onChange: (_) { if (_c['passwordConfirm']!.text.isNotEmpty) _formKey.currentState?.validate(); })),
                       const SizedBox(width: 12),
                       Expanded(child: _field('passwordConfirm', 'Potvrdi lozinku', Icons.lock_outline, obscure: true, validator: _reqConfirm)),
                     ]),
                     const SizedBox(height: 12),
-                    Row(children: [
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Expanded(child: _field('firstName', 'Ime', Icons.person_outline, validator: (v) => _reqName(v, 'Ime'))),
                       const SizedBox(width: 12),
                       Expanded(child: _field('lastName', 'Prezime', Icons.person_outline, validator: (v) => _reqName(v, 'Prezime'))),
                     ]),
                     const SizedBox(height: 12),
-                    Row(children: [
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Expanded(child: _field('address', 'Adresa (opcionalno)', Icons.location_on_outlined)),
                       const SizedBox(width: 12),
                       Expanded(child: _field('city', 'Grad (opcionalno)', Icons.location_city, validator: _optCity)),
@@ -412,10 +422,16 @@ class _AddUserDialogState extends State<_AddUserDialog> {
       onChanged: onChange,
       decoration: InputDecoration(
         labelText: label,
+        errorMaxLines: 6,
+        errorStyle: const TextStyle(
+          fontSize: 12,
+          height: 1.25,
+          overflow: TextOverflow.visible,
+        ),
         labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
         prefixIcon: Icon(icon, size: 18, color: Colors.grey[500]),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kPrimary, width: 2)),
@@ -464,33 +480,62 @@ class _EditUserDialogState extends State<_EditUserDialog> {
   late final _lastCtrl  = TextEditingController(text: widget.user.lastName ?? '');
   late final _addrCtrl  = TextEditingController(text: widget.user.address ?? '');
   late final _cityCtrl  = TextEditingController(text: widget.user.city ?? '');
+  final _newPasswordCtrl = TextEditingController();
+  final _newPasswordConfirmCtrl = TextEditingController();
   bool _isLoading = false;
+  bool _changePassword = false;
 
   static final _emailRegex = RegExp(r'^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$');
   static final _nameRegex  = RegExp(r"^[A-Za-zÀ-žA-Ža-ž\s'\-]{2,50}$");
+  static final _upperCase  = RegExp(r'[A-Z]');
+  static final _digit      = RegExp(r'\d');
+  static final _specialChar = RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]');
 
   @override
   void dispose() {
     _emailCtrl.dispose(); _firstCtrl.dispose(); _lastCtrl.dispose();
     _addrCtrl.dispose(); _cityCtrl.dispose();
+    _newPasswordCtrl.dispose();
+    _newPasswordConfirmCtrl.dispose();
     super.dispose();
   }
 
   String? _reqEmail(String? v) {
     if (v == null || v.trim().isEmpty) return 'Email je obavezan';
-    if (!_emailRegex.hasMatch(v.trim())) return 'Unesite ispravan email';
+    if (!_emailRegex.hasMatch(v.trim())) {
+      return 'Unesite validan email u formatu: korisnik@domena.tld';
+    }
     return null;
   }
 
   String? _reqName(String? v, String label) {
     if (v == null || v.trim().isEmpty) return '$label je obavezno';
-    if (!_nameRegex.hasMatch(v.trim())) return '$label sadrži nedozvoljene znakove';
+    if (!_nameRegex.hasMatch(v.trim())) {
+      return '$label smije sadržavati samo slova, razmak, apostrof i crticu (2-50 znakova)';
+    }
     return null;
   }
 
   String? _optCity(String? v) {
     if (v == null || v.trim().isEmpty) return null;
     if (v.trim().length < 2) return 'Naziv grada mora imati najmanje 2 znaka';
+    return null;
+  }
+
+  String? _optionalPassword(String? v) {
+    if (!_changePassword) return null;
+    if (v == null || v.isEmpty) return 'Unesite novu lozinku';
+    if (v.length < 8) return 'Lozinka mora imati najmanje 8 znakova';
+    if (!_upperCase.hasMatch(v)) return 'Lozinka mora imati najmanje jedno veliko slovo (A-Z)';
+    if (!_digit.hasMatch(v)) return 'Lozinka mora imati najmanje jedan broj (0-9)';
+    if (!_specialChar.hasMatch(v)) return 'Lozinka mora imati najmanje jedan poseban znak (npr. !@#)';
+    return null;
+  }
+
+  String? _optionalPasswordConfirm(String? v) {
+    if (!_changePassword) return null;
+    if (v == null || v.isEmpty) return 'Potvrdite novu lozinku';
+    if (v != _newPasswordCtrl.text) return 'Potvrda lozinke mora biti identična novoj lozinci';
     return null;
   }
 
@@ -514,7 +559,7 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                       keyboard: TextInputType.emailAddress,
                       validator: _reqEmail),
                   const SizedBox(height: 12),
-                  Row(children: [
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Expanded(child: _formField(_firstCtrl, 'Ime', Icons.person_outline,
                         validator: (v) => _reqName(v, 'Ime'))),
                     const SizedBox(width: 12),
@@ -522,12 +567,60 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                         validator: (v) => _reqName(v, 'Prezime'))),
                   ]),
                   const SizedBox(height: 12),
-                  Row(children: [
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Expanded(child: _formField(_addrCtrl, 'Adresa', Icons.location_on_outlined)),
                     const SizedBox(width: 12),
                     Expanded(child: _formField(_cityCtrl, 'Grad', Icons.location_city,
                         validator: _optCity)),
                   ]),
+                  const SizedBox(height: 12),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _changePassword,
+                    title: const Text('Izmijeni lozinku'),
+                    subtitle: const Text(
+                      'Ako nije označeno, lozinka ostaje nepromijenjena.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    onChanged: _isLoading
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _changePassword = value ?? false;
+                              if (!_changePassword) {
+                                _newPasswordCtrl.clear();
+                                _newPasswordConfirmCtrl.clear();
+                              }
+                            });
+                          },
+                  ),
+                  if (_changePassword) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _formField(
+                            _newPasswordCtrl,
+                            'Nova lozinka',
+                            Icons.lock_outline,
+                            obscure: true,
+                            validator: _optionalPassword,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _formField(
+                            _newPasswordConfirmCtrl,
+                            'Potvrda nove lozinke',
+                            Icons.lock_outline,
+                            obscure: true,
+                            validator: _optionalPasswordConfirm,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ]),
               ),
               AdminDialogFooter(children: [
@@ -552,20 +645,28 @@ class _EditUserDialogState extends State<_EditUserDialog> {
     String label,
     IconData icon, {
     TextInputType keyboard = TextInputType.text,
+    bool obscure = false,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: ctrl,
       keyboardType: keyboard,
+      obscureText: obscure,
       enabled: !_isLoading,
       validator: validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: label,
+        errorMaxLines: 6,
+        errorStyle: const TextStyle(
+          fontSize: 12,
+          height: 1.25,
+          overflow: TextOverflow.visible,
+        ),
         labelStyle: TextStyle(color: Colors.grey[600], fontSize: 13),
         prefixIcon: Icon(icon, size: 18, color: Colors.grey[500]),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kPrimary, width: 2)),
@@ -579,7 +680,7 @@ class _EditUserDialogState extends State<_EditUserDialog> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    final ok = await widget.provider.updateUser(
+    final updated = await widget.provider.updateUser(
       userId: widget.user.id,
       email: _emailCtrl.text.trim(),
       firstName: _firstCtrl.text.trim(),
@@ -587,9 +688,25 @@ class _EditUserDialogState extends State<_EditUserDialog> {
       address: _addrCtrl.text.trim(),
       city: _cityCtrl.text.trim(),
     );
+
+    var changedPassword = false;
+    var passwordUpdated = true;
+    if (updated && _changePassword) {
+      changedPassword = true;
+      passwordUpdated = await widget.provider.changeUserPassword(
+        userId: widget.user.id,
+        password: _newPasswordCtrl.text,
+        passwordConfirm: _newPasswordConfirmCtrl.text,
+      );
+    }
+
+    final ok = updated && passwordUpdated;
     if (mounted) {
       setState(() => _isLoading = false);
-      AdminSnackBar.show(context, 'Korisnik je ažuriran', ok);
+      final successMessage = changedPassword
+          ? 'Korisnik je ažuriran i lozinka je uspješno promijenjena.'
+          : 'Korisnik je uspješno ažuriran.';
+      AdminSnackBar.show(context, successMessage, ok);
       if (ok) Navigator.pop(context);
     }
   }

@@ -10,9 +10,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
   bool _showPassword = false;
+
+  static final _usernameRegex = RegExp(r'^[A-Za-z0-9_\.]{3,30}$');
 
   @override
   void initState() {
@@ -46,9 +49,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               Container(
                 width: 60,
                 height: 60,
@@ -75,8 +80,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 32),
 
-              TextField(
+              TextFormField(
                 controller: _usernameController,
+                validator: _validateUsername,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 decoration: InputDecoration(
                   labelText: 'Korisničko ime',
                   prefixIcon: const Icon(Icons.person),
@@ -91,9 +98,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
 
-              TextField(
+              TextFormField(
                 controller: _passwordController,
                 obscureText: !_showPassword,
+                validator: _validatePassword,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 decoration: InputDecoration(
                   labelText: 'Lozinka',
                   prefixIcon: const Icon(Icons.lock),
@@ -172,17 +181,39 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 },
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  String? _validateUsername(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Korisničko ime je obavezno';
+    }
+    if (!_usernameRegex.hasMatch(value.trim())) {
+      return 'Unesite korisničko ime u formatu: 3-30 znakova (slova, brojevi, _ ili .)';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Lozinka je obavezna';
+    }
+    return null;
+  }
+
   Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     final authProvider = context.read<AuthProvider>();
     await authProvider.adminLogin(
-      _usernameController.text,
+      _usernameController.text.trim(),
       _passwordController.text,
     );
   }

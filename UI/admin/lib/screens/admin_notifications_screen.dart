@@ -471,6 +471,7 @@ class _SendNotificationDialog extends StatefulWidget {
 
 class _SendNotificationDialogState
     extends State<_SendNotificationDialog> {
+  final _formKey = GlobalKey<FormState>();
   final _titleCtrl   = TextEditingController();
   final _messageCtrl = TextEditingController();
 
@@ -522,9 +523,11 @@ class _SendNotificationDialogState
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     if (!widget.toAll) ...[
                       _label('Korisnik'),
                       const SizedBox(height: 8),
@@ -536,7 +539,9 @@ class _SendNotificationDialogState
                     AdminFormField(
                         controller: _titleCtrl,
                         label: 'Naslov notifikacije',
-                        icon: Icons.title),
+                      icon: Icons.title,
+                      enabled: !_isLoading,
+                      validator: _validateTitle),
                     const SizedBox(height: 20),
                     _label('Poruka'),
                     const SizedBox(height: 8),
@@ -544,7 +549,9 @@ class _SendNotificationDialogState
                         controller: _messageCtrl,
                         label: 'Tekst poruke',
                         icon: Icons.message_outlined,
-                        maxLines: 4),
+                      maxLines: 4,
+                      enabled: !_isLoading,
+                      validator: _validateMessage),
                     const SizedBox(height: 20),
                     _label('Tip notifikacije'),
                     const SizedBox(height: 8),
@@ -557,7 +564,8 @@ class _SendNotificationDialogState
                       const SizedBox(height: 12),
                       _buildEmailNote(),
                     ],
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -591,6 +599,14 @@ class _SendNotificationDialogState
         label: 'Odaberi korisnika',
         icon: Icons.person_outline,
         items: provider.users.map((u) => u.id).toList(),
+        validator: widget.toAll
+            ? null
+            : (value) {
+                if (value == null) {
+                  return 'Odaberite korisnika kojem šaljete notifikaciju';
+                }
+                return null;
+              },
         labelBuilder: (id) {
           final u = provider.users.firstWhere((u) => u.id == id);
           return '${u.firstName ?? ''} ${u.lastName ?? ''} · ${u.email}';
@@ -598,6 +614,26 @@ class _SendNotificationDialogState
         onChanged: (v) => setState(() => _selectedUserId = v),
       ),
     );
+  }
+
+  String? _validateTitle(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Naslov je obavezan';
+    }
+    if (value.trim().length < 3 || value.trim().length > 120) {
+      return 'Naslov mora imati 3-120 znakova';
+    }
+    return null;
+  }
+
+  String? _validateMessage(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Poruka je obavezna';
+    }
+    if (value.trim().length < 5 || value.trim().length > 1000) {
+      return 'Poruka mora imati 5-1000 znakova';
+    }
+    return null;
   }
 
   Widget _buildTypeGrid() {
@@ -672,9 +708,9 @@ class _SendNotificationDialogState
   }
 
   Future<void> _submit() async {
-    if (_titleCtrl.text.trim().isEmpty) { AdminSnackBar.error(context, 'Naslov je obavezan.'); return; }
-    if (_messageCtrl.text.trim().isEmpty) { AdminSnackBar.error(context, 'Poruka je obavezna.'); return; }
-    if (!widget.toAll && _selectedUserId == null) { AdminSnackBar.error(context, 'Odaberi korisnika.'); return; }
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     setState(() => _isLoading = true);
     final provider = Provider.of<NotificationProvider>(context, listen: false);

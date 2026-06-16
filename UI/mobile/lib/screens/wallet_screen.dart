@@ -291,13 +291,29 @@ class _WalletFormSheetState extends State<WalletFormSheet> {
                   ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Unesite iznos';
-                  if (double.tryParse(value) == null ||
-                      double.parse(value) <= 0) {
-                    return 'Unesite validan iznos';
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Iznos je obavezan';
+                  }
+
+                  final normalized = value.trim().replaceAll(',', '.');
+                  final formatRegex = RegExp(r'^\d+(\.\d{1,2})?$');
+                  if (!formatRegex.hasMatch(normalized)) {
+                    return 'Unesite iznos u formatu: 10 ili 10.50';
+                  }
+
+                  final amount = double.tryParse(normalized);
+                  if (amount == null) {
+                    return 'Unesite validan decimalni broj u formatu: 10 ili 10.50';
+                  }
+                  if (amount <= 0) {
+                    return 'Iznos mora biti veći od 0 KM';
+                  }
+                  if (amount > 10000) {
+                    return 'Maksimalni iznos po uplati je 10,000.00 KM';
                   }
                   return null;
                 },
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 enabled: !_isLoading,
               ),
               const SizedBox(height: 24),

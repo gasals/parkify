@@ -35,6 +35,12 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide(color: AppColors.error),
       ),
+      errorMaxLines: 6,
+      errorStyle: TextStyle(
+        fontSize: 12,
+        height: 1.25,
+        overflow: TextOverflow.visible,
+      ),
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(

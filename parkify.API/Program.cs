@@ -1,5 +1,6 @@
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using parkify.API.Filters;
@@ -27,6 +28,30 @@ builder.Services.AddSingleton<ITokenRevocationService, TokenRevocationService>()
 builder.Services.AddControllers(x =>
 {
     x.Filters.Add<ExceptionFilter>();
+})
+.ConfigureApiBehaviorOptions(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("ModelValidation");
+
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors.Select(error => error.ErrorMessage));
+
+        logger.LogWarning(
+            "Nevalidan request. Method: {Method}, Path: {Path}, Query: {Query}, Errors: {@Errors}",
+            context.HttpContext.Request.Method,
+            context.HttpContext.Request.Path,
+            context.HttpContext.Request.QueryString.Value,
+            errors);
+
+        return new BadRequestObjectResult(new { errors });
+    };
 });
 
 builder.Services.AddSwaggerGen(c =>
