@@ -7,6 +7,7 @@ using parkify.RabbitMQ;
 using parkify.RabbitMQ.Models;
 using parkify.Service.Interfaces;
 using Stripe;
+using Microsoft.Extensions.Configuration;
 
 namespace parkify.Service.Services
 {
@@ -15,14 +16,49 @@ namespace parkify.Service.Services
           IPaymentService
     {
         private readonly IMessagePublisher _publisher;
+        private readonly IConfiguration _configuration;
 
         public PaymentService(
             Database.ParkifyContext context,
             IMapper mapper,
-            IMessagePublisher publisher)
+            IMessagePublisher publisher,
+            IConfiguration configuration)
             : base(context, mapper)
         {
             _publisher = publisher;
+            _configuration = configuration;
+            StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
+        }
+
+        public async Task<PaymentIntentCreateResponse> CreatePaymentWithIntent(PaymentInsertRequest request)
+        {
+            var options = new PaymentIntentCreateOptions
+            {
+                Amount = (long)(request.Amount * 100),
+                Currency = "bam",
+                PaymentMethodTypes = new List<string> { "card" },
+                Metadata = new Dictionary<string, string>
+                {
+                    { "reservationId", request.ReservationId?.ToString() ?? string.Empty },
+                    { "userId", request.UserId.ToString() }
+                }
+            };
+
+            var intentService = new PaymentIntentService();
+            var paymentIntent = await intentService.CreateAsync(options);
+
+            request.StripePaymentIntentId = paymentIntent.Id;
+            var payment = Insert(request);
+
+            return new PaymentIntentCreateResponse
+            {
+                Id = payment.Id,
+                PaymentCode = payment.PaymentCode,
+                ClientSecret = paymentIntent.ClientSecret ?? string.Empty,
+                StripePaymentIntentId = payment.StripePaymentIntentId,
+                Amount = payment.Amount,
+                Status = (int)payment.Status
+            };
         }
 
         public override IQueryable<Database.Payment> AddFilter(PaymentSearch search, IQueryable<Database.Payment> query)
@@ -131,7 +167,9 @@ namespace parkify.Service.Services
                 if (reservation != null)
                 {
                     reservation.PaymentAmountPaid = payment.Amount;
-                    reservation.Status = Database.ReservationStatus.Confirmed;
+                    reservation.Status = reservation.ReservationStart <= DateTime.UtcNow.AddMinutes(10)
+                        ? Database.ReservationStatus.Confirmed
+                        : Database.ReservationStatus.Pending;
 
                     var parkingZone = Context.ParkingZones.Find(reservation.ParkingZoneId);
                     if (parkingZone != null && parkingZone.AvailableSpots > 0)
@@ -151,7 +189,7 @@ namespace parkify.Service.Services
                         UserId = payment.UserId,
                         Title = "Plaćanje uspješno",
                         Message = $"Vaše plaćanje od {payment.Amount:F2} KM je uspješno obrađeno. " +
-                                  $"Rezervacija je potvrđena. Kod: {reservation.ReservationCode}",
+                                  $"Rezervacija je kreirana. Kod: {reservation.ReservationCode}",
                         Type = (int)Database.NotificationType.PaymentSuccessful,
                         Channel = NotificationChannel.Both,
                         ReservationId = reservation.Id

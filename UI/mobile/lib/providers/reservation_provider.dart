@@ -53,9 +53,9 @@ class ReservationProvider extends ChangeNotifier {
         page: page,
       );
 
-        final newReservations = result.results;
+      final newReservations = result.results;
 
-        _totalCount = result.count;
+      _totalCount = result.count;
 
       if (page == 1) {
         _reservations = newReservations;
@@ -87,6 +87,26 @@ class ReservationProvider extends ChangeNotifier {
     } catch (e) {
       log('ReservationProvider.cancelReservation error: $e');
       _errorMessage = 'Došlo je do greške pri otkazivanju rezervacije.';
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> confirmReservation(int reservationId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await ApiService.confirmReservation(reservationId);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      log('ReservationProvider.confirmReservation error: $e');
+      _errorMessage = 'Došlo je do greške pri potvrdi rezervacije.';
       notifyListeners();
       return false;
     } finally {

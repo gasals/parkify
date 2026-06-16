@@ -15,37 +15,51 @@ class ReviewsScreen extends StatefulWidget {
 }
 
 class _ReviewsScreenState extends State<ReviewsScreen> {
+  bool _hasChanges = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ReviewProvider>(context, listen: false)
-          .getZoneReviews(parkingZoneId: widget.parkingZone.id);
+      Provider.of<ReviewProvider>(
+        context,
+        listen: false,
+      ).getZoneReviews(parkingZoneId: widget.parkingZone.id);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.parkingZone.name} - Ocjene'),
-        backgroundColor: AppColors.primary,
-      ),
-      body: Consumer<ReviewProvider>(
-        builder: (context, reviewProvider, _) {
-          return Column(
-            children: [
-              _buildRatingHeader(reviewProvider),
-              Expanded(child: _buildReviewsList(reviewProvider)),
-            ],
-          );
-        },
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(_hasChanges);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(_hasChanges),
+          ),
+          title: Text('${widget.parkingZone.name} - Ocjene'),
+          backgroundColor: AppColors.primary,
+        ),
+        body: Consumer<ReviewProvider>(
+          builder: (context, reviewProvider, _) {
+            return Column(
+              children: [
+                _buildRatingHeader(reviewProvider),
+                Expanded(child: _buildReviewsList(reviewProvider)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
   Widget _buildRatingHeader(ReviewProvider reviewProvider) {
-    final avgRating  = reviewProvider.averageRating;
+    final avgRating = reviewProvider.averageRating;
     final reviewCount = reviewProvider.reviewCount;
     final hasUserReview = reviewProvider.userReview != null;
 
@@ -74,7 +88,9 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                       Text(
                         avgRating.toStringAsFixed(1),
                         style: const TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -82,7 +98,9 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                   Text(
                     '$reviewCount ocjena',
                     style: TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary),
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -91,7 +109,8 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                 icon: Icon(hasUserReview ? Icons.edit : Icons.add, size: 18),
                 label: Text(hasUserReview ? 'Izmijeni' : 'Napiši'),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary),
+                  backgroundColor: AppColors.primary,
+                ),
               ),
             ],
           ),
@@ -109,12 +128,17 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Tvoja ocjena',
-                          style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Tvoja ocjena',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       _buildRatingStars(
-                          reviewProvider.userReview!.rating.toDouble()),
+                        reviewProvider.userReview!.rating.toDouble(),
+                      ),
                     ],
                   ),
                 ],
@@ -135,16 +159,21 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.rate_review_outlined,
-                size: 64, color: AppColors.textTertiary),
+            Icon(
+              Icons.rate_review_outlined,
+              size: 64,
+              color: AppColors.textTertiary,
+            ),
             const SizedBox(height: 16),
-            Text('Nema ocjena',
-                style:
-                    TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+            Text(
+              'Nema ocjena',
+              style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 8),
-            Text('Budi prvi da ocijeniš ovaj parking',
-                style:
-                    TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+            Text(
+              'Budi prvi da ocijeniš ovaj parking',
+              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            ),
           ],
         ),
       );
@@ -160,7 +189,10 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   }
 
   Widget _buildReviewCard(
-      BuildContext context, Review review, ReviewProvider reviewProvider) {
+    BuildContext context,
+    Review review,
+    ReviewProvider reviewProvider,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 1,
@@ -179,13 +211,18 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                       Text(
                         review.author?.firstName ?? 'Anoniman',
                         style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text(review.formattedDate,
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary)),
+                      Text(
+                        review.formattedDate,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -195,18 +232,18 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             Row(
               children: List.generate(
                 5,
-                (i) => Icon(Icons.star,
-                    size: 16,
-                    color: i < review.rating
-                        ? Colors.amber
-                        : AppColors.textTertiary),
+                (i) => Icon(
+                  Icons.star,
+                  size: 16,
+                  color: i < review.rating
+                      ? Colors.amber
+                      : AppColors.textTertiary,
+                ),
               ),
             ),
-            if (review.reviewText != null &&
-                review.reviewText!.isNotEmpty) ...[
+            if (review.reviewText != null && review.reviewText!.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(review.reviewText!,
-                  style: const TextStyle(fontSize: 13)),
+              Text(review.reviewText!, style: const TextStyle(fontSize: 13)),
             ],
           ],
         ),
@@ -218,23 +255,30 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     return Row(
       children: List.generate(5, (index) {
         final fill = (rating - index).clamp(0.0, 1.0);
-        return Icon(Icons.star,
-            size: 18,
-            color: fill > 0.5
-                ? Colors.amber
-                : fill > 0
-                    ? Colors.amber.withOpacity(0.5)
-                    : AppColors.textTertiary);
+        return Icon(
+          Icons.star,
+          size: 18,
+          color: fill > 0.5
+              ? Colors.amber
+              : fill > 0
+              ? Colors.amber.withOpacity(0.5)
+              : AppColors.textTertiary,
+        );
       }),
     );
   }
 
-  void _showAddReviewDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showAddReviewDialog(BuildContext context) async {
+    final wasSaved = await showDialog<bool>(
       context: context,
-      builder: (_) =>
-          _AddReviewDialog(parkingZoneId: widget.parkingZone.id),
+      builder: (_) => _AddReviewDialog(parkingZoneId: widget.parkingZone.id),
     );
+
+    if (wasSaved == true && mounted) {
+      setState(() {
+        _hasChanges = true;
+      });
+    }
   }
 }
 
@@ -258,8 +302,7 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
   void initState() {
     super.initState();
     _textController = TextEditingController();
-    final reviewProvider =
-        Provider.of<ReviewProvider>(context, listen: false);
+    final reviewProvider = Provider.of<ReviewProvider>(context, listen: false);
     if (reviewProvider.userReview != null) {
       _rating = reviewProvider.userReview!.rating;
       _textController.text = reviewProvider.userReview!.reviewText ?? '';
@@ -273,6 +316,9 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
   }
 
   String? _validateText(String? v) {
+    if (v == null || v.trim().isEmpty) {
+      return 'Recenzija je obavezna';
+    }
     if (v != null && v.trim().isNotEmpty && v.trim().length < 10) {
       return 'Recenzija mora imati najmanje 10 znakova';
     }
@@ -288,10 +334,11 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
 
     setState(() => _isLoading = true);
     try {
-      final authProvider =
-          Provider.of<AuthProvider>(context, listen: false);
-      final reviewProvider =
-          Provider.of<ReviewProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final reviewProvider = Provider.of<ReviewProvider>(
+        context,
+        listen: false,
+      );
 
       if (reviewProvider.userReview != null) {
         await reviewProvider.updateReview(
@@ -313,7 +360,7 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
       }
 
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Ocjena uspješno spremljena')),
         );
@@ -322,7 +369,8 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Došlo je do greške. Pokušajte ponovno.')),
+            content: Text('Došlo je do greške. Pokušajte ponovno.'),
+          ),
         );
       }
     } finally {
@@ -346,11 +394,15 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Ocijeni parking',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Ocijeni parking',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     GestureDetector(
-                      onTap: Navigator.of(context).pop,
+                      onTap: () => Navigator.of(context).pop(false),
                       child: const Icon(Icons.close),
                     ),
                   ],
@@ -358,9 +410,13 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                 const SizedBox(height: 24),
 
                 Center(
-                  child: Text('Odaberi ocjenu *',
-                      style: TextStyle(
-                          fontSize: 14, color: AppColors.textSecondary)),
+                  child: Text(
+                    'Odaberi ocjenu *',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -392,9 +448,10 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Center(
-                      child: Text('Ocjena je obavezna',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.red[700])),
+                      child: Text(
+                        'Ocjena je obavezna',
+                        style: TextStyle(fontSize: 12, color: Colors.red[700]),
+                      ),
                     ),
                   ),
 
@@ -402,8 +459,14 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                   padding: const EdgeInsets.only(top: 8),
                   child: Center(
                     child: Text(
-                      ['', 'Loše', 'Ispod prosjeka', 'Prosječno',
-                          'Dobro', 'Odlično'][_rating],
+                      [
+                        '',
+                        'Loše',
+                        'Ispod prosjeka',
+                        'Prosječno',
+                        'Dobro',
+                        'Odlično',
+                      ][_rating],
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -442,7 +505,8 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                   decoration: InputDecoration(
                     hintText: 'Šta misliš o ovom parkingu?',
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     contentPadding: const EdgeInsets.all(12),
                   ),
                 ),
@@ -452,8 +516,9 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed:
-                            _isLoading ? null : Navigator.of(context).pop,
+                        onPressed: _isLoading
+                            ? null
+                            : () => Navigator.of(context).pop(false),
                         child: const Text('Otkaži'),
                       ),
                     ),
@@ -462,17 +527,23 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _submitReview,
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary),
+                          backgroundColor: AppColors.primary,
+                        ),
                         child: _isLoading
                             ? const SizedBox(
-                                height: 20, width: 20,
+                                height: 20,
+                                width: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation(
-                                        Colors.white)),
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation(
+                                    Colors.white,
+                                  ),
+                                ),
                               )
-                            : const Text('Spremi',
-                                style: TextStyle(color: Colors.white)),
+                            : const Text(
+                                'Spremi',
+                                style: TextStyle(color: Colors.white),
+                              ),
                       ),
                     ),
                   ],

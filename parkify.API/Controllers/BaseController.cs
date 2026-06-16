@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using parkify.Model.Constants;
 using parkify.Model.Helpers;
 using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
+using System.Security.Claims;
 
 namespace parkify.API.Controllers
 {
@@ -26,6 +28,22 @@ namespace parkify.API.Controllers
         public virtual TModel GetById(int id)
         {
             return _service.GetById(id);
+        }
+
+        protected int GetCurrentUserIdOrThrow()
+        {
+            var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(claimValue, out var currentUserId))
+            {
+                throw new UnauthorizedAccessException("Korisnički identitet nije validan.");
+            }
+
+            return currentUserId;
+        }
+
+        protected bool IsCurrentUserAdmin()
+        {
+            return User.IsInRole(AppRoles.Admin);
         }
     }
 }

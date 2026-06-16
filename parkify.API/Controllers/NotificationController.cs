@@ -22,12 +22,26 @@ namespace parkify.API.Controllers
         [HttpGet]
         [Authorize]
         public override PagedResult<Notification> GetList([FromQuery] NotificationSearch searchObject)
-            => base.GetList(searchObject);
+        {
+            if (!IsCurrentUserAdmin())
+            {
+                searchObject.UserId = GetCurrentUserIdOrThrow();
+            }
+
+            return base.GetList(searchObject);
+        }
 
         [HttpGet("{id}")]
         [Authorize]
         public override Notification GetById(int id)
-            => base.GetById(id);
+        {
+            var notification = base.GetById(id);
+
+            if (!IsCurrentUserAdmin() && notification.UserId != GetCurrentUserIdOrThrow())
+                throw new UnauthorizedAccessException("Nemate pravo pristupa ovoj notifikaciji.");
+
+            return notification;
+        }
 
         [HttpPost("send")]
         [Authorize(Roles = AppRoles.Admin)]
@@ -49,6 +63,13 @@ namespace parkify.API.Controllers
         [Authorize]
         public IActionResult MarkAsRead(int id)
         {
+            if (!IsCurrentUserAdmin())
+            {
+                var notification = base.GetById(id);
+                if (notification.UserId != GetCurrentUserIdOrThrow())
+                    throw new UnauthorizedAccessException("Nemate pravo izmjene ove notifikacije.");
+            }
+
             _notificationService.Update(id, new NotificationUpdateRequest { IsRead = true });
             return Ok();
         }

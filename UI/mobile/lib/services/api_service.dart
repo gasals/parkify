@@ -247,10 +247,7 @@ class ApiService {
         endpoint,
       ).replace(queryParameters: params.isNotEmpty ? params : null);
 
-  static Future<AuthSession> login(
-    String username,
-    String password,
-  ) async {
+  static Future<AuthSession> login(String username, String password) async {
     try {
       final response = await http
           .post(
@@ -260,7 +257,10 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      final session = await _handleModelResponse(response, AuthSession.fromJson);
+      final session = await _handleModelResponse(
+        response,
+        AuthSession.fromJson,
+      );
 
       if (session.token.isNotEmpty) {
         setToken(session.token);
@@ -272,9 +272,7 @@ class ApiService {
     }
   }
 
-  static Future<AuthSession> register(
-    UserRegistrationRequest request,
-  ) async {
+  static Future<AuthSession> register(UserRegistrationRequest request) async {
     try {
       final response = await http
           .post(
@@ -284,7 +282,10 @@ class ApiService {
           )
           .timeout(_timeout);
 
-      final session = await _handleModelResponse(response, AuthSession.fromJson);
+      final session = await _handleModelResponse(
+        response,
+        AuthSession.fromJson,
+      );
 
       if (session.token.isNotEmpty) {
         setToken(session.token);
@@ -423,9 +424,7 @@ class ApiService {
     try {
       final response = await http
           .get(
-            Uri.parse(
-              '${AppUrls.parkingZones}/recommendations/$userId?count=$count',
-            ),
+            Uri.parse('${AppUrls.parkingZones}/recommendations?count=$count'),
             headers: _getHeaders(),
           )
           .timeout(_timeout);
@@ -446,7 +445,7 @@ class ApiService {
       final response = await http
           .get(
             Uri.parse(
-              '${AppUrls.parkingZones}/recommendations/$userId/explained?count=$count',
+              '${AppUrls.parkingZones}/recommendations/explained?count=$count',
             ),
             headers: _getHeaders(),
           )
@@ -462,7 +461,9 @@ class ApiService {
     }
   }
 
-  static Future<PagedResponse<ParkingSpot>> getParkingSpotsByZoneId(int id) async {
+  static Future<PagedResponse<ParkingSpot>> getParkingSpotsByZoneId(
+    int id,
+  ) async {
     try {
       final response = await http
           .get(
@@ -490,7 +491,7 @@ class ApiService {
           )
           .timeout(_timeout);
 
-          return await _handleModelResponse(response, Reservation.fromJson);
+      return await _handleModelResponse(response, Reservation.fromJson);
     } catch (e) {
       log('ApiService.createReservation error: $e');
       _throwWithMessage(e, 'Greška pri kreiranju rezervacije');
@@ -520,9 +521,7 @@ class ApiService {
     }
   }
 
-  static Future<Reservation> cancelReservation(
-    int reservationId,
-  ) async {
+  static Future<Reservation> cancelReservation(int reservationId) async {
     try {
       final response = await http
           .put(
@@ -536,6 +535,23 @@ class ApiService {
     } catch (e) {
       log('ApiService.cancelReservation error: $e');
       _throwWithMessage(e, 'Greška pri otkazivanju rezervacije');
+    }
+  }
+
+  static Future<Reservation> confirmReservation(int reservationId) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse('${AppUrls.reservations}/$reservationId'),
+            headers: _getHeaders(),
+            body: jsonEncode({'status': ReservationStatus.confirmed.value}),
+          )
+          .timeout(_timeout);
+
+      return await _handleModelResponse(response, Reservation.fromJson);
+    } catch (e) {
+      log('ApiService.confirmReservation error: $e');
+      _throwWithMessage(e, 'Greška pri potvrdi rezervacije');
     }
   }
 
@@ -558,9 +574,7 @@ class ApiService {
     }
   }
 
-  static Future<Payment> confirmPayment({
-    required int paymentId,
-  }) async {
+  static Future<Payment> confirmPayment({required int paymentId}) async {
     try {
       final response = await http
           .put(
@@ -622,13 +636,11 @@ class ApiService {
     }
   }
 
-  static Future<Preference> getUserPreference({
-    required int userId,
-  }) async {
+  static Future<Preference> getUserPreference({required int userId}) async {
     try {
       final response = await http
           .get(
-            Uri.parse('${AppUrls.preferences}/user/$userId'),
+            Uri.parse('${AppUrls.preferences}/user/me'),
             headers: _getHeaders(),
           )
           .timeout(_timeout);
@@ -647,7 +659,7 @@ class ApiService {
     try {
       final response = await http
           .put(
-            Uri.parse('${AppUrls.preferences}/user/$userId'),
+            Uri.parse('${AppUrls.preferences}/user/me'),
             headers: _getHeaders(),
             body: jsonEncode(request.toJson()),
           )
@@ -660,9 +672,7 @@ class ApiService {
     }
   }
 
-  static Future<Review> createReview(
-    ReviewUpsertRequest request,
-  ) async {
+  static Future<Review> createReview(ReviewUpsertRequest request) async {
     try {
       final response = await http
           .post(
@@ -672,7 +682,7 @@ class ApiService {
           )
           .timeout(_timeout);
 
-          return await _handleModelResponse(response, Review.fromJson);
+      return await _handleModelResponse(response, Review.fromJson);
     } catch (e) {
       log('ApiService.createReview error: $e');
       _throwWithMessage(e, 'Greška pri kreiranju recenzije');
@@ -818,7 +828,9 @@ class ApiService {
     }
   }
 
-  static Future<PagedResponse<WalletTransaction>> getWalletHistory(int walletId) async {
+  static Future<PagedResponse<WalletTransaction>> getWalletHistory(
+    int walletId,
+  ) async {
     try {
       final response = await http
           .get(
@@ -868,14 +880,16 @@ class ApiService {
           )
           .timeout(_timeout);
 
-          await _handleObjectResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       log('ApiService.sendNotification error: $e');
       _throwWithMessage(e, 'Greška pri slanju notifikacije');
     }
   }
 
-  static Future<void> sendNotificationToAll(NotificationSendRequest request) async {
+  static Future<void> sendNotificationToAll(
+    NotificationSendRequest request,
+  ) async {
     try {
       final response = await http
           .post(
@@ -885,7 +899,7 @@ class ApiService {
           )
           .timeout(_timeout);
 
-          await _handleObjectResponse(response);
+      await _handleObjectResponse(response);
     } catch (e) {
       log('ApiService.sendNotificationToAll error: $e');
       _throwWithMessage(e, 'Greška pri slanju notifikacija');

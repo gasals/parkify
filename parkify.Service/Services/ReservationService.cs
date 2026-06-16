@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
@@ -462,10 +463,14 @@ namespace parkify.Service.Services
             }
 
             entity.PaymentAmountPaid = 0;
+            var nowUtc = DateTime.UtcNow;
+            var autoConfirmThreshold = nowUtc.AddMinutes(10);
 
             if (entity.FinalPrice == 0)
             {
-                entity.Status = Database.ReservationStatus.Confirmed;
+                entity.Status = entity.ReservationStart <= autoConfirmThreshold
+                    ? Database.ReservationStatus.Confirmed
+                    : Database.ReservationStatus.Pending;
 
                 if (parkingZone.AvailableSpots > 0)
                 {
@@ -486,13 +491,18 @@ namespace parkify.Service.Services
 
         public override void AfterInsert(Database.Reservation entity, ReservationInsertRequest request)
         {
-            if (entity.Status == Database.ReservationStatus.Confirmed)
+            if (entity.Status == Database.ReservationStatus.Pending ||
+                entity.Status == Database.ReservationStatus.Confirmed)
             {
                 _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
                 {
                     UserId = entity.UserId,
-                    Title = "Rezervacija potvrđena",
-                    Message = $"Vaša rezervacija je uspješno kreirana i potvrđena. Kod rezervacije: {entity.ReservationCode}",
+                    Title = entity.Status == Database.ReservationStatus.Confirmed
+                        ? "Rezervacija potvrđena"
+                        : "Rezervacija kreirana",
+                    Message = entity.Status == Database.ReservationStatus.Confirmed
+                        ? $"Vaša rezervacija je odmah potvrđena. Kod rezervacije: {entity.ReservationCode}"
+                        : $"Vaša rezervacija je uspješno kreirana. Kod rezervacije: {entity.ReservationCode}",
                     Type = (int)Database.NotificationType.ReservationConfirmed,
                     Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
                     ReservationId = entity.Id,
@@ -505,9 +515,81 @@ namespace parkify.Service.Services
 
         public override void BeforeUpdate(ReservationUpdateRequest request, Database.Reservation entity)
         {
+            var previousStatus = Context.Reservations
+                .AsNoTracking()
+                .Where(r => r.Id == entity.Id)
+                .Select(r => r.Status)
+                .FirstOrDefault();
+
+            if (request.Status.HasValue &&
+                request.Status.Value == (int)Database.ReservationStatus.Confirmed)
+            {
+                if (previousStatus == Database.ReservationStatus.Confirmed)
+                {
+                    base.BeforeUpdate(request, entity);
+                    return;
+                }
+
+                if (previousStatus != Database.ReservationStatus.Pending)
+                    throw new UserException("Potvrda je dozvoljena samo za rezervacije u statusu Pending.");
+
+                entity.Status = Database.ReservationStatus.Confirmed;
+                entity.Modified = DateTime.UtcNow;
+
+                _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
+                {
+                    UserId = entity.UserId,
+                    Title = "Rezervacija potvrđena",
+                    Message = $"Rezervacija {entity.ReservationCode} je potvrđena.",
+                    Type = (int)Database.NotificationType.ReservationConfirmed,
+                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
+                    ReservationId = entity.Id,
+                    ParkingZoneId = entity.ParkingZoneId
+                });
+            }
+
+            if (request.Status.HasValue &&
+                request.Status.Value == (int)Database.ReservationStatus.Completed)
+            {
+                if (previousStatus == Database.ReservationStatus.Completed)
+                {
+                    base.BeforeUpdate(request, entity);
+                    return;
+                }
+
+                ReleaseSpotForReservation(entity);
+                entity.Status = Database.ReservationStatus.Completed;
+                entity.Modified = DateTime.UtcNow;
+            }
+
+            if (request.Status.HasValue &&
+                request.Status.Value == (int)Database.ReservationStatus.NoShow)
+            {
+                if (previousStatus == Database.ReservationStatus.NoShow)
+                {
+                    base.BeforeUpdate(request, entity);
+                    return;
+                }
+
+                ReleaseSpotForReservation(entity);
+                entity.Status = Database.ReservationStatus.NoShow;
+                entity.Modified = DateTime.UtcNow;
+            }
+
             if (request.Status.HasValue &&
                 request.Status.Value == (int)Database.ReservationStatus.Cancelled)
             {
+                if (previousStatus == Database.ReservationStatus.Cancelled)
+                {
+                    base.BeforeUpdate(request, entity);
+                    return;
+                }
+
+                if (previousStatus != Database.ReservationStatus.Pending &&
+                    previousStatus != Database.ReservationStatus.Confirmed &&
+                    previousStatus != Database.ReservationStatus.Active)
+                    throw new UserException("Otkazivanje je dozvoljeno samo za rezervacije u statusu Pending, Confirmed ili Active.");
+
                 var refundAmount = entity.WalletAmountUsed + entity.PaymentAmountPaid;
 
                 if (refundAmount > 0)
@@ -529,22 +611,7 @@ namespace parkify.Service.Services
                     }
                 }
 
-                if (entity.Status == Database.ReservationStatus.Confirmed ||
-                    entity.Status == Database.ReservationStatus.Active)
-                {
-                    var zoneForCancel = Context.ParkingZones.Find(entity.ParkingZoneId);
-                    if (zoneForCancel != null)
-                    {
-                        zoneForCancel.AvailableSpots += 1;
-                    }
-
-                    var spotForCancel = Context.ParkingSpots.Find(entity.ParkingSpotId);
-                    if (spotForCancel != null)
-                    {
-                        spotForCancel.IsAvailable = true;
-                        spotForCancel.Modified = DateTime.UtcNow;
-                    }
-                }
+                ReleaseSpotForReservation(entity);
 
                 entity.Status = Database.ReservationStatus.Cancelled;
                 _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
@@ -609,9 +676,34 @@ namespace parkify.Service.Services
                         }
                     }
                 }
+
+                ReleaseSpotForReservation(entity);
             }
 
             base.BeforeUpdate(request, entity);
+        }
+
+        private void ReleaseSpotForReservation(Database.Reservation reservation)
+        {
+            var parkingSpot = Context.ParkingSpots.Find(reservation.ParkingSpotId);
+            if (parkingSpot == null)
+            {
+                return;
+            }
+
+            if (parkingSpot.IsAvailable)
+            {
+                return;
+            }
+
+            parkingSpot.IsAvailable = true;
+            parkingSpot.Modified = DateTime.UtcNow;
+
+            var parkingZone = Context.ParkingZones.Find(reservation.ParkingZoneId);
+            if (parkingZone != null)
+            {
+                parkingZone.AvailableSpots += 1;
+            }
         }
 
         private string GenerateReservationCode(ReservationInsertRequest request)

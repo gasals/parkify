@@ -13,6 +13,8 @@ import '../models/preference_model.dart';
 import '../providers/parking_zone_provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/parking_details_screen.dart';
+import '../screens/reservation_screen.dart';
+import '../services/api_service.dart';
 
 class MapsScreen extends StatefulWidget {
   @override
@@ -129,6 +131,51 @@ class _MapsScreenState extends State<MapsScreen> {
     return null;
   }
 
+  Future<void> _openZoneInfo(
+    ParkingZone zone, {
+    bool clearSearch = false,
+  }) async {
+    final reviewProvider = Provider.of<ReviewProvider>(context, listen: false);
+    final zoneProvider = Provider.of<ParkingZoneProvider>(
+      context,
+      listen: false,
+    );
+
+    await reviewProvider.getZoneReviews(parkingZoneId: zone.id);
+
+    if (!mounted) {
+      return;
+    }
+
+    final resolvedZone =
+        _findZoneById(_filteredZones, zone.id) ??
+        _findZoneById(zoneProvider.parkingZones, zone.id) ??
+        zone;
+
+    if (clearSearch) {
+      _searchController.clear();
+      FocusScope.of(context).unfocus();
+    }
+
+    setState(() {
+      _selectedZone = resolvedZone;
+      _selectedZone!.isFavorite =
+          _userPreference?.favoriteParkingZoneId == resolvedZone.id;
+      _selectedZone!.averageRating = reviewProvider.averageRating;
+      _selectedZone!.reviewCount = reviewProvider.reviewCount;
+      _sheetState = BottomSheetState.info;
+      if (clearSearch) {
+        _searchQuery = '';
+      }
+    });
+
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLng(
+        LatLng(resolvedZone.latitude, resolvedZone.longitude),
+      ),
+    );
+  }
+
   Set<Marker> _buildMarkers() {
     return _filteredZones.map((zone) {
       final isSelected = _selectedZone?.id == zone.id;
@@ -143,18 +190,7 @@ class _MapsScreenState extends State<MapsScreen> {
           snippet: '${zone.pricePerHour}KM/h',
         ),
         onTap: () async {
-          final reviewProvider = Provider.of<ReviewProvider>(
-            context,
-            listen: false,
-          );
-          await reviewProvider.getZoneReviews(parkingZoneId: zone.id);
-
-          setState(() {
-            _selectedZone = zone;
-            _selectedZone!.averageRating = reviewProvider.averageRating;
-            _selectedZone!.reviewCount = reviewProvider.reviewCount;
-            _sheetState = BottomSheetState.info;
-          });
+          await _openZoneInfo(zone);
         },
       );
     }).toSet();
@@ -210,6 +246,46 @@ class _MapsScreenState extends State<MapsScreen> {
     }
   }
 
+  Future<void> _refreshSelectedZoneRating() async {
+    if (_selectedZone == null) {
+      return;
+    }
+
+    final reviewProvider = Provider.of<ReviewProvider>(context, listen: false);
+    await reviewProvider.getZoneReviews(parkingZoneId: _selectedZone!.id);
+
+    if (!mounted || _selectedZone == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedZone!.averageRating = reviewProvider.averageRating;
+      _selectedZone!.reviewCount = reviewProvider.reviewCount;
+    });
+  }
+
+  Future<ParkingZone> _loadZoneForSpotPicker(ParkingZone baseZone) async {
+    try {
+      final freshZone = await ApiService.getParkingZoneById(baseZone.id);
+
+      if (freshZone.spots == null || freshZone.spots!.isEmpty) {
+        final spotsResult = await ApiService.getParkingSpotsByZoneId(
+          baseZone.id,
+        );
+        freshZone.spots = spotsResult.results;
+      }
+
+      freshZone.isFavorite =
+          _userPreference?.favoriteParkingZoneId == freshZone.id;
+      freshZone.averageRating = baseZone.averageRating;
+      freshZone.reviewCount = baseZone.reviewCount;
+
+      return freshZone;
+    } catch (_) {
+      return baseZone;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -233,36 +309,39 @@ class _MapsScreenState extends State<MapsScreen> {
                   _userPreference?.favoriteParkingZoneId,
                 )
               : null;
-            final recommendedZone = _recommendedZone;
-            final recommendationReasons =
+          final recommendedZone = _recommendedZone;
+          final recommendationReasons =
               _recommendedExplanation?.reasons ?? const <String>[];
-            final visibleRecommendationReasons = recommendationReasons
+          final visibleRecommendationReasons = recommendationReasons
               .take(3)
               .toList();
 
-            final hasFavoriteBanner = favoriteZone != null;
-            final hasRecommendationBanner = recommendedZone != null;
-              final hasRecommendationStatusBanner = recommendedZone == null;
-              const baseBannerTop = 50.0;
-              const favoriteBannerHeight = 44.0;
-              const statusBannerHeight = 56.0;
-              const interBannerGap = 10.0;
-              const afterBannerGap = 12.0;
+          final hasFavoriteBanner = favoriteZone != null;
+          final hasRecommendationBanner = recommendedZone != null;
+          final hasRecommendationStatusBanner = recommendedZone == null;
+          const baseBannerTop = 50.0;
+          const favoriteBannerHeight = 44.0;
+          const statusBannerHeight = 56.0;
+          const interBannerGap = 10.0;
+          const afterBannerGap = 12.0;
 
-              final recommendationBannerTop = hasFavoriteBanner
-                ? baseBannerTop + favoriteBannerHeight + interBannerGap
-                : baseBannerTop;
+          final recommendationBannerTop = hasFavoriteBanner
+              ? baseBannerTop + favoriteBannerHeight + interBannerGap
+              : baseBannerTop;
 
-              final recommendationBannerHeight = hasRecommendationBanner
-                ? 56.0 + (visibleRecommendationReasons.length * 18.0)
-                : statusBannerHeight;
+          final recommendationBannerHeight = hasRecommendationBanner
+              ? 56.0 + (visibleRecommendationReasons.length * 18.0)
+              : statusBannerHeight;
 
-              final searchTop = hasFavoriteBanner ||
+          final searchTop =
+              hasFavoriteBanner ||
                   hasRecommendationBanner ||
                   hasRecommendationStatusBanner
-                ? recommendationBannerTop + recommendationBannerHeight + afterBannerGap
-                : 100.0;
-            final searchResultsTop = searchTop + 50.0;
+              ? recommendationBannerTop +
+                    recommendationBannerHeight +
+                    afterBannerGap
+              : 100.0;
+          final searchResultsTop = searchTop + 50.0;
 
           return Stack(
             children: [
@@ -286,16 +365,7 @@ class _MapsScreenState extends State<MapsScreen> {
                   right: 12,
                   child: GestureDetector(
                     onTap: () async {
-                      setState(() {
-                        _selectedZone = favoriteZone;
-                        _selectedZone!.isFavorite = true;
-                        _sheetState = BottomSheetState.info;
-                      });
-                      _mapController?.animateCamera(
-                        CameraUpdate.newLatLng(
-                          LatLng(favoriteZone.latitude, favoriteZone.longitude),
-                        ),
-                      );
+                      await _openZoneInfo(favoriteZone);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -338,24 +408,13 @@ class _MapsScreenState extends State<MapsScreen> {
                   right: 12,
                   child: GestureDetector(
                     onTap: () async {
-                      setState(() {
-                        _selectedZone =
-                            _findZoneById(
-                              provider.parkingZones,
-                              recommendedZone.id,
-                            ) ??
-                            recommendedZone;
-                        _sheetState = BottomSheetState.info;
-                      });
-
-                      _mapController?.animateCamera(
-                        CameraUpdate.newLatLng(
-                          LatLng(
-                            recommendedZone.latitude,
-                            recommendedZone.longitude,
-                          ),
-                        ),
-                      );
+                      final resolvedZone =
+                          _findZoneById(
+                            provider.parkingZones,
+                            recommendedZone.id,
+                          ) ??
+                          recommendedZone;
+                      await _openZoneInfo(resolvedZone);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -558,22 +617,8 @@ class _MapsScreenState extends State<MapsScreen> {
                             '${zone.address}',
                             style: const TextStyle(fontSize: 12),
                           ),
-                          onTap: () {
-                            _searchController.clear();
-                            FocusScope.of(context).unfocus();
-                            setState(() {
-                              _selectedZone = zone;
-                              _selectedZone!.isFavorite =
-                                  _userPreference?.favoriteParkingZoneId ==
-                                  zone.id;
-                              _sheetState = BottomSheetState.info;
-                              _searchQuery = '';
-                            });
-                            _mapController?.animateCamera(
-                              CameraUpdate.newLatLng(
-                                LatLng(zone.latitude, zone.longitude),
-                              ),
-                            );
+                          onTap: () async {
+                            await _openZoneInfo(zone, clearSearch: true);
                           },
                         );
                       },
@@ -708,13 +753,17 @@ class _MapsScreenState extends State<MapsScreen> {
           ),
           const SizedBox(height: 12),
           GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
+            onTap: () async {
+              final hasChanges = await Navigator.of(context).push<bool>(
                 MaterialPageRoute(
                   builder: (context) =>
                       ReviewsScreen(parkingZone: _selectedZone!),
                 ),
               );
+
+              if (hasChanges == true) {
+                await _refreshSelectedZoneRating();
+              }
             },
             child: Container(
               padding: const EdgeInsets.all(12),
@@ -767,21 +816,48 @@ class _MapsScreenState extends State<MapsScreen> {
             height: 48,
             child: ElevatedButton(
               onPressed: () async {
-                final zoneProvider = Provider.of<ParkingZoneProvider>(
-                  context,
-                  listen: false,
+                final selectedZone = _selectedZone;
+                if (selectedZone == null) {
+                  return;
+                }
+
+                final freshZone = await _loadZoneForSpotPicker(selectedZone);
+
+                final selectedSpot = await showModalBottomSheet<ParkingSpot>(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (sheetContext) =>
+                      ParkingDetailsScreen(parkingZone: freshZone),
                 );
-                await zoneProvider.getParkingZoneById(_selectedZone!.id);
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        ParkingDetailsScreen(parkingZone: _selectedZone!),
+
+                if (!mounted) {
+                  return;
+                }
+
+                if (selectedSpot != null) {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ReservationScreen(
+                        parkingZone: freshZone,
+                        parkingSpot: selectedSpot,
+                      ),
+                    ),
+                  );
+                }
+
+                setState(() {
+                  _selectedZone = freshZone;
+                  _selectedZone!.isFavorite =
+                      _userPreference?.favoriteParkingZoneId == freshZone.id;
+                  _sheetState = BottomSheetState.info;
+                });
+
+                _mapController?.animateCamera(
+                  CameraUpdate.newLatLng(
+                    LatLng(freshZone.latitude, freshZone.longitude),
                   ),
                 );
-                setState(() {
-                  _sheetState = BottomSheetState.closed;
-                  _selectedZone = null;
-                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,

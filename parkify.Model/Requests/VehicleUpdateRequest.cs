@@ -5,8 +5,7 @@
 
     public class VehicleUpdateRequest
     {
-            [StringLength(8, MinimumLength = 4, ErrorMessage = "Registracija mora imati 4-8 znakova.")]
-            [RegularExpression("^[A-Za-z0-9\\-\\s]+$", ErrorMessage = "Registracija smije sadržavati samo slova, brojeve, razmak i crticu.")]
+            [StringLength(50, MinimumLength = 1, ErrorMessage = "Registracija mora imati 1-50 znakova.")]
         public string? LicensePlate { get; set; }
 
             [EnumDataType(typeof(VehicleCategory), ErrorMessage = "Unesena kategorija vozila nije validna.")]

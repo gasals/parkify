@@ -43,18 +43,20 @@ namespace parkify.API.Controllers
             return base.GetById(id);
         }
 
-        [HttpGet("recommendations/{userId}")]
+        [HttpGet("recommendations")]
         [Authorize]
-        public IActionResult GetRecommendations(int userId, [FromQuery] int count = 5)
+        public IActionResult GetRecommendations([FromQuery] int count = 5, [FromQuery] int? userId = null)
         {
-            return Ok((_service as IParkingZoneService)!.GetRecommendations(userId, count));
+            var effectiveUserId = ResolveRecommendationUserId(userId);
+            return Ok((_service as IParkingZoneService)!.GetRecommendations(effectiveUserId, count));
         }
 
-        [HttpGet("recommendations/{userId}/explained")]
+        [HttpGet("recommendations/explained")]
         [Authorize]
-        public IActionResult GetRecommendationsExplained(int userId, [FromQuery] int count = 5)
+        public IActionResult GetRecommendationsExplained([FromQuery] int count = 5, [FromQuery] int? userId = null)
         {
-            return Ok((_service as IParkingZoneService)!.GetRecommendationsWithExplanation(userId, count));
+            var effectiveUserId = ResolveRecommendationUserId(userId);
+            return Ok((_service as IParkingZoneService)!.GetRecommendationsWithExplanation(effectiveUserId, count));
         }
 
         [HttpDelete("{id}")]
@@ -62,6 +64,19 @@ namespace parkify.API.Controllers
         public IActionResult Delete(int id)
         {
             return Ok((_service as IParkingZoneService)!.Delete(id));
+        }
+
+        private int ResolveRecommendationUserId(int? requestedUserId)
+        {
+            if (requestedUserId.HasValue)
+            {
+                if (!IsCurrentUserAdmin())
+                    throw new UnauthorizedAccessException("Nemate pravo pristupa preporukama drugog korisnika.");
+
+                return requestedUserId.Value;
+            }
+
+            return GetCurrentUserIdOrThrow();
         }
     }
 }

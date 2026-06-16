@@ -30,7 +30,15 @@ namespace parkify.Service.Services
             while (!stoppingToken.IsCancellationRequested)
             {
                 try { await CheckReservationsAsync(); }
-                catch (Exception ex)
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (DbUpdateException ex)
+                {
+                    _logger.LogError(ex, "Greška pri spremanju promjena u ReservationMonitorService");
+                }
+                catch (InvalidOperationException ex)
                 {
                     _logger.LogError(ex, "Greška u ReservationMonitorService");
                 }
@@ -46,23 +54,38 @@ namespace parkify.Service.Services
 
             var staleCutoff = now.AddMinutes(-10);
             var stalePending = await db.Reservations
-                .Where(r => r.Status == Database.ReservationStatus.Pending && r.Modified < staleCutoff)
+                .Where(r =>
+                    r.Status == Database.ReservationStatus.Pending &&
+                    r.FinalPrice > r.PaymentAmountPaid &&
+                    r.Modified < staleCutoff)
                 .ToListAsync();
             foreach (var r in stalePending)
             {
                 r.Status = Database.ReservationStatus.Cancelled;
                 r.Modified = now;
+
+                await PublishIfNotSentAsync(
+                    db, r.UserId, r.Id,
+                    Database.NotificationType.ReservationCancelled,
+                    "Rezervacija otkazana",
+                    "Rezervacija je automatski otkazana jer uplata nije završena na vrijeme.",
+                    NotificationChannel.Both);
+
                 _logger.LogInformation("Rezervacija {ReservationId} otkazana zbog isteka pending perioda.", r.Id);
             }
 
-            var toActivate = await db.Reservations
-                .Where(r => r.Status == Database.ReservationStatus.Confirmed && r.ReservationStart <= now && r.ReservationEnd > now)
+            var toConfirm = await db.Reservations
+                .Where(r =>
+                    r.Status == Database.ReservationStatus.Pending &&
+                    r.PaymentAmountPaid >= r.FinalPrice &&
+                    r.ReservationStart <= now &&
+                    r.ReservationEnd > now)
                 .ToListAsync();
-            foreach (var r in toActivate)
+            foreach (var r in toConfirm)
             {
-                r.Status = Database.ReservationStatus.Active;
+                r.Status = Database.ReservationStatus.Confirmed;
                 r.Modified = now;
-                _logger.LogInformation($"Rezervacija {r.Id} aktivirana.");
+                _logger.LogInformation("Rezervacija {ReservationId} potvrđena na početku termina.", r.Id);
             }
 
             var toComplete = await db.Reservations
@@ -81,9 +104,11 @@ namespace parkify.Service.Services
                 _logger.LogInformation($"Rezervacija {r.Id} završena.");
             }
 
-            var noShowLimit = now.AddMinutes(-30);
             var toNoShow = await db.Reservations
-                .Where(r => r.Status == Database.ReservationStatus.Confirmed && !r.IsCheckedIn && r.ReservationStart <= noShowLimit)
+                .Where(r =>
+                    r.Status == Database.ReservationStatus.Confirmed &&
+                    !r.IsCheckedIn &&
+                    r.ReservationEnd <= now)
                 .ToListAsync();
             foreach (var r in toNoShow)
             {
@@ -106,7 +131,8 @@ namespace parkify.Service.Services
 
             var upcoming = await db.Reservations
                 .Where(r =>
-                    r.Status == Database.ReservationStatus.Confirmed &&
+                    r.Status == Database.ReservationStatus.Pending &&
+                    r.PaymentAmountPaid >= r.FinalPrice &&
                     !r.IsCheckedIn &&
                     r.ReservationStart > now.AddMinutes(9) &&
                     r.ReservationStart <= now.AddMinutes(11))

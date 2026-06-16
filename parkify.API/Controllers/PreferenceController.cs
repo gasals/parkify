@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using parkify.Model.Constants;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -18,17 +19,35 @@ namespace parkify.API.Controllers
             _preferenceService = service;
         }
 
-        [HttpGet("user/{userId}")]
+        [HttpGet("user/me")]
         [Authorize]
-        public async Task<IActionResult> GetUserPreference(int userId)
+        public async Task<IActionResult> GetUserPreference()
+        {
+            var userId = GetCurrentUserIdOrThrow();
+            var preference = await _preferenceService.GetOrCreateUserPreference(userId);
+            return Ok(preference);
+        }
+
+        [HttpPut("user/me")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUserPreferences([FromBody] PreferenceUpdateRequest request)
+        {
+            var userId = GetCurrentUserIdOrThrow();
+            var preference = await _preferenceService.UpdateUserPreferences(userId, request);
+            return Ok(preference);
+        }
+
+        [HttpGet("user/{userId:int}")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<IActionResult> GetUserPreferenceForAdmin(int userId)
         {
             var preference = await _preferenceService.GetOrCreateUserPreference(userId);
             return Ok(preference);
         }
 
-        [HttpPut("user/{userId}")]
-        [Authorize]
-        public async Task<IActionResult> UpdateUserPreferences(int userId, [FromBody] PreferenceUpdateRequest request)
+        [HttpPut("user/{userId:int}")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<IActionResult> UpdateUserPreferencesForAdmin(int userId, [FromBody] PreferenceUpdateRequest request)
         {
             var preference = await _preferenceService.UpdateUserPreferences(userId, request);
             return Ok(preference);

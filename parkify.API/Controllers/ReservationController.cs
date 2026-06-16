@@ -5,6 +5,7 @@ using parkify.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using parkify.Model.Constants;
+using parkify.Model.Helpers;
 
 namespace parkify.API.Controllers
 {
@@ -12,6 +13,61 @@ namespace parkify.API.Controllers
     {
         public ReservationController(IReservationService service) : base(service)
         {
+        }
+
+        [HttpGet]
+        [Authorize]
+        public override PagedResult<Reservation> GetList([FromQuery] ReservationSearch searchObject)
+        {
+            if (!IsCurrentUserAdmin())
+            {
+                searchObject.UserId = GetCurrentUserIdOrThrow();
+            }
+
+            return base.GetList(searchObject);
+        }
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public override Reservation GetById(int id)
+        {
+            var reservation = base.GetById(id);
+
+            if (!IsCurrentUserAdmin() && reservation.UserId != GetCurrentUserIdOrThrow())
+                throw new UnauthorizedAccessException("Nemate pravo pristupa ovoj rezervaciji.");
+
+            return reservation;
+        }
+
+        [HttpPost]
+        [Authorize]
+        public override Reservation Insert([FromBody] ReservationInsertRequest request)
+        {
+            var currentUserId = GetCurrentUserIdOrThrow();
+            if (!IsCurrentUserAdmin())
+            {
+                request.UserId = currentUserId;
+            }
+            else if (request.UserId <= 0)
+            {
+                request.UserId = currentUserId;
+            }
+
+            return base.Insert(request);
+        }
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public override Reservation Update(int id, [FromBody] ReservationUpdateRequest request)
+        {
+            if (!IsCurrentUserAdmin())
+            {
+                var reservation = base.GetById(id);
+                if (reservation.UserId != GetCurrentUserIdOrThrow())
+                    throw new UnauthorizedAccessException("Nemate pravo izmjene ove rezervacije.");
+            }
+
+            return base.Update(id, request);
         }
 
         [HttpGet("report/pdf")]

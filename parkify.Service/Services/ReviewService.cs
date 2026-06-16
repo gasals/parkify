@@ -43,7 +43,25 @@ namespace parkify.Service.Services
             if (Context.Reviews.Any(x => x.UserId == request.UserId && x.ParkingZoneId == request.ParkingZoneId))
                 throw new UserException("Ve? ste ocijenili ovu zonu.");
 
+            if (string.IsNullOrWhiteSpace(request.ReviewText))
+                throw new UserException("Recenzija je obavezna.");
+
+            entity.ReviewText = request.ReviewText.Trim();
+
             base.BeforeInsert(request, entity);
+        }
+
+        public override void BeforeUpdate(ReviewUpdateRequest request, Database.Review entity)
+        {
+            if (request.ReviewText != null)
+            {
+                if (string.IsNullOrWhiteSpace(request.ReviewText))
+                    throw new UserException("Recenzija ne može biti prazna.");
+
+                entity.ReviewText = request.ReviewText.Trim();
+            }
+
+            base.BeforeUpdate(request, entity);
         }
     }
 }

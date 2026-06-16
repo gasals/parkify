@@ -258,10 +258,23 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const SizedBox(width: 8),
-                if (reservation.status == ReservationStatus.pending.value ||
-                  reservation.status == ReservationStatus.confirmed.value &&
-                    reservation.reservationStart.isAfter(DateTime.now()))
+                if (reservation.status == ReservationStatus.pending.value) ...[
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          _confirmReservation(context, reservation),
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const Text(
+                        'Potvrdi',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _cancelReservation(context, reservation),
@@ -272,6 +285,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                       ),
                     ),
                   ),
+                ],
               ],
             ),
           ],
@@ -303,46 +317,187 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
   }
 
   void _cancelReservation(BuildContext context, Reservation reservation) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Otkaži rezervaciju?'),
-        content: Text(
-          'Jeste li sigurni da želite otkazati rezervaciju ${reservation.reservationCode}?',
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textTertiary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Otkaži rezervaciju?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Jeste li sigurni da želite otkazati rezervaciju ${reservation.reservationCode}?',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      child: const Text('Ne'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(sheetContext).pop();
+                        final provider = Provider.of<ReservationProvider>(
+                          context,
+                          listen: false,
+                        );
+                        final authProvider = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        final success = await provider.cancelReservation(
+                          reservation.id,
+                        );
+                        if (success && mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Rezervacija je otkazana'),
+                            ),
+                          );
+                        }
+                        await provider.getUserReservations(
+                          userId: authProvider.user?.id ?? 0,
+                          page: 1,
+                        );
+                        setState(() {
+                          _currentPage = 1;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Otkaži'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: const Text('Ne'),
+      ),
+    );
+  }
+
+  void _confirmReservation(BuildContext context, Reservation reservation) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final provider = Provider.of<ReservationProvider>(
-                context,
-                listen: false,
-              );
-              final authProvider = Provider.of<AuthProvider>(
-                context,
-                listen: false,
-              );
-              final success = await provider.cancelReservation(reservation.id);
-              if (success && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Rezervacija je otkazana')),
-                );
-              }
-              await provider.getUserReservations(
-                userId: authProvider.user?.id ?? 0,
-                page: 1,
-              );
-              setState(() {
-                _currentPage = 1;
-              });
-            },
-            child: const Text('Otkaži'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textTertiary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Potvrdi rezervaciju?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Želite li potvrditi rezervaciju ${reservation.reservationCode}?',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      child: const Text('Ne'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(sheetContext).pop();
+                        final provider = Provider.of<ReservationProvider>(
+                          context,
+                          listen: false,
+                        );
+                        final authProvider = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        final success = await provider.confirmReservation(
+                          reservation.id,
+                        );
+                        if (success && mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Rezervacija je potvrđena'),
+                            ),
+                          );
+                        }
+                        await provider.getUserReservations(
+                          userId: authProvider.user?.id ?? 0,
+                          page: 1,
+                        );
+                        setState(() {
+                          _currentPage = 1;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Potvrdi'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

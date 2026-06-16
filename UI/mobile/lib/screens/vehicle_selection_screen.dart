@@ -54,8 +54,10 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.user != null) {
-        Provider.of<VehicleProvider>(context, listen: false)
-            .fetchUserVehicles(authProvider.user!.id);
+        Provider.of<VehicleProvider>(
+          context,
+          listen: false,
+        ).fetchUserVehicles(authProvider.user!.id);
       }
     });
   }
@@ -75,7 +77,8 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
           }
           if (provider.errorMessage != null && provider.vehicles.isEmpty) {
             return const Center(
-                child: Text("Došlo je do greške pri učitavanju vozila."));
+              child: Text("Došlo je do greške pri učitavanju vozila."),
+            );
           }
           if (provider.vehicles.isEmpty) {
             return const Center(
@@ -96,9 +99,13 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                   itemCount: provider.vehicles.length,
                   itemBuilder: (context, index) {
                     final vehicle = provider.vehicles[index];
-                    final isSelected = provider.selectedVehicle?.id == vehicle.id;
+                    final isSelected =
+                        provider.selectedVehicle?.id == vehicle.id;
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       elevation: isSelected ? 4 : 1,
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -118,22 +125,29 @@ class _VehicleSelectionScreenState extends State<VehicleSelectionScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
-                            color: isSelected ? AppColors.primary : Colors.black,
+                            color: isSelected
+                                ? AppColors.primary
+                                : Colors.black,
                           ),
                         ),
-                        subtitle: Text('${vehicle.model} - ${vehicle.categoryLabel}'),
+                        subtitle: Text(
+                          '${vehicle.model} - ${vehicle.categoryLabel}',
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.grey),
-                              onPressed: () => _showVehicleFormSheet(vehicle: vehicle),
+                              onPressed: () =>
+                                  _showVehicleFormSheet(vehicle: vehicle),
                             ),
                             Icon(
                               isSelected
                                   ? Icons.check_circle
                                   : Icons.radio_button_unchecked,
-                              color: isSelected ? AppColors.primary : Colors.grey,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey,
                             ),
                           ],
                         ),
@@ -178,10 +192,10 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
   @override
   void initState() {
     super.initState();
-    _licensePlateController =
-        TextEditingController(text: widget.vehicle?.licensePlate ?? '');
-    _modelController =
-        TextEditingController(text: widget.vehicle?.model ?? '');
+    _licensePlateController = TextEditingController(
+      text: widget.vehicle?.licensePlate ?? '',
+    );
+    _modelController = TextEditingController(text: widget.vehicle?.model ?? '');
     _category = widget.vehicle?.category ?? VehicleCategory.b;
   }
 
@@ -194,12 +208,8 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
 
   String? _validatePlate(String? v) {
     if (v == null || v.trim().isEmpty) return 'Registracija je obavezna';
-    final clean = v.trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
-    if (clean.length < 4 || clean.length > 8) {
-      return 'Registracija mora imati 4-8 znakova (primjer: A00K000)';
-    }
-    if (!RegExp(r'^[A-Z0-9]+$').hasMatch(clean)) {
-      return 'Registracija smije sadržavati samo velika slova A-Z i brojeve 0-9';
+    if (v.trim().length > 50) {
+      return 'Registracija ne smije imati više od 50 znakova';
     }
     return null;
   }
@@ -220,7 +230,9 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16, right: 16, top: 16,
+        left: 16,
+        right: 16,
+        top: 16,
       ),
       child: Form(
         key: _formKey,
@@ -235,7 +247,9 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                   Text(
                     isEditing ? 'Uredi vozilo' : 'Dodaj novo vozilo',
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -252,11 +266,14 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                 validator: _validatePlate,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 decoration: InputDecoration(
-                  labelText: 'Registracija (npr. A00-K-000)',
-                  prefixIcon:
-                      const Icon(Icons.directions_car, color: AppColors.primary),
+                  labelText: 'Registracija',
+                  prefixIcon: const Icon(
+                    Icons.directions_car,
+                    color: AppColors.primary,
+                  ),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -268,18 +285,20 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 decoration: InputDecoration(
                   labelText: 'Model (npr. VW Golf)',
-                  prefixIcon:
-                      const Icon(Icons.settings, color: AppColors.primary),
+                  prefixIcon: const Icon(
+                    Icons.settings,
+                    color: AppColors.primary,
+                  ),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
 
               DropdownButtonFormField<VehicleCategory>(
                 value: _category,
-                validator: (v) =>
-                    v == null ? 'Kategorija je obavezna' : null,
+                validator: (v) => v == null ? 'Kategorija je obavezna' : null,
                 items: const [
                   DropdownMenuItem(
                     value: VehicleCategory.am,
@@ -293,14 +312,8 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                     value: VehicleCategory.a2,
                     child: Text('A2'),
                   ),
-                  DropdownMenuItem(
-                    value: VehicleCategory.a,
-                    child: Text('A'),
-                  ),
-                  DropdownMenuItem(
-                    value: VehicleCategory.b,
-                    child: Text('B'),
-                  ),
+                  DropdownMenuItem(value: VehicleCategory.a, child: Text('A')),
+                  DropdownMenuItem(value: VehicleCategory.b, child: Text('B')),
                   DropdownMenuItem(
                     value: VehicleCategory.be,
                     child: Text('B E'),
@@ -313,10 +326,7 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                     value: VehicleCategory.c1e,
                     child: Text('C1 E'),
                   ),
-                  DropdownMenuItem(
-                    value: VehicleCategory.c,
-                    child: Text('C'),
-                  ),
+                  DropdownMenuItem(value: VehicleCategory.c, child: Text('C')),
                   DropdownMenuItem(
                     value: VehicleCategory.ce,
                     child: Text('C E'),
@@ -329,36 +339,27 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                     value: VehicleCategory.d1e,
                     child: Text('D1 E'),
                   ),
-                  DropdownMenuItem(
-                    value: VehicleCategory.d,
-                    child: Text('D'),
-                  ),
+                  DropdownMenuItem(value: VehicleCategory.d, child: Text('D')),
                   DropdownMenuItem(
                     value: VehicleCategory.de,
                     child: Text('D E'),
                   ),
-                  DropdownMenuItem(
-                    value: VehicleCategory.f,
-                    child: Text('F'),
-                  ),
-                  DropdownMenuItem(
-                    value: VehicleCategory.g,
-                    child: Text('G'),
-                  ),
-                  DropdownMenuItem(
-                    value: VehicleCategory.h,
-                    child: Text('H'),
-                  ),
+                  DropdownMenuItem(value: VehicleCategory.f, child: Text('F')),
+                  DropdownMenuItem(value: VehicleCategory.g, child: Text('G')),
+                  DropdownMenuItem(value: VehicleCategory.h, child: Text('H')),
                 ],
                 onChanged: _isLoading
                     ? null
                     : (v) => setState(() => _category = v!),
                 decoration: InputDecoration(
                   labelText: 'Kategorija',
-                  prefixIcon:
-                      const Icon(Icons.category, color: AppColors.primary),
+                  prefixIcon: const Icon(
+                    Icons.category,
+                    color: AppColors.primary,
+                  ),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -367,8 +368,7 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed:
-                          _isLoading ? null : Navigator.of(context).pop,
+                      onPressed: _isLoading ? null : Navigator.of(context).pop,
                       child: const Text('Otkaži'),
                     ),
                   ),
@@ -377,14 +377,18 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submitForm,
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary),
+                        backgroundColor: AppColors.primary,
+                      ),
                       child: _isLoading
                           ? const SizedBox(
-                              height: 20, width: 20,
+                              height: 20,
+                              width: 20,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation(Colors.white)),
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
+                              ),
                             )
                           : Text(
                               isEditing ? 'Spremi' : 'Dodaj',
@@ -408,39 +412,49 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
     setState(() => _isLoading = true);
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final vehicleProvider =
-          Provider.of<VehicleProvider>(context, listen: false);
+      final vehicleProvider = Provider.of<VehicleProvider>(
+        context,
+        listen: false,
+      );
 
       final success = widget.vehicle == null
           ? await vehicleProvider.addVehicle(
               userId: authProvider.user!.id,
-              licensePlate: _licensePlateController.text.trim().toUpperCase(),
+              licensePlate: _licensePlateController.text.trim(),
               category: _category,
               model: _modelController.text.trim(),
             )
           : await vehicleProvider.updateVehicle(
               vehicleId: widget.vehicle!.id,
               userId: authProvider.user!.id,
-              licensePlate: _licensePlateController.text.trim().toUpperCase(),
+              licensePlate: _licensePlateController.text.trim(),
               category: _category,
               model: _modelController.text.trim(),
             );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(success
-              ? (widget.vehicle == null ? 'Vozilo dodano' : 'Vozilo ažurirano')
-              : 'Greška pri spremanju'),
-          backgroundColor: success ? Colors.green : Colors.red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? (widget.vehicle == null
+                        ? 'Vozilo dodano'
+                        : 'Vozilo ažurirano')
+                  : 'Greška pri spremanju',
+            ),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
         if (success) Navigator.pop(context);
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Došlo je do greške. Pokušajte ponovno.'),
-          backgroundColor: Colors.red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Došlo je do greške. Pokušajte ponovno.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

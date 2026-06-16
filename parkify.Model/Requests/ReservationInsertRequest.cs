@@ -14,7 +14,7 @@ namespace parkify.Model.Requests
         public int ParkingSpotId { get; set; }
 
         [Required(ErrorMessage = "Registracija vozila je obavezna.")]
-        [StringLength(8, MinimumLength = 4, ErrorMessage = "Registracija vozila mora imati 4-8 znakova.")]
+        [StringLength(50, MinimumLength = 1, ErrorMessage = "Registracija vozila mora imati 1-50 znakova.")]
         public string VehicleLicensePlate { get; set; }
 
         [Required(ErrorMessage = "Vrijeme početka rezervacije je obavezno.")]
