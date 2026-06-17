@@ -13,6 +13,8 @@ docker-compose up --build
 
 Docker će automatski buildati aplikaciju, seedati bazu sa test podacima i pokrenuti API.
 
+**Napomena:** Prije pokretanja potrebno je raspakovati `env-tajne.zip` arhivu.
+
 ### 2. GitHub Release ZIP
 
 Za pregled rada preuzeti GitHub Release ZIP naziva `fit-build-2026-06-17.zip`.
