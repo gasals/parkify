@@ -517,23 +517,39 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
             child: Text('Nema rezervacija koje odgovaraju pretrazi.'),
           );
         }
-        return GridView.builder(
-          controller: _scrollController,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 20,
-            mainAxisSpacing: 20,
-            childAspectRatio: 1.5,
-          ),
-          itemCount:
-              provider.reservations.length + (provider.isLoading ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == provider.reservations.length) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return _buildReservationTile(
-              provider.reservations[index],
-              provider,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final crossAxisCount = screenWidth >= 1500
+                ? 3
+                : screenWidth >= 900
+                    ? 2
+                    : 1;
+            final mainAxisExtent = screenWidth >= 1500
+                ? 305.0
+                : screenWidth >= 900
+                    ? 330.0
+                    : 360.0;
+
+            return GridView.builder(
+              controller: _scrollController,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+                mainAxisExtent: mainAxisExtent,
+              ),
+              itemCount:
+                  provider.reservations.length + (provider.isLoading ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == provider.reservations.length) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return _buildReservationTile(
+                  provider.reservations[index],
+                  provider,
+                );
+              },
             );
           },
         );
@@ -549,6 +565,11 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     final statusColor = _statusColor(statusEnum);
     final userName = _resolveUserName(reservation.userId);
     final zoneName = _resolveZoneName(reservation);
+    final hasCheckAction =
+        (!reservation.isCheckedIn &&
+            reservation.status == ReservationStatus.confirmed.value) ||
+        (!reservation.isCheckedOut &&
+            reservation.status == ReservationStatus.active.value);
 
     return Card(
       elevation: 0,
@@ -611,73 +632,90 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               '${reservation.finalPrice} BAM',
             ),
             const Spacer(),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () =>
-                        _showChangeStatusDialog(reservation, provider),
-                    icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-                    label: const Text(
-                      'STATUS',
-                      style: TextStyle(color: Colors.white, fontSize: 11),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 360;
+                final double halfWidth = compact
+                    ? constraints.maxWidth
+                    : (constraints.maxWidth - 8) / 2;
+
+                return Align(
+                  alignment: Alignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _reservationActionButton(
+                        width: halfWidth,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showChangeStatusDialog(reservation, provider),
+                          icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                          label: const Text(
+                            'STATUS',
+                            style: TextStyle(color: Colors.white, fontSize: 11),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrimary,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      if (hasCheckAction)
+                        _reservationActionButton(
+                          width: halfWidth,
+                          child: OutlinedButton.icon(
+                            icon: Icon(
+                              !reservation.isCheckedIn ? Icons.login : Icons.logout,
+                              size: 16,
+                              color: !reservation.isCheckedIn
+                                  ? Colors.green
+                                  : Colors.orange,
+                            ),
+                            onPressed: !reservation.isCheckedIn
+                                ? () => _checkIn(reservation, provider)
+                                : () => _checkOut(reservation, provider),
+                            label: Text(
+                              !reservation.isCheckedIn ? 'CHECK-IN' : 'CHECK-OUT',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: !reservation.isCheckedIn
+                                  ? Colors.green
+                                  : Colors.orange,
+                              side: BorderSide(
+                                color: !reservation.isCheckedIn
+                                    ? Colors.green
+                                    : Colors.orange,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ),
-                if ((!reservation.isCheckedIn &&
-                        reservation.status ==
-                            ReservationStatus.confirmed.value) ||
-                    (!reservation.isCheckedOut &&
-                        reservation.status ==
-                            ReservationStatus.active.value)) ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: Icon(
-                        !reservation.isCheckedIn ? Icons.login : Icons.logout,
-                        size: 16,
-                        color: !reservation.isCheckedIn
-                            ? Colors.green
-                            : Colors.orange,
-                      ),
-                      onPressed: !reservation.isCheckedIn
-                          ? () => _checkIn(reservation, provider)
-                          : () => _checkOut(reservation, provider),
-                      label: Text(
-                        !reservation.isCheckedIn ? 'CHECK-IN' : 'CHECK-OUT',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: !reservation.isCheckedIn
-                            ? Colors.green
-                            : Colors.orange,
-                        side: BorderSide(
-                          color: !reservation.isCheckedIn
-                              ? Colors.green
-                              : Colors.orange,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+                );
+              },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _reservationActionButton({required double width, required Widget child}) {
+    return SizedBox(
+      width: width,
+      height: 40,
+      child: child,
     );
   }
 

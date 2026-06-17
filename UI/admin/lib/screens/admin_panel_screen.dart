@@ -51,8 +51,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         ),
       ),
       actions: [
-        const Icon(Icons.notifications, color: Colors.white),
-        const SizedBox(width: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
@@ -70,16 +68,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ],
           ),
         ),
-        Container(
-          margin: const EdgeInsets.only(right: 16),
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            color: Colors.green,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.person, color: Colors.white),
-        ),
+        const SizedBox(width: 16),
       ],
     );
   }

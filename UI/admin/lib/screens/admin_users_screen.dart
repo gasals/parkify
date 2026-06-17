@@ -128,15 +128,36 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         if (provider.users.isEmpty) {
           return const Center(child: Text('Nema pronađenih korisnika.'));
         }
-        return GridView.builder(
-          controller: _scrollController,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, crossAxisSpacing: 20, mainAxisSpacing: 20, childAspectRatio: 2,
-          ),
-          itemCount: provider.users.length + (provider.isLoading ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == provider.users.length) return const Center(child: CircularProgressIndicator());
-            return _buildUserTile(provider.users[index], provider);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final crossAxisCount = screenWidth >= 1500
+                ? 3
+                : screenWidth >= 900
+                    ? 2
+                    : 1;
+            final mainAxisExtent = screenWidth >= 1500
+                ? 270.0
+                : screenWidth >= 900
+                    ? 300.0
+                    : 330.0;
+
+            return GridView.builder(
+              controller: _scrollController,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+                mainAxisExtent: mainAxisExtent,
+              ),
+              itemCount: provider.users.length + (provider.isLoading ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == provider.users.length) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return _buildUserTile(provider.users[index], provider);
+              },
+            );
           },
         );
       },
@@ -184,36 +205,58 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             _infoRow(Icons.email, 'Email', user.email),
             _infoRow(Icons.location_on_outlined, 'Adresa', '${user.address ?? 'N/A'} ${user.city ?? ''}'),
             const Spacer(),
-            Row(children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _showEditUserDialog(user, provider),
-                  icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-                  label: const Text('UREDI', style: TextStyle(color: Colors.white, fontSize: 11)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimary, elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => provider.toggleUserActive(userId: user.id, isActive: !user.isActive),
-                  icon: Icon(user.isActive ? Icons.lock_outline : Icons.lock_open, size: 16),
-                  label: Text(user.isActive ? 'BLOKIRAJ' : 'AKTIVIRAJ',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: user.isActive ? Colors.red : Colors.green,
-                    side: BorderSide(color: user.isActive ? Colors.red : Colors.green),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ),
-            ]),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 360;
+
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _userActionButton(
+                      width: compact ? constraints.maxWidth : (constraints.maxWidth - 8) / 2,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showEditUserDialog(user, provider),
+                        icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                        label: const Text('UREDI', style: TextStyle(color: Colors.white, fontSize: 11)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                    _userActionButton(
+                      width: compact ? constraints.maxWidth : (constraints.maxWidth - 8) / 2,
+                      child: OutlinedButton.icon(
+                        onPressed: () => provider.toggleUserActive(userId: user.id, isActive: !user.isActive),
+                        icon: Icon(user.isActive ? Icons.lock_outline : Icons.lock_open, size: 16),
+                        label: Text(
+                          user.isActive ? 'BLOKIRAJ' : 'AKTIVIRAJ',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: user.isActive ? Colors.red : Colors.green,
+                          side: BorderSide(color: user.isActive ? Colors.red : Colors.green),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _userActionButton({required double width, required Widget child}) {
+    return SizedBox(
+      width: width,
+      height: 40,
+      child: child,
     );
   }
 

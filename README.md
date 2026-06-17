@@ -32,7 +32,7 @@ Zip sadrži dva foldera:
 
 1. Otvoriti Android Emulator
 2. Prevući `parkify.apk` u emulator (drag & drop)
-4. Otvoriti aplikaciju
+3. Otvoriti aplikaciju
 
 ---
 
@@ -88,28 +88,28 @@ Sistem šalje notifikacije putem tri kanala: In-App (push), Email i oba kanala i
 | Potvrda rezervacije | Korisnik kreira rezervaciju | In-App + Email |
 | Plaćanje uspješno | Stripe potvrdi transakciju | In-App + Email |
 | Plaćanje neuspješno | Stripe odbije transakciju | In-App + Email |
-| Podsjetnik za rezervaciju | 30 minuta prije početka rezervacije (job) | In-App |
-| Check-in podsjetnik | Rezervacija postane aktivna | In-App |
+| Podsjetnik za rezervaciju | Oko 10 minuta prije početka rezervacije (job) | In-App + Email |
+| Check-in podsjetnik | Oko 10 minuta nakon početka, ako nije urađen check-in (job) | In-App |
 | Otkazana rezervacija | Admin ili korisnik otkaže rezervaciju | In-App + Email |
 | No-show | Job detektuje neiskorištenu rezervaciju | In-App |
-| Obavijest o dostupnosti | Admin ručno šalje iz panela | In-App |
-| Posebna ponuda | Admin ručno šalje iz panela | Email (ako korisnik ima uključen `NotifyAboutOffers`) |
-| Parking pun | Popunjenost zone dosegne 100% | In-App |
+| Obavijest o dostupnosti | Pokušaj rezervacije nedostupnog mjesta | In-App + Email |
+| Posebna ponuda | Admin ručno šalje iz panela | In-App + Email (email samo ako je uključen `NotifyAboutOffers`) |
+| Parking pun | Pokušaj rezervacije u zoni bez slobodnih mjesta | In-App + Email |
 
 > Email za tip "Posebna ponuda" neće biti poslan korisnicima koji imaju isključen `NotifyAboutOffers` u preferencama.
 
 ---
 
-## Automatski Job — ReservationStatusJob
+## Automatski Job — ReservationMonitorService
 
-`ReservationStatusJob` je pozadinski servis koji se pokreće automatski svakih **10 minuta** i vrši sljedeće radnje:
+`ReservationMonitorService` je pozadinski servis koji se pokreće automatski svakih **1 minutu** i vrši sljedeće radnje:
 
-**Aktivacija rezervacija** — Sve rezervacije sa statusom `Confirmed` čiji je `ReservationStart` prošao, a `ReservationEnd` još nije, prebacuje u status `Active`.
+**Potvrda rezervacija na početku termina** — Sve rezervacije sa statusom `Pending` koje su u potpunosti plaćene i čiji je termin počeo, prebacuje u status `Confirmed`.
 
 **Završavanje rezervacija** — Sve rezervacije sa statusom `Active` čiji je `ReservationEnd` prošao, prebacuje u status `Completed` i oslobađa parking mjesto (`IsAvailable = true`).
 
-**Detekcija No-Show** — Sve rezervacije sa statusom `Confirmed` kod kojih je `ReservationStart` prošao više od 30 minuta, a korisnik se nije check-inao, prebacuje u status `NoShow`, oslobađa parking mjesto i šalje In-App notifikaciju korisniku.
+**Detekcija No-Show** — Sve rezervacije sa statusom `Confirmed` kod kojih je `ReservationEnd` prošao, a korisnik se nije check-inao, prebacuje u status `NoShow`, oslobađa parking mjesto i šalje In-App notifikaciju korisniku.
 
-**Podsjetnici** — Za svaku `Confirmed` rezervaciju čiji `ReservationStart` je u sljedećih 30 minuta, a podsjetnik još nije poslan, šalje In-App notifikaciju korisniku i bilježi da je podsjetnik poslan.
+**Podsjetnici** — Za rezervacije koje počinju za oko 10 minuta šalje podsjetnik, a za `Confirmed` rezervacije bez check-ina oko 10 minuta nakon početka šalje check-in podsjetnik.
 
 ---

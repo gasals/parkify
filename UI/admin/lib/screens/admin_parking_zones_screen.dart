@@ -165,15 +165,36 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
         if (provider.parkingZones.isEmpty) {
           return const Center(child: Text('Nema parking zona'));
         }
-        return GridView.builder(
-          controller: _scrollController,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, crossAxisSpacing: 20, mainAxisSpacing: 20, childAspectRatio: 1.5,
-          ),
-          itemCount: provider.parkingZones.length + (provider.isLoading ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == provider.parkingZones.length) return const Center(child: CircularProgressIndicator());
-            return _buildZoneTile(provider.parkingZones[index], provider);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final crossAxisCount = screenWidth >= 1500
+                ? 3
+                : screenWidth >= 900
+                    ? 2
+                    : 1;
+            final mainAxisExtent = screenWidth >= 1500
+                ? 355.0
+                : screenWidth >= 900
+                    ? 385.0
+                    : 430.0;
+
+            return GridView.builder(
+              controller: _scrollController,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+                mainAxisExtent: mainAxisExtent,
+              ),
+              itemCount: provider.parkingZones.length + (provider.isLoading ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == provider.parkingZones.length) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return _buildZoneTile(provider.parkingZones[index], provider);
+              },
+            );
           },
         );
       },
@@ -243,56 +264,87 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
             _priceInfo(Icons.wb_sunny, 'Dnevna', '${zone.dailyRate} KM'),
           ]),
           const SizedBox(height: 16),
-          Row(children: [
-            Expanded(child: SizedBox(height: 40, child: ElevatedButton.icon(
-              onPressed: () => _showEditZoneDialog(zone, provider),
-              icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-              label: const FittedBox(child: Text('UREDI', style: TextStyle(color: Colors.white, fontSize: 11))),
-              style: ElevatedButton.styleFrom(backgroundColor: kPrimary, elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            ))),
-            const SizedBox(width: 8),
-            Expanded(child: SizedBox(height: 40, child: OutlinedButton.icon(
-              onPressed: () => _showSpotsDialog(zone.id, provider),
-              icon: const Icon(Icons.grid_view_rounded, size: 16),
-              label: const FittedBox(child: Text('MJESTA', style: TextStyle(fontSize: 11))),
-              style: OutlinedButton.styleFrom(foregroundColor: kPrimary,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  side: const BorderSide(color: kPrimary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            ))),
-            const SizedBox(width: 8),
-            Expanded(child: SizedBox(height: 40, child: OutlinedButton.icon(
-              onPressed: () => _toggleZoneActive(zone, provider),
-              icon: Icon(zone.isActive ? Icons.lock_outline : Icons.lock_open_outlined, size: 16),
-              label: FittedBox(
-                child: Text(zone.isActive ? 'DEAKTIVIRAJ' : 'AKTIVIRAJ',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: zone.isActive ? Colors.red : Colors.green,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                side: BorderSide(color: zone.isActive ? Colors.red : Colors.green),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ))),
-            const SizedBox(width: 8),
-            Expanded(child: SizedBox(height: 40, child: OutlinedButton.icon(
-              onPressed: () => _deleteZone(zone, provider),
-              icon: const Icon(Icons.delete_outline, size: 16),
-              label: const FittedBox(child: Text('OBRIŠI',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ))),
-          ]),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 420;
+
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _zoneActionButton(
+                    width: compact ? constraints.maxWidth : (constraints.maxWidth - 8) / 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showEditZoneDialog(zone, provider),
+                      icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                      label: const Text('UREDI', style: TextStyle(color: Colors.white, fontSize: 11)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  _zoneActionButton(
+                    width: compact ? constraints.maxWidth : (constraints.maxWidth - 8) / 2,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showSpotsDialog(zone.id, provider),
+                      icon: const Icon(Icons.grid_view_rounded, size: 16),
+                      label: const Text('MJESTA', style: TextStyle(fontSize: 11)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: kPrimary,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        side: const BorderSide(color: kPrimary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  _zoneActionButton(
+                    width: compact ? constraints.maxWidth : (constraints.maxWidth - 8) / 2,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _toggleZoneActive(zone, provider),
+                      icon: Icon(zone.isActive ? Icons.lock_outline : Icons.lock_open_outlined, size: 16),
+                      label: Text(
+                        zone.isActive ? 'DEAKTIVIRAJ' : 'AKTIVIRAJ',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: zone.isActive ? Colors.red : Colors.green,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        side: BorderSide(color: zone.isActive ? Colors.red : Colors.green),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  _zoneActionButton(
+                    width: compact ? constraints.maxWidth : (constraints.maxWidth - 8) / 2,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _deleteZone(zone, provider),
+                      icon: const Icon(Icons.delete_outline, size: 16),
+                      label: const Text('OBRIŠI', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ]),
       ),
+    );
+  }
+
+  Widget _zoneActionButton({required double width, required Widget child}) {
+    return SizedBox(
+      width: width,
+      height: 40,
+      child: child,
     );
   }
 
