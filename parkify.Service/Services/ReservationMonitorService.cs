@@ -57,12 +57,36 @@ namespace parkify.Service.Services
                 .Where(r =>
                     r.Status == Database.ReservationStatus.Pending &&
                     r.FinalPrice > r.PaymentAmountPaid &&
-                    r.Modified < staleCutoff)
+                    (r.Modified ?? r.Created) < staleCutoff)
                 .ToListAsync();
             foreach (var r in stalePending)
             {
+                if (r.WalletAmountUsed > 0)
+                {
+                    var wallet = await db.Wallets.FirstOrDefaultAsync(w => w.UserId == r.UserId);
+                    if (wallet != null)
+                    {
+                        wallet.Balance += r.WalletAmountUsed;
+                        wallet.Modified = now;
+
+                        db.WalletTransactions.Add(new Database.WalletTransaction
+                        {
+                            WalletId = wallet.Id,
+                            Amount = r.WalletAmountUsed,
+                            Type = Database.WalletTransactionType.Cancellation,
+                            Created = now
+                        });
+                    }
+                }
+
                 r.Status = Database.ReservationStatus.Cancelled;
                 r.Modified = now;
+
+                await ReservationLifecycleCoordinator.ReleaseSpotAsync(
+                    db,
+                    r.ParkingZoneId,
+                    r.ParkingSpotId,
+                    now);
 
                 await PublishIfNotSentAsync(
                     db, r.UserId, r.Id,
@@ -85,6 +109,13 @@ namespace parkify.Service.Services
             {
                 r.Status = Database.ReservationStatus.Confirmed;
                 r.Modified = now;
+
+                await ReservationLifecycleCoordinator.ReserveSpotAsync(
+                    db,
+                    r.ParkingZoneId,
+                    r.ParkingSpotId,
+                    now);
+
                 _logger.LogInformation("Rezervacija {ReservationId} potvrđena na početku termina.", r.Id);
             }
 
@@ -112,11 +143,7 @@ namespace parkify.Service.Services
             {
                 r.Status = Database.ReservationStatus.Completed;
                 r.Modified = now;
-                if (spotsById.TryGetValue(r.ParkingSpotId, out var spot))
-                {
-                    spot.IsAvailable = true;
-                    spot.Modified = now;
-                }
+                await ReservationLifecycleCoordinator.ReleaseSpotBatchAsync(db, r, spotsById, now);
                 _logger.LogInformation($"Rezervacija {r.Id} završena.");
             }
 
@@ -124,11 +151,7 @@ namespace parkify.Service.Services
             {
                 r.Status = Database.ReservationStatus.NoShow;
                 r.Modified = now;
-                if (spotsById.TryGetValue(r.ParkingSpotId, out var spot))
-                {
-                    spot.IsAvailable = true;
-                    spot.Modified = now;
-                }
+                await ReservationLifecycleCoordinator.ReleaseSpotBatchAsync(db, r, spotsById, now);
                 await PublishIfNotSentAsync(
                     db, r.UserId, r.Id,
                     Database.NotificationType.ReservationCancelled,

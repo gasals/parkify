@@ -409,26 +409,15 @@ namespace parkify.Service.Services
 
         public override async Task BeforeInsert(ReservationInsertRequest request, Database.Reservation entity)
         {
+            entity.ReservationStart = ReservationLifecycleCoordinator.NormalizeToUtc(entity.ReservationStart);
+            entity.ReservationEnd = ReservationLifecycleCoordinator.NormalizeToUtc(entity.ReservationEnd);
+
             if (entity.ReservationEnd <= entity.ReservationStart)
                 throw new UserException("Vrijeme završetka mora biti poslije vremena početka rezervacije.");
 
             var parkingZone = await Context.ParkingZones.FindAsync(entity.ParkingZoneId);
             if (parkingZone == null)
                 throw new UserException("Parking zona nije pronađena.");
-
-            if (parkingZone.AvailableSpots <= 0)
-            {
-                await _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
-                {
-                    UserId = entity.UserId,
-                    Title = "Parking zona je puna",
-                    Message = $"Zona {parkingZone.Name} trenutno nema slobodnih mjesta.",
-                    Type = (int)Database.NotificationType.ParkingFull,
-                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
-                    ParkingZoneId = entity.ParkingZoneId
-                });
-                throw new UserException("Parking zona je puna.");
-            }
 
             var parkingSpot = await Context.ParkingSpots.FirstOrDefaultAsync(ps => ps.Id == entity.ParkingSpotId);
             if (parkingSpot == null)
@@ -439,7 +428,9 @@ namespace parkify.Service.Services
 
             var hasOverlap = await Context.Reservations.AnyAsync(r =>
                 r.ParkingSpotId == entity.ParkingSpotId &&
-                (r.Status == Database.ReservationStatus.Confirmed || r.Status == Database.ReservationStatus.Active) &&
+                (r.Status == Database.ReservationStatus.Pending ||
+                 r.Status == Database.ReservationStatus.Confirmed ||
+                 r.Status == Database.ReservationStatus.Active) &&
                 entity.ReservationStart < r.ReservationEnd &&
                 r.ReservationStart < entity.ReservationEnd);
 
@@ -459,20 +450,6 @@ namespace parkify.Service.Services
 
             if (!parkingSpot.IsActive)
                 throw new UserException("Odabrano parking mjesto nije aktivno.");
-
-            if (!parkingSpot.IsAvailable)
-            {
-                await _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
-                {
-                    UserId = entity.UserId,
-                    Title = "Nema slobodnih mjesta",
-                    Message = $"Parking mjesto {parkingSpot.SpotCode} trenutno nije dostupno.",
-                    Type = (int)Database.NotificationType.AvailabilityAlert,
-                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
-                    ParkingZoneId = entity.ParkingZoneId
-                });
-                throw new UserException("Odabrano parking mjesto trenutno nije raspoloživo.");
-            }
 
             if (request.RequiresDisabledSpot && parkingSpot.Type != Database.ParkingSpotType.Disabled)
                 throw new UserException("Za ovu rezervaciju morate odabrati invalidsko parking mjesto.");
@@ -532,19 +509,17 @@ namespace parkify.Service.Services
                     ? Database.ReservationStatus.Confirmed
                     : Database.ReservationStatus.Pending;
 
-                if (parkingZone.AvailableSpots > 0)
+                if (entity.Status == Database.ReservationStatus.Confirmed)
                 {
-                    parkingZone.AvailableSpots -= 1;
-                }
-
-                if (parkingSpot != null)
-                {
-                    parkingSpot.IsAvailable = false;
-                    parkingSpot.Modified = DateTime.UtcNow;
+                    await ReservationLifecycleCoordinator.ReserveSpotAsync(
+                        Context,
+                        entity.ParkingZoneId,
+                        entity.ParkingSpotId,
+                        DateTime.UtcNow);
                 }
             }
 
-            entity.ReservationCode = GenerateReservationCode(request);
+            entity.ReservationCode = GenerateReservationCode(entity);
 
             await base.BeforeInsert(request, entity);
         }
@@ -604,6 +579,11 @@ namespace parkify.Service.Services
 
                 entity.Status = Database.ReservationStatus.Confirmed;
                 entity.Modified = DateTime.UtcNow;
+                await ReservationLifecycleCoordinator.ReserveSpotAsync(
+                    Context,
+                    entity.ParkingZoneId,
+                    entity.ParkingSpotId,
+                    DateTime.UtcNow);
 
                 await _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
                 {
@@ -626,7 +606,11 @@ namespace parkify.Service.Services
                     return;
                 }
 
-                await ReleaseSpotForReservation(entity);
+                await ReservationLifecycleCoordinator.ReleaseSpotAsync(
+                    Context,
+                    entity.ParkingZoneId,
+                    entity.ParkingSpotId,
+                    DateTime.UtcNow);
                 entity.Status = Database.ReservationStatus.Completed;
                 entity.Modified = DateTime.UtcNow;
 
@@ -651,7 +635,11 @@ namespace parkify.Service.Services
                     return;
                 }
 
-                await ReleaseSpotForReservation(entity);
+                await ReservationLifecycleCoordinator.ReleaseSpotAsync(
+                    Context,
+                    entity.ParkingZoneId,
+                    entity.ParkingSpotId,
+                    DateTime.UtcNow);
                 entity.Status = Database.ReservationStatus.NoShow;
                 entity.Modified = DateTime.UtcNow;
 
@@ -702,7 +690,11 @@ namespace parkify.Service.Services
                     }
                 }
 
-                await ReleaseSpotForReservation(entity);
+                await ReservationLifecycleCoordinator.ReleaseSpotAsync(
+                    Context,
+                    entity.ParkingZoneId,
+                    entity.ParkingSpotId,
+                    DateTime.UtcNow);
 
                 entity.Status = Database.ReservationStatus.Cancelled;
                 await _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
@@ -723,7 +715,9 @@ namespace parkify.Service.Services
                     throw new UserException("Check-in prije početka rezervacije.");
 
                 entity.IsCheckedIn = true;
-                entity.CheckInTime = request.CheckInTime ?? DateTime.UtcNow;
+                entity.CheckInTime = request.CheckInTime.HasValue
+                    ? ReservationLifecycleCoordinator.NormalizeToUtc(request.CheckInTime.Value)
+                    : DateTime.UtcNow;
                 entity.CheckInBy = actorUserId;
                 entity.Status = Database.ReservationStatus.Active;
 
@@ -742,7 +736,9 @@ namespace parkify.Service.Services
             if (request.IsCheckedOut.HasValue && request.IsCheckedOut.Value)
             {
                 entity.IsCheckedOut = true;
-                entity.CheckOutTime = request.CheckOutTime ?? DateTime.UtcNow;
+                entity.CheckOutTime = request.CheckOutTime.HasValue
+                    ? ReservationLifecycleCoordinator.NormalizeToUtc(request.CheckOutTime.Value)
+                    : DateTime.UtcNow;
                 entity.Status = Database.ReservationStatus.Completed;
 
                 if (entity.CheckOutTime > entity.ReservationEnd)
@@ -762,6 +758,9 @@ namespace parkify.Service.Services
 
                             if (wallet != null)
                             {
+                                if (wallet.Balance < extraCost)
+                                    throw new UserException("Novčanik nema dovoljno sredstava za dodatni trošak kašnjenja. Prvo dopunite novčanik.");
+
                                 wallet.Balance -= extraCost;
                                 wallet.Modified = DateTime.UtcNow;
                                 Context.Wallets.Update(wallet);
@@ -780,40 +779,21 @@ namespace parkify.Service.Services
                     }
                 }
 
-                await ReleaseSpotForReservation(entity);
+                await ReservationLifecycleCoordinator.ReleaseSpotAsync(
+                    Context,
+                    entity.ParkingZoneId,
+                    entity.ParkingSpotId,
+                    DateTime.UtcNow);
             }
 
             await base.BeforeUpdate(request, entity);
         }
 
-        private async Task ReleaseSpotForReservation(Database.Reservation reservation)
+        private string GenerateReservationCode(Database.Reservation reservation)
         {
-            var parkingSpot = await Context.ParkingSpots.FindAsync(reservation.ParkingSpotId);
-            if (parkingSpot == null)
-            {
-                return;
-            }
-
-            if (parkingSpot.IsAvailable)
-            {
-                return;
-            }
-
-            parkingSpot.IsAvailable = true;
-            parkingSpot.Modified = DateTime.UtcNow;
-
-            var parkingZone = await Context.ParkingZones.FindAsync(reservation.ParkingZoneId);
-            if (parkingZone != null)
-            {
-                parkingZone.AvailableSpots += 1;
-            }
-        }
-
-        private string GenerateReservationCode(ReservationInsertRequest request)
-        {
-            var dateTimePart = request.ReservationStart.ToString("yyMMddHHmm");
+            var dateTimePart = reservation.ReservationStart.ToString("yyMMddHHmm");
             var random = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
-            return $"U{request.UserId}-Z{request.ParkingZoneId}-{dateTimePart}-{random}";
+            return $"U{reservation.UserId}-Z{reservation.ParkingZoneId}-{dateTimePart}-{random}";
         }
 
         private static decimal CalculateReservationPrice(

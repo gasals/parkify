@@ -9,7 +9,6 @@ class UserRegistrationRequest {
   final String lastName;
   final String? address;
   final String? city;
-  final String? phoneNumber;
 
   const UserRegistrationRequest({
     required this.username,
@@ -20,7 +19,6 @@ class UserRegistrationRequest {
     required this.lastName,
     this.address,
     this.city,
-    this.phoneNumber,
   });
 
   Map<String, Object?> toJson() => {
@@ -32,7 +30,6 @@ class UserRegistrationRequest {
     'lastName': lastName,
     'address': address,
     'city': city,
-    'phoneNumber': phoneNumber,
   };
 }
 
@@ -40,20 +37,17 @@ class UserUpdateRequestDto {
   final String email;
   final String firstName;
   final String lastName;
-  final String? phoneNumber;
 
   const UserUpdateRequestDto({
     required this.email,
     required this.firstName,
     required this.lastName,
-    this.phoneNumber,
   });
 
   Map<String, Object?> toJson() => {
     'email': email,
     'firstName': firstName,
     'lastName': lastName,
-    'phoneNumber': phoneNumber,
   };
 }
 
@@ -76,7 +70,6 @@ class ChangePasswordRequestDto {
 }
 
 class ReservationCreateRequest {
-  final int userId;
   final int parkingZoneId;
   final int parkingSpotId;
   final DateTime reservationStart;
@@ -86,7 +79,6 @@ class ReservationCreateRequest {
   final String? notes;
 
   const ReservationCreateRequest({
-    required this.userId,
     required this.parkingZoneId,
     required this.parkingSpotId,
     required this.reservationStart,
@@ -97,11 +89,10 @@ class ReservationCreateRequest {
   });
 
   Map<String, Object?> toJson() => {
-    'userId': userId,
     'parkingZoneId': parkingZoneId,
     'parkingSpotId': parkingSpotId,
-    'reservationStart': reservationStart.toIso8601String(),
-    'reservationEnd': reservationEnd.toIso8601String(),
+    'reservationStart': reservationStart.toUtc().toIso8601String(),
+    'reservationEnd': reservationEnd.toUtc().toIso8601String(),
     'vehicleLicensePlate': vehicleLicensePlate,
     'requiresDisabledSpot': requiresDisabledSpot,
     'notes': notes,
@@ -111,14 +102,12 @@ class ReservationCreateRequest {
 class PaymentCreateRequest {
   final int? reservationId;
   final int? walletId;
-  final int userId;
   final double amount;
   final String currency;
 
   const PaymentCreateRequest({
     this.reservationId,
     this.walletId,
-    required this.userId,
     required this.amount,
     this.currency = 'bam',
   });
@@ -126,7 +115,6 @@ class PaymentCreateRequest {
   Map<String, Object?> toJson() => {
     'reservationId': reservationId,
     'walletId': walletId,
-    'userId': userId,
     'amount': amount,
     'currency': currency,
   };
@@ -156,40 +144,34 @@ class PreferenceUpdateRequest {
 
 class ReviewUpsertRequest {
   final int? parkingZoneId;
-  final int? userId;
   final int rating;
   final String? reviewText;
 
   const ReviewUpsertRequest({
     this.parkingZoneId,
-    this.userId,
     required this.rating,
     this.reviewText,
   });
 
   Map<String, Object?> toJson() => {
     if (parkingZoneId != null) 'parkingZoneId': parkingZoneId,
-    if (userId != null) 'userId': userId,
     'rating': rating,
     'reviewText': reviewText,
   };
 }
 
 class VehicleUpdateRequest {
-  final int userId;
   final String licensePlate;
   final String model;
   final VehicleCategory category;
 
   const VehicleUpdateRequest({
-    required this.userId,
     required this.licensePlate,
     required this.model,
     required this.category,
   });
 
   Map<String, Object?> toJson() => {
-    'userId': userId,
     'licensePlate': licensePlate,
     'model': model,
     'category': category.value,

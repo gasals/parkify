@@ -2,6 +2,7 @@ import 'package:admin/services/api_service.dart';
 import 'package:admin/utils/file_saver.dart';
 import 'package:admin/widgets/admin_dialog_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import '../models/parking_zone_model.dart';
 import '../models/reservation_model.dart';
@@ -29,6 +30,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
   ReservationStatus? _selectedStatus;
   bool _isSearching = false;
   bool _isDownloadingReport = false;
+  bool _isPrintingReport = false;
 
   static final _reportFirstDate = DateTime(2020, 1, 1);
 
@@ -166,6 +168,57 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     } finally {
       if (mounted) {
         setState(() => _isDownloadingReport = false);
+      }
+    }
+  }
+
+  Future<void> _printReport({required bool finance}) async {
+    if (_isPrintingReport) {
+      return;
+    }
+
+    try {
+      final options = await _showReportOptionsDialog(finance: finance);
+
+      if (options == null) {
+        return;
+      }
+
+      setState(() => _isPrintingReport = true);
+
+      final from = DateTime(
+        options.range.start.year,
+        options.range.start.month,
+        options.range.start.day,
+      );
+      final to = DateTime(
+        options.range.end.year,
+        options.range.end.month,
+        options.range.end.day,
+        23,
+        59,
+        59,
+      );
+
+      final bytes = finance
+          ? await ApiService.downloadFinanceReportPdf(
+              from: from,
+              to: to,
+              userId: options.onlySelectedUser ? _selectedUser?.id : null,
+            )
+          : await ApiService.downloadReservationReportPdf(from: from, to: to);
+
+      await Printing.layoutPdf(onLayout: (_) async => bytes);
+    } catch (e) {
+      if (!mounted) return;
+      AdminSnackBar.show(
+        context,
+        e.toString().replaceFirst('Exception: ', ''),
+        false,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPrintingReport = false);
       }
     }
   }
@@ -405,6 +458,14 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
+                onPressed: _isPrintingReport
+                    ? null
+                    : () => _printReport(finance: false),
+                icon: const Icon(Icons.print_outlined),
+                label: Text(_isPrintingReport ? 'Priprema...' : 'Print operativni'),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
                 onPressed: _isDownloadingReport
                     ? null
                     : () => _downloadReport(finance: true),
@@ -412,6 +473,14 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                 label: Text(
                   _isDownloadingReport ? 'Preuzimanje...' : 'Finansijski PDF',
                 ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: _isPrintingReport
+                    ? null
+                    : () => _printReport(finance: true),
+                icon: const Icon(Icons.print_outlined),
+                label: Text(_isPrintingReport ? 'Priprema...' : 'Print finansijski'),
               ),
               const SizedBox(width: 12),
               CommonButtons.buildClearButton(onPressed: _clearSearch),

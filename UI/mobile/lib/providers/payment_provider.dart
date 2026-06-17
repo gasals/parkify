@@ -25,7 +25,6 @@ class PaymentProvider extends ChangeNotifier {
   Future<PaymentIntentResult> createPayment({
     int? reservationId,
     int? walletId,
-    required int userId,
     required double amount,
   }) async {
     _isLoading = true;
@@ -37,7 +36,6 @@ class PaymentProvider extends ChangeNotifier {
         PaymentCreateRequest(
           reservationId: reservationId,
           walletId: walletId,
-          userId: userId,
           amount: amount,
         ),
       );

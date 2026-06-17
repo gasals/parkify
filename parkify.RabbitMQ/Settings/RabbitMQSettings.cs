@@ -8,6 +8,7 @@ namespace parkify.RabbitMQ.Settings
         public string Password { get; set; } = "guest";
         public string VirtualHost { get; set; } = "/";
         public string NotificationQueue { get; set; } = "parkify.notifications";
+        public string NotificationDeadLetterQueue { get; set; } = "parkify.notifications.dead-letter";
         public string ExchangeName { get; set; } = "parkify.exchange";
     }
 }

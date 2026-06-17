@@ -71,7 +71,7 @@ class ParkingZoneProvider extends ChangeNotifier {
     required String name,
     required String description,
     required String address,
-    required String city,
+    required int cityId,
     required double latitude,
     required double longitude,
     required double pricePerHour,
@@ -86,7 +86,7 @@ class ParkingZoneProvider extends ChangeNotifier {
           name: name,
           description: description,
           address: address,
-          city: city,
+          cityId: cityId,
           latitude: latitude,
           longitude: longitude,
           pricePerHour: pricePerHour,
@@ -184,7 +184,7 @@ class ParkingZoneProvider extends ChangeNotifier {
       if (index != -1) {
         final response = await ApiService.searchParkingZones(
           page: 1,
-          pageSize: 1000,
+          pageSize: 100,
         );
         final zones = response.results;
 
@@ -299,7 +299,7 @@ class ParkingZoneProvider extends ChangeNotifier {
     try {
       final result = await ApiService.searchParkingZones(
         name: name,
-        pageSize: 1000,
+        pageSize: 100,
       );
       return result.results;
     } catch (e) {

@@ -45,18 +45,32 @@ namespace parkify.API.Controllers
 
         [HttpGet("recommendations")]
         [Authorize]
-        public async Task<IActionResult> GetRecommendations([FromQuery] int count = 5, [FromQuery] int? userId = null)
+        public async Task<IActionResult> GetRecommendations([FromQuery] int count = 5)
         {
-            var effectiveUserId = ResolveRecommendationUserId(userId);
-            return Ok(await (_service as IParkingZoneService)!.GetRecommendations(effectiveUserId, count));
+            var currentUserId = GetCurrentUserIdOrThrow();
+            return Ok(await (_service as IParkingZoneService)!.GetRecommendations(currentUserId, count));
         }
 
         [HttpGet("recommendations/explained")]
         [Authorize]
-        public async Task<IActionResult> GetRecommendationsExplained([FromQuery] int count = 5, [FromQuery] int? userId = null)
+        public async Task<IActionResult> GetRecommendationsExplained([FromQuery] int count = 5)
         {
-            var effectiveUserId = ResolveRecommendationUserId(userId);
-            return Ok(await (_service as IParkingZoneService)!.GetRecommendationsWithExplanation(effectiveUserId, count));
+            var currentUserId = GetCurrentUserIdOrThrow();
+            return Ok(await (_service as IParkingZoneService)!.GetRecommendationsWithExplanation(currentUserId, count));
+        }
+
+        [HttpGet("recommendations/admin/{userId:int}")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<IActionResult> GetRecommendationsForAdmin(int userId, [FromQuery] int count = 5)
+        {
+            return Ok(await (_service as IParkingZoneService)!.GetRecommendations(userId, count));
+        }
+
+        [HttpGet("recommendations/explained/admin/{userId:int}")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<IActionResult> GetRecommendationsExplainedForAdmin(int userId, [FromQuery] int count = 5)
+        {
+            return Ok(await (_service as IParkingZoneService)!.GetRecommendationsWithExplanation(userId, count));
         }
 
         [HttpDelete("{id}")]
@@ -66,17 +80,5 @@ namespace parkify.API.Controllers
             return Ok((_service as IParkingZoneService)!.Delete(id));
         }
 
-        private int ResolveRecommendationUserId(int? requestedUserId)
-        {
-            if (requestedUserId.HasValue)
-            {
-                if (!IsCurrentUserAdmin())
-                    throw new UnauthorizedAccessException("Nemate pravo pristupa preporukama drugog korisnika.");
-
-                return requestedUserId.Value;
-            }
-
-            return GetCurrentUserIdOrThrow();
-        }
     }
 }

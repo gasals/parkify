@@ -2,11 +2,13 @@ using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
 using parkify.Service.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using parkify.Model.Helpers;
 
 namespace parkify.API.Controllers
 {
+    [Authorize]
     public class ReviewController : BaseCRUDController<Review, ReviewSearch, ReviewInsertRequest, ReviewUpdateRequest>
     {
         public ReviewController(IReviewService service) : base(service)
@@ -42,14 +44,7 @@ namespace parkify.API.Controllers
         public override async Task<Review> Insert([FromBody] ReviewInsertRequest request)
         {
             var currentUserId = GetCurrentUserIdOrThrow();
-            if (!IsCurrentUserAdmin())
-            {
-                request.UserId = currentUserId;
-            }
-            else if (request.UserId <= 0)
-            {
-                request.UserId = currentUserId;
-            }
+            request.UserId = currentUserId;
 
             return await base.Insert(request);
         }

@@ -25,7 +25,7 @@ class ReviewProvider extends ChangeNotifier {
   Future<void> getZoneReviews({
     required int parkingZoneId,
     int page = 1,
-    int pageSize = 1000,
+    int pageSize = 20,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -63,7 +63,6 @@ class ReviewProvider extends ChangeNotifier {
 
   Future<Review> createReview({
     required int parkingZoneId,
-    required int userId,
     required int rating,
     required String? reviewText,
   }) async {
@@ -73,7 +72,6 @@ class ReviewProvider extends ChangeNotifier {
       final review = await ApiService.createReview(
         ReviewUpsertRequest(
           parkingZoneId: parkingZoneId,
-          userId: userId,
           rating: rating,
           reviewText: reviewText,
         ),

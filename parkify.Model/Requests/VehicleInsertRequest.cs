@@ -2,10 +2,11 @@
 {
     using parkify.Model.Models;
     using System.ComponentModel.DataAnnotations;
+    using System.Text.Json.Serialization;
 
     public class VehicleInsertRequest
     {
-            [Range(1, int.MaxValue, ErrorMessage = "UserId mora biti veći od 0.")]
+            [JsonIgnore]
         public int UserId { get; set; }
 
             [Required(ErrorMessage = "Registracija vozila je obavezna.")]

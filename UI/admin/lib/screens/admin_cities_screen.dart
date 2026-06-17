@@ -23,7 +23,7 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<CityProvider>().getAllCities(pageSize: 1000);
+      context.read<CityProvider>().getAllCities(pageSize: 100);
     });
   }
 
@@ -35,7 +35,7 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
 
   Future<void> _search() async {
     setState(() => _isSearching = true);
-    await context.read<CityProvider>().getAllCities(pageSize: 1000);
+    await context.read<CityProvider>().getAllCities(pageSize: 100);
     if (mounted) {
       setState(() => _isSearching = false);
     }
@@ -43,7 +43,7 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
 
   Future<void> _refresh() async {
     _searchController.clear();
-    await context.read<CityProvider>().getAllCities(pageSize: 1000);
+    await context.read<CityProvider>().getAllCities(pageSize: 100);
   }
 
   Future<void> _openCityDialog({City? city}) async {

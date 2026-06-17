@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
         reservationProvider.getUserReservations(userId: userId),
         preferenceProvider.loadUserPreference(userId: userId),
         cityProvider.getAllCities(),
-        parkingZoneProvider.getRecommendedZones(userId: userId),
+        parkingZoneProvider.getRecommendedZones(),
         notificationProvider.fetchUnreadCount(userId),
       ]);
     }

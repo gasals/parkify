@@ -21,7 +21,6 @@ namespace parkify.Service.Database
         public decimal PaymentAmountPaid { get; set; }
         public bool RequiresDisabledSpot { get; set; } = false;
         public string Notes { get; set; } = string.Empty;
-        public string QRCodeData { get; set; } = string.Empty;
         public DateTime Created { get; set; } = DateTime.UtcNow;
         public DateTime? Modified { get; set; }
         public DateTime? CheckInTime { get; set; }

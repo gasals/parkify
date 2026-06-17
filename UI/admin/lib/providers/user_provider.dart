@@ -221,7 +221,7 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<List<User>> getAllUsersList({int pageSize = 1000}) async {
+  Future<List<User>> getAllUsersList({int pageSize = 100}) async {
     try {
       final result = await ApiService.getAllUsers(pageSize: pageSize);
       return result.results;
@@ -240,7 +240,7 @@ class UserProvider extends ChangeNotifier {
       final result = await ApiService.searchUsers(
         username: username,
         email: email,
-        pageSize: 1000,
+        pageSize: 100,
       );
       return result.results;
     } catch (e) {

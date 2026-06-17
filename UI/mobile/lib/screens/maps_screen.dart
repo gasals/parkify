@@ -67,7 +67,7 @@ class _MapsScreenState extends State<MapsScreen> {
     }
 
     await zoneProvider.getParkingZones();
-    await zoneProvider.getRecommendedZones(userId: userId ?? 0);
+    await zoneProvider.getRecommendedZones();
     await cityProvider.getAllCities();
 
     setState(() {

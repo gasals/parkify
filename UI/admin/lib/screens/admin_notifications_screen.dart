@@ -5,7 +5,6 @@ import '../models/notification_model.dart';
 import '../models/user_model.dart';
 import '../providers/notification_provider.dart';
 import '../providers/user_provider.dart';
-import '../services/api_service.dart';
 import '../widgets/common_widgets.dart';
 
 class AdminNotificationsScreen extends StatefulWidget {
@@ -254,7 +253,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                 setState(() => _selectedUser = null);
               }
               if (value.isNotEmpty) {
-                await provider.searchUsers(username: value, pageSize: 1000);
+                await provider.searchUsers(username: value, pageSize: 100);
               }
             },
             decoration: SearchFieldDecoration.buildInputDecoration(

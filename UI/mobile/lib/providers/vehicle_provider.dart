@@ -74,7 +74,6 @@ class VehicleProvider extends ChangeNotifier {
 
   Future<bool> updateVehicle({
     required int vehicleId,
-    required int userId,
     required String licensePlate,
     required String model,
     required VehicleCategory category,
@@ -87,7 +86,6 @@ class VehicleProvider extends ChangeNotifier {
       final updatedVehicle = await ApiService.updateVehicle(
         vehicleId: vehicleId,
         request: VehicleUpdateRequest(
-          userId: userId,
           licensePlate: licensePlate,
           model: model,
           category: category,

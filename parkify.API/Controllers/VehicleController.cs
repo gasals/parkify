@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using parkify.Model.Helpers;
 using parkify.Model.Models;
 using parkify.Model.Requests;
@@ -9,6 +10,7 @@ namespace parkify.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class VehicleController : BaseCRUDController<Vehicle, VehicleSearchObject, VehicleInsertRequest, VehicleUpdateRequest>
     {
         public VehicleController(IVehicleService service) : base(service)

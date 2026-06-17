@@ -3,7 +3,6 @@ import 'package:mobile/models/review_model.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/parking_zone_model.dart';
-import '../providers/auth_provider.dart';
 import '../providers/review_provider.dart';
 
 class ReviewsScreen extends StatefulWidget {
@@ -319,10 +318,10 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
     if (v == null || v.trim().isEmpty) {
       return 'Recenzija je obavezna';
     }
-    if (v != null && v.trim().isNotEmpty && v.trim().length < 10) {
+    if (v.trim().isNotEmpty && v.trim().length < 10) {
       return 'Recenzija mora imati najmanje 10 znakova';
     }
-    if (v != null && v.trim().length > 500) {
+    if (v.trim().length > 500) {
       return 'Recenzija ne smije imati više od 500 znakova';
     }
     return null;
@@ -334,7 +333,6 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
 
     setState(() => _isLoading = true);
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final reviewProvider = Provider.of<ReviewProvider>(
         context,
         listen: false,
@@ -351,7 +349,6 @@ class _AddReviewDialogState extends State<_AddReviewDialog> {
       } else {
         await reviewProvider.createReview(
           parkingZoneId: widget.parkingZoneId,
-          userId: authProvider.user!.id,
           rating: _rating,
           reviewText: _textController.text.trim().isEmpty
               ? null

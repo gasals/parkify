@@ -16,11 +16,9 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
   late TextEditingController _emailController;
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
-  late TextEditingController _phoneNumberController;
   bool _isLoading = false;
 
   static final _emailRegex = RegExp(r'^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$');
-  static final _phoneRegex = RegExp(r'^\+?[\d\s\-\(\)]{6,20}$');
   static final _nameRegex  = RegExp(r"^[A-Za-zÀ-žA-Ža-ž\s'\-]{2,50}$");
 
   @override
@@ -30,7 +28,6 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     _emailController       = TextEditingController(text: user?.email ?? '');
     _firstNameController   = TextEditingController(text: user?.firstName ?? '');
     _lastNameController    = TextEditingController(text: user?.lastName ?? '');
-    _phoneNumberController = TextEditingController(text: user?.phoneNumber ?? '');
   }
 
   @override
@@ -38,7 +35,6 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     _emailController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _phoneNumberController.dispose();
     super.dispose();
   }
 
@@ -54,14 +50,6 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     if (v == null || v.trim().isEmpty) return '$label je obavezno';
     if (v.trim().length < 2) return '$label mora imati najmanje 2 znaka';
     if (!_nameRegex.hasMatch(v.trim())) return '$label sadrži nedozvoljene znakove';
-    return null;
-  }
-
-  String? _validatePhone(String? v) {
-    if (v == null || v.trim().isEmpty) return null;
-    if (!_phoneRegex.hasMatch(v.trim())) {
-      return 'Unesite validan broj telefona (dozvoljeno: +, cifre, razmak i -; 6-20 znakova)';
-    }
     return null;
   }
 
@@ -130,20 +118,6 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _phoneNumberController,
-                keyboardType: TextInputType.phone,
-                enabled: !_isLoading,
-                validator: _validatePhone,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                decoration: InputDecoration(
-                  labelText: 'Telefonski broj (opcionalno)',
-                  prefixIcon: const Icon(Icons.phone, color: AppColors.primary),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
               const SizedBox(height: 24),
 
               Row(
@@ -189,9 +163,6 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
         email: _emailController.text.trim(),
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
-        phoneNumber: _phoneNumberController.text.trim().isEmpty
-            ? null
-            : _phoneNumberController.text.trim(),
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

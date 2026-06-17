@@ -176,7 +176,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
       final reservation = await reservationProvider.createReservation(
         ReservationCreateRequest(
-          userId: authProvider.user!.id,
           parkingZoneId: widget.parkingZone.id,
           parkingSpotId: widget.parkingSpot.id,
           reservationStart: _startTime,
@@ -196,7 +195,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
       if (reservation.finalPrice > 0) {
         final payment = await paymentProvider.createPayment(
           reservationId: reservation.id,
-          userId: authProvider.user!.id,
           amount: reservation.finalPrice,
         );
 

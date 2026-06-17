@@ -56,7 +56,39 @@ namespace parkify.API.Controllers
             if (!CanAccessUser(id))
                 throw new UnauthorizedAccessException("Nemate pravo izmjene ovog korisnika.");
 
+            if (!User.IsInRole(AppRoles.Admin) && request.IsActive.HasValue)
+                throw new UnauthorizedAccessException("Nemate pravo izmjene statusa korisničkog naloga.");
+
             return await base.Update(id, request);
+        }
+
+        [HttpPut("me/profile")]
+        [Authorize]
+        public async Task<User> UpdateMyProfile([FromBody] UserUpdateRequest request)
+        {
+            var currentUserId = GetCurrentUserIdOrThrow();
+            request.IsActive = null;
+            request.CurrentPassword = null;
+            request.Password = null;
+            request.PasswordConfirm = null;
+
+            return await base.Update(currentUserId, request);
+        }
+
+        [HttpPut("me/password")]
+        [Authorize]
+        public async Task<User> ChangeMyPassword([FromBody] UserUpdateRequest request)
+        {
+            var currentUserId = GetCurrentUserIdOrThrow();
+
+            request.IsActive = null;
+            request.Email = null;
+            request.FirstName = null;
+            request.LastName = null;
+            request.Address = null;
+            request.CityId = null;
+
+            return await base.Update(currentUserId, request);
         }
 
         [HttpGet("{id}")]

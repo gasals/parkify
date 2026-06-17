@@ -91,7 +91,7 @@ class ParkingZoneCreateRequest {
   final String name;
   final String description;
   final String address;
-  final String city;
+  final int cityId;
   final double latitude;
   final double longitude;
   final double pricePerHour;
@@ -101,7 +101,7 @@ class ParkingZoneCreateRequest {
     required this.name,
     required this.description,
     required this.address,
-    required this.city,
+    required this.cityId,
     required this.latitude,
     required this.longitude,
     required this.pricePerHour,
@@ -112,7 +112,7 @@ class ParkingZoneCreateRequest {
     'name': name,
     'description': description,
     'address': address,
-    'city': city,
+    'cityId': cityId,
     'latitude': latitude,
     'longitude': longitude,
     'pricePerHour': pricePerHour,

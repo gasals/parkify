@@ -163,7 +163,7 @@ class ReservationProvider extends ChangeNotifier {
     }
   }
 
-  Future<List<User>> getAllUsersList({int pageSize = 1000}) async {
+  Future<List<User>> getAllUsersList({int pageSize = 100}) async {
     try {
       final result = await ApiService.getAllUsers(pageSize: pageSize);
       return result.results;
@@ -179,7 +179,7 @@ class ReservationProvider extends ChangeNotifier {
       final result = await ApiService.searchUsers(
         username: username,
         email: email,
-        pageSize: 1000,
+        pageSize: 100,
       );
       return result.results;
     } catch (e) {
@@ -190,7 +190,7 @@ class ReservationProvider extends ChangeNotifier {
   }
 
   Future<List<ParkingZone>> getAllParkingZonesList({
-    int pageSize = 1000,
+    int pageSize = 100,
   }) async {
     try {
       final result = await ApiService.searchParkingZones(pageSize: pageSize);
@@ -206,7 +206,7 @@ class ReservationProvider extends ChangeNotifier {
     try {
       final result = await ApiService.searchParkingZones(
         name: name,
-        pageSize: 1000,
+        pageSize: 100,
       );
       return result.results;
     } catch (e) {

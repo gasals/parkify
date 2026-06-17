@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace parkify.Model.Requests
 {
@@ -7,7 +8,7 @@ namespace parkify.Model.Requests
         [Range(1, int.MaxValue, ErrorMessage = "ParkingZoneId mora biti veći od 0.")]
         public int ParkingZoneId { get; set; }
 
-        [Range(1, int.MaxValue, ErrorMessage = "UserId mora biti veći od 0.")]
+        [JsonIgnore]
         public int UserId { get; set; }
 
         [Range(1, 5, ErrorMessage = "Ocjena mora biti između 1 i 5.")]

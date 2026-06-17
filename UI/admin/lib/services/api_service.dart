@@ -252,7 +252,7 @@ class ApiService {
 
   static Future<PagedResponse<User>> getAllUsers({
     int page = 1,
-    int pageSize = 1000,
+    int pageSize = 100,
   }) async {
     try {
       final params = await _buildQueryParams(page: page, pageSize: pageSize);
@@ -356,7 +356,7 @@ class ApiService {
   static Future<PagedResponse<City>> searchCities({String? name}) async {
     try {
       final params = await _buildQueryParams(
-        pageSize: 1000,
+        pageSize: 100,
         filters: {'name': name},
       );
       final response = await http

@@ -76,7 +76,7 @@ namespace parkify.Service.Services
                         if (attempt == maxAttempts)
                         {
                             _logger.LogError(ex, "Greška pri spremanju notifikacije nakon {Attempt} pokušaja", attempt);
-                            await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                            await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                             return;
                         }
 
@@ -95,7 +95,7 @@ namespace parkify.Service.Services
                         if (attempt == maxAttempts)
                         {
                             _logger.LogError(ex, "Greška pri obradi notifikacije nakon {Attempt} pokušaja", attempt);
-                            await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                            await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                             return;
                         }
 
@@ -103,6 +103,25 @@ namespace parkify.Service.Services
                         _logger.LogWarning(
                             ex,
                             "Obrada notifikacije nije uspjela (pokušaj {Attempt}/{MaxAttempts}). Novi pokušaj za {DelaySeconds}s",
+                            attempt,
+                            maxAttempts,
+                            delaySeconds);
+
+                        await Task.Delay(TimeSpan.FromSeconds(delaySeconds), stoppingToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (attempt == maxAttempts)
+                        {
+                            _logger.LogError(ex, "Neočekivana greška pri obradi notifikacije nakon {Attempt} pokušaja", attempt);
+                            await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                            return;
+                        }
+
+                        var delaySeconds = (int)Math.Pow(2, attempt - 1);
+                        _logger.LogWarning(
+                            ex,
+                            "Neočekivana greška pri obradi notifikacije (pokušaj {Attempt}/{MaxAttempts}). Novi pokušaj za {DelaySeconds}s",
                             attempt,
                             maxAttempts,
                             delaySeconds);

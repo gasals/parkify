@@ -75,14 +75,13 @@ class ParkingZoneProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> getRecommendedZones({required int userId, int count = 5}) async {
+  Future<void> getRecommendedZones({int count = 5}) async {
     _errorMessage = null;
     notifyListeners();
 
     try {
       final explainedResult =
           await ApiService.getExplainedRecommendedParkingZones(
-            userId: userId,
             count: count,
           );
 
@@ -98,7 +97,6 @@ class ParkingZoneProvider extends ChangeNotifier {
 
       try {
         final result = await ApiService.getRecommendedParkingZones(
-          userId: userId,
           count: count,
         );
 

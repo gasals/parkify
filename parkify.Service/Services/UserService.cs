@@ -144,6 +144,9 @@ namespace parkify.Service.Services
             if (hash != entity.PasswordHash)
                 return null;
 
+            if (!entity.IsActive)
+                return null;
+
             return Mapper.Map<User>(entity);
         }
         public async Task<User?> GetLoggedInUser(string username)

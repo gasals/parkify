@@ -94,7 +94,6 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String firstName,
     required String lastName,
-    required String? phoneNumber,
   }) async {
     if (user == null) return false;
 
@@ -103,12 +102,10 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       _user = await ApiService.updateUser(
-        userId: user!.id,
         request: UserUpdateRequestDto(
           email: email,
           firstName: firstName,
           lastName: lastName,
-          phoneNumber: phoneNumber,
         ),
       );
       notifyListeners();
@@ -139,7 +136,6 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       final success = await ApiService.changePassword(
-        userId: user!.id,
         request: ChangePasswordRequestDto(
           currentPassword: currentPassword,
           password: password,

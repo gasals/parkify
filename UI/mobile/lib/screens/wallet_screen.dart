@@ -367,7 +367,6 @@ class _WalletFormSheetState extends State<WalletFormSheet> {
 
     try {
       final amount = double.parse(_amountController.text);
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final walletProvider = Provider.of<WalletProvider>(
         context,
         listen: false,
@@ -375,7 +374,6 @@ class _WalletFormSheetState extends State<WalletFormSheet> {
 
       final payment = await paymentProvider.createPayment(
         walletId: walletProvider.userWallet?.id,
-        userId: authProvider.user!.id,
         amount: amount,
       );
 

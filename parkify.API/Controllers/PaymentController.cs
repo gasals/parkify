@@ -52,14 +52,7 @@ namespace parkify.API.Controllers
         public override async Task<Payment> Insert([FromBody] PaymentInsertRequest request)
         {
             var currentUserId = GetCurrentUserIdOrThrow();
-            if (!IsCurrentUserAdmin())
-            {
-                request.UserId = currentUserId;
-            }
-            else if (request.UserId <= 0)
-            {
-                request.UserId = currentUserId;
-            }
+            request.UserId = currentUserId;
 
             return await base.Insert(request);
         }
@@ -76,14 +69,7 @@ namespace parkify.API.Controllers
         public async Task<IActionResult> CreatePaymentWithIntent([FromBody] PaymentInsertRequest request)
         {
             var currentUserId = GetCurrentUserIdOrThrow();
-            if (!IsCurrentUserAdmin())
-            {
-                request.UserId = currentUserId;
-            }
-            else if (request.UserId <= 0)
-            {
-                request.UserId = currentUserId;
-            }
+            request.UserId = currentUserId;
 
             var result = await _paymentService.CreatePaymentWithIntent(request);
             return Ok(result);

@@ -310,13 +310,12 @@ class ApiService {
   }
 
   static Future<User> updateUser({
-    required int userId,
     required UserUpdateRequestDto request,
   }) async {
     try {
       final response = await http
           .put(
-            Uri.parse('${AppUrls.users}/$userId'),
+            Uri.parse('${AppUrls.users}/me/profile'),
             headers: _getHeaders(),
             body: jsonEncode(request.toJson()),
           )
@@ -330,13 +329,12 @@ class ApiService {
   }
 
   static Future<bool> changePassword({
-    required int userId,
     required ChangePasswordRequestDto request,
   }) async {
     try {
       final response = await http
           .put(
-            Uri.parse('${AppUrls.users}/$userId'),
+            Uri.parse('${AppUrls.users}/me/password'),
             headers: _getHeaders(),
             body: jsonEncode(request.toJson()),
           )
@@ -417,7 +415,6 @@ class ApiService {
   }
 
   static Future<List<ParkingZone>> getRecommendedParkingZones({
-    required int userId,
     int count = 5,
   }) async {
     try {
@@ -437,7 +434,6 @@ class ApiService {
 
   static Future<List<ParkingZoneRecommendation>>
   getExplainedRecommendedParkingZones({
-    required int userId,
     int count = 5,
   }) async {
     try {

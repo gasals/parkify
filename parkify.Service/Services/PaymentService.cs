@@ -33,9 +33,56 @@ namespace parkify.Service.Services
 
         public async Task<PaymentIntentCreateResponse> CreatePaymentWithIntent(PaymentInsertRequest request)
         {
+            if (request.UserId <= 0)
+                throw new UserException("Nevažeći korisnik za kreiranje plaćanja.");
+
+            if (request.ReservationId.HasValue)
+            {
+                var reservation = await Context.Reservations
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.Id == request.ReservationId.Value);
+
+                if (reservation == null)
+                    throw new UserException("Rezervacija ne postoji");
+
+                if (await Context.Payments.AnyAsync(p =>
+                        p.ReservationId == reservation.Id &&
+                        (p.Status == Database.PaymentStatus.Pending || p.Status == Database.PaymentStatus.Completed)))
+                {
+                    throw new UserException("Za ovu rezervaciju već postoji aktivno ili završeno plaćanje.");
+                }
+
+                var dueAmount = reservation.FinalPrice - reservation.PaymentAmountPaid;
+                if (dueAmount <= 0)
+                    throw new UserException("Rezervacija je već u potpunosti plaćena.");
+
+                if (reservation.UserId != request.UserId)
+                    throw new UserException("Korisnik nije vlasnik odabrane rezervacije.");
+
+                request.Amount = dueAmount;
+                request.WalletId = null;
+            }
+            else
+            {
+                var wallet = await Context.Wallets
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(w => w.UserId == request.UserId);
+
+                if (wallet == null)
+                    throw new UserException("Novčanik nije pronađen za trenutnog korisnika.");
+
+                if (request.WalletId.HasValue && request.WalletId.Value != wallet.Id)
+                    throw new UserException("Nije dozvoljeno plaćanje nad tuđim novčanikom.");
+
+                if (!request.Amount.HasValue || request.Amount.Value <= 0)
+                    throw new UserException("Iznos dopune mora biti veći od 0");
+
+                request.WalletId = wallet.Id;
+            }
+
             var options = new PaymentIntentCreateOptions
             {
-                Amount = (long)(request.Amount * 100),
+                Amount = (long)(request.Amount!.Value * 100),
                 Currency = "bam",
                 PaymentMethodTypes = new List<string> { "card" },
                 Metadata = new Dictionary<string, string>
@@ -96,15 +143,25 @@ namespace parkify.Service.Services
 
             if (request.ReservationId.HasValue)
             {
-                var reservationExists = await Context.Reservations.AnyAsync(r => r.Id == request.ReservationId.Value);
-                if (!reservationExists)
+                var reservation = await Context.Reservations
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.Id == request.ReservationId.Value);
+                if (reservation == null)
                     throw new UserException("Rezervacija ne postoji");
+
+                if (reservation.UserId != entity.UserId)
+                    throw new UserException("Korisnik nije vlasnik odabrane rezervacije.");
             }
             else if (request.WalletId.HasValue)
             {
-                var walletExists = await Context.Wallets.AnyAsync(w => w.Id == request.WalletId.Value);
-                if (!walletExists)
+                var wallet = await Context.Wallets
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(w => w.Id == request.WalletId.Value);
+                if (wallet == null)
                     throw new UserException("Wallet ne postoji");
+
+                if (wallet.UserId != entity.UserId)
+                    throw new UserException("Korisnik nije vlasnik odabranog novčanika.");
             }
             else
             {
@@ -161,6 +218,7 @@ namespace parkify.Service.Services
             payment.TransactionId = paymentIntent.LatestChargeId ?? paymentIntent.Id;
             payment.Modified = DateTime.UtcNow;
             NotificationMessage? notification = null;
+            await using var transaction = await Context.Database.BeginTransactionAsync();
 
             if (payment.ReservationId.HasValue)
             {
@@ -172,17 +230,13 @@ namespace parkify.Service.Services
                         ? Database.ReservationStatus.Confirmed
                         : Database.ReservationStatus.Pending;
 
-                    var parkingZone = await Context.ParkingZones.FindAsync(reservation.ParkingZoneId);
-                    if (parkingZone != null && parkingZone.AvailableSpots > 0)
+                    if (reservation.Status == Database.ReservationStatus.Confirmed)
                     {
-                        parkingZone.AvailableSpots -= 1;
-                    }
-
-                    var parkingSpot = await Context.ParkingSpots.FindAsync(reservation.ParkingSpotId);
-                    if (parkingSpot != null)
-                    {
-                        parkingSpot.IsAvailable = false;
-                        parkingSpot.Modified = DateTime.UtcNow;
+                        await ReservationLifecycleCoordinator.ReserveSpotAsync(
+                            Context,
+                            reservation.ParkingZoneId,
+                            reservation.ParkingSpotId,
+                            DateTime.UtcNow);
                     }
 
                     notification = new NotificationMessage
@@ -225,6 +279,7 @@ namespace parkify.Service.Services
             }
 
             await Context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             if (notification != null)
             {
@@ -282,6 +337,7 @@ namespace parkify.Service.Services
             payment.RefundReason = sanitizedReason;
             payment.Refunded = DateTime.UtcNow;
             payment.Modified = DateTime.UtcNow;
+            await using var transaction = await Context.Database.BeginTransactionAsync();
 
             if (payment.ReservationId.HasValue)
             {
@@ -294,19 +350,11 @@ namespace parkify.Service.Services
                         reservation.Status == Database.ReservationStatus.Active)
                     {
                         reservation.Status = Database.ReservationStatus.Cancelled;
-
-                        var parkingZone = await Context.ParkingZones.FindAsync(reservation.ParkingZoneId);
-                        if (parkingZone != null)
-                        {
-                            parkingZone.AvailableSpots += 1;
-                        }
-
-                        var parkingSpot = await Context.ParkingSpots.FindAsync(reservation.ParkingSpotId);
-                        if (parkingSpot != null)
-                        {
-                            parkingSpot.IsAvailable = true;
-                            parkingSpot.Modified = DateTime.UtcNow;
-                        }
+                        await ReservationLifecycleCoordinator.ReleaseSpotAsync(
+                            Context,
+                            reservation.ParkingZoneId,
+                            reservation.ParkingSpotId,
+                            DateTime.UtcNow);
                     }
                 }
             }
@@ -315,6 +363,9 @@ namespace parkify.Service.Services
                 var wallet = await Context.Wallets.FindAsync(payment.WalletId.Value);
                 if (wallet != null)
                 {
+                    if (wallet.Balance < payment.Amount)
+                        throw new UserException("Novčanik nema dovoljno sredstava za refundaciju ove dopune.");
+
                     wallet.Balance -= payment.Amount;
                     wallet.Modified = DateTime.UtcNow;
 
@@ -329,6 +380,7 @@ namespace parkify.Service.Services
             }
 
             await Context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             await _publisher.PublishNotificationAsync(new NotificationMessage
             {

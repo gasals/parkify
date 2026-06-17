@@ -47,14 +47,7 @@ namespace parkify.API.Controllers
         public override async Task<Reservation> Insert([FromBody] ReservationInsertRequest request)
         {
             var currentUserId = GetCurrentUserIdOrThrow();
-            if (!IsCurrentUserAdmin())
-            {
-                request.UserId = currentUserId;
-            }
-            else if (request.UserId <= 0)
-            {
-                request.UserId = currentUserId;
-            }
+            request.UserId = currentUserId;
 
             return await base.Insert(request);
         }

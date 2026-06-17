@@ -426,7 +426,6 @@ class _VehicleFormSheetState extends State<VehicleFormSheet> {
             )
           : await vehicleProvider.updateVehicle(
               vehicleId: widget.vehicle!.id,
-              userId: authProvider.user!.id,
               licensePlate: _licensePlateController.text.trim(),
               category: _category,
               model: _modelController.text.trim(),
