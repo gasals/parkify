@@ -13,11 +13,9 @@ docker-compose up --build
 
 Docker će automatski buildati aplikaciju, seedati bazu sa test podacima i pokrenuti API.
 
-### 2. Export Aplikacija
+### 2. GitHub Release ZIP
 
-```bash
-Export: fit-build-2026-05-24.zip
-```
+Za pregled rada preuzeti GitHub Release ZIP naziva `fit-build-2026-06-17.zip`.
 
 Zip sadrži dva foldera:
 
