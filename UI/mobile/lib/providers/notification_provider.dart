@@ -17,10 +17,12 @@ class NotificationProvider extends ChangeNotifier {
   int get totalPages => _totalPages;
 
   Future<void> fetchNotifications({int? userId, bool? isRead}) async {
-    _isLoading = true;
-    _currentPage = 1;
-    _notifications = [];
-    notifyListeners();
+    final isInitialLoad = _notifications.isEmpty;
+    if (isInitialLoad) {
+      _isLoading = true;
+      _currentPage = 1;
+      notifyListeners();
+    }
 
     try {
       final result = await ApiService.getNotifications(
@@ -29,11 +31,14 @@ class NotificationProvider extends ChangeNotifier {
         page: 1,
       );
       _notifications = result.results;
+      _currentPage = 1;
       _totalPages = result.count == 0 ? 1 : ((result.count + 19) ~/ 20);
     } catch (e) {
       debugPrint('fetchNotifications error: $e');
     } finally {
-      _isLoading = false;
+      if (isInitialLoad) {
+        _isLoading = false;
+      }
       notifyListeners();
     }
   }

@@ -18,7 +18,7 @@ class AppUrls {
 
   static const String notifications = '$baseUrl/notification';
 
-  static const String reviews = '$baseUrl/reviews';
+    static const String reviews = '$baseUrl/review';
 
   static const String preferences = '$baseUrl/preferences';
 

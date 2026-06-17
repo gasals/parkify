@@ -337,7 +337,6 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
       builder: (_) => _EditZoneDialog(zone: zone, provider: provider, allCities: _allCities));
   }
 
-  // FIX: prima zoneId, dialog sam cita svjeze podatke iz providera
   void _showSpotsDialog(int zoneId, ParkingZoneProvider provider) {
     showDialog(context: context,
         builder: (_) => _SpotsGridDialog(zoneId: zoneId, provider: provider));
@@ -349,8 +348,8 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
       builder: (_) => AdminConfirmDialog(
         title: zone.isActive ? 'Deaktiviraj zonu?' : 'Aktiviraj zonu?',
         message: zone.isActive
-            ? 'Zona \u0107e biti deaktivirana i ne\u0107e biti vidljiva korisnicima.'
-            : 'Zona \u0107e biti aktivirana i vidljiva korisnicima.',
+            ? 'Zona će biti deaktivirana i neće biti vidljiva korisnicima.'
+            : 'Zona će biti aktivirana i vidljiva korisnicima.',
         confirmLabel: 'Potvrdi',
         confirmColor: zone.isActive ? Colors.red : Colors.green,
         onConfirm: () async {
@@ -372,7 +371,7 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
         title: 'Obriši zonu?',
         message:
             'Zona će biti trajno obrisana samo ako nema povezanih mjesta ni historije rezervacija.',
-        confirmLabel: 'Obriši',
+          confirmLabel: 'Obriši',
         confirmColor: Colors.red,
         onConfirm: () async {
           final ok = await provider.deleteParkingZone(zone.id);
@@ -395,7 +394,6 @@ class _AdminParkingZonesScreenState extends State<AdminParkingZonesScreen> {
   }
 }
 
-// \u2500\u2500\u2500 Add Zone Dialog \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 class _AddZoneDialog extends StatefulWidget {
   final List<City> allCities;
@@ -434,7 +432,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
   String? _reqName(String? v) {
     if (v == null || v.trim().isEmpty) return 'Naziv zone je obavezan';
     if (v.trim().length < 2) return 'Naziv mora imati najmanje 2 znaka';
-    if (v.trim().length > 100) return 'Naziv ne smije imati vi\u0161e od 100 znakova';
+    if (v.trim().length > 100) return 'Naziv ne smije imati vise od 100 znakova';
     return null;
   }
 
@@ -448,8 +446,8 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
     if (v == null || v.trim().isEmpty) return 'Cijena po satu je obavezna';
     final d = double.tryParse(v.trim().replaceAll(',', '.'));
     if (d == null) return 'Unesite decimalni broj u formatu: 2.50';
-    if (d <= 0) return 'Cijena mora biti ve\u0107a od 0';
-    if (d > 999) return 'Cijena ne smije biti ve\u0107a od 999';
+    if (d <= 0) return 'Cijena mora biti veca od 0';
+    if (d > 999) return 'Cijena ne smije biti veca od 999';
     return null;
   }
 
@@ -457,14 +455,14 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
     if (v == null || v.trim().isEmpty) return 'Cijena po danu je obavezna';
     final d = double.tryParse(v.trim().replaceAll(',', '.'));
     if (d == null) return 'Unesite decimalni broj u formatu: 15.00';
-    if (d <= 0) return 'Cijena mora biti ve\u0107a od 0';
-    if (d > 9999) return 'Cijena ne smije biti ve\u0107a od 9999';
+    if (d <= 0) return 'Cijena mora biti veca od 0';
+    if (d > 9999) return 'Cijena ne smije biti veca od 9999';
     return null;
   }
 
   String? _optDesc(String? v) {
     if (v == null || v.trim().isEmpty) return null;
-    if (v.trim().length > 500) return 'Opis ne smije imati vi\u0161e od 500 znakova';
+    if (v.trim().length > 500) return 'Opis ne smije imati vise od 500 znakova';
     return null;
   }
 
@@ -501,7 +499,6 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(child: _formField(_nameCtrl, 'Naziv zone', Icons.local_parking, validator: _reqName)),
           const SizedBox(width: 12),
-          // FIX: isti stil kao status dropdown na rezervacijama
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             DropdownButtonFormField<City>(
               value: _selectedCity,
@@ -653,7 +650,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
         child: const Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.touch_app, size: 16, color: kPrimary),
           SizedBox(width: 6),
-          Text('Klikni na mapu da odabere\u0161 lokaciju', style: TextStyle(fontSize: 13)),
+          Text('Klikni na mapu da odaberes lokaciju', style: TextStyle(fontSize: 13)),
         ]),
       ))),
       if (_pickedLocation != null)
@@ -674,7 +671,7 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
             const Spacer(),
             TextButton(
               onPressed: () => setState(() => _pickedLocation = null),
-              child: const Text('Poni\u0161ti', style: TextStyle(color: kDanger)),
+              child: const Text('Ponisti', style: TextStyle(color: kDanger)),
             ),
           ]),
         )),
@@ -733,7 +730,6 @@ class _AddZoneDialogState extends State<_AddZoneDialog> {
   }
 }
 
-// \u2500\u2500\u2500 Edit Zone Dialog \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 class _EditZoneDialog extends StatefulWidget {
   final ParkingZone zone;
@@ -783,7 +779,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
     if (v == null || v.trim().isEmpty) return 'Cijena je obavezna';
     final d = double.tryParse(v.trim().replaceAll(',', '.'));
     if (d == null) return 'Unesite decimalni broj u formatu: 2.50';
-    if (d <= 0) return 'Cijena mora biti ve\u0107a od 0';
+    if (d <= 0) return 'Cijena mora biti veca od 0';
     return null;
   }
 
@@ -791,7 +787,7 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
     if (v == null || v.trim().isEmpty) return 'Cijena po danu je obavezna';
     final d = double.tryParse(v.trim().replaceAll(',', '.'));
     if (d == null) return 'Unesite decimalni broj u formatu: 15.00';
-    if (d <= 0) return 'Cijena mora biti ve\u0107a od 0';
+    if (d <= 0) return 'Cijena mora biti veca od 0';
     return null;
   }
 
@@ -952,15 +948,11 @@ class _EditZoneDialogState extends State<_EditZoneDialog> {
     );
     if (mounted) {
       setState(() => _isLoading = false);
-      AdminSnackBar.show(context, 'Zona je a\u017eurirana', ok);
+      AdminSnackBar.show(context, 'Zona je azurirana', ok);
       if (ok) Navigator.pop(context);
     }
   }
 }
-
-// \u2500\u2500\u2500 Spots Grid Dialog \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-// FIX: prima zoneId i koristi Consumer<ParkingZoneProvider> koji uvijek
-// cita svjeze podatke - novi spot je vidljiv odmah nakon dodavanja.
 
 class _SpotsGridDialog extends StatelessWidget {
   final int zoneId;
@@ -1117,7 +1109,7 @@ class _SpotsGridDialog extends StatelessWidget {
       final n = int.tryParse(v.trim());
       if (n == null) return 'Unesite cijeli broj u formatu: 1';
       if (n < 1) return '$label mora biti najmanje 1';
-      if (n > 50) return '$label ne smije biti ve\u0107i od 50';
+      if (n > 50) return '$label ne smije biti veci od 50';
       return null;
     }
 
@@ -1175,7 +1167,7 @@ class _SpotsGridDialog extends StatelessWidget {
                       columnNumber: int.tryParse(colCtrl.text),
                       isAvailable: true,
                     );
-                    if (context.mounted) AdminSnackBar.show(context, ok ? 'Mjesto dodano' : 'Gre\u0161ka', ok);
+                    if (context.mounted) AdminSnackBar.show(context, ok ? 'Mjesto dodano' : 'Greska', ok);
                   },
                 ),
               ]),
@@ -1200,7 +1192,7 @@ class _SpotsGridDialog extends StatelessWidget {
       final n = int.tryParse(v.trim());
       if (n == null) return 'Unesite cijeli broj u formatu: 1';
       if (n < 1) return '$label mora biti najmanje 1';
-      if (n > 50) return '$label ne smije biti ve\u0107i od 50';
+      if (n > 50) return '$label ne smije biti veci od 50';
       return null;
     }
 
@@ -1258,7 +1250,7 @@ class _SpotsGridDialog extends StatelessWidget {
                       rowNumber: int.tryParse(rowCtrl.text),
                       columnNumber: int.tryParse(colCtrl.text),
                     );
-                    if (context.mounted) AdminSnackBar.show(context, 'Mjesto a\u017eurirano', ok);
+                    if (context.mounted) AdminSnackBar.show(context, 'Mjesto azurirano', ok);
                   },
                 ),
               ]),
@@ -1286,13 +1278,13 @@ class _SpotsGridDialog extends StatelessWidget {
       context: context,
       builder: (_) => AdminConfirmDialog(
         title: spot.isAvailable ? 'Deaktiviraj mjesto?' : 'Aktiviraj mjesto?',
-        message: spot.isAvailable ? 'Mjesto \u0107e biti deaktivirano.' : 'Mjesto \u0107e biti aktivirano.',
+        message: spot.isAvailable ? 'Mjesto ce biti deaktivirano.' : 'Mjesto ce biti aktivirano.',
         confirmLabel: 'Potvrdi',
         confirmColor: spot.isAvailable ? Colors.red : Colors.green,
         onConfirm: () async {
           final ok = await p.toggleParkingSpotActive(
               spotId: spot.id, isAvailable: !spot.isAvailable);
-          if (context.mounted) AdminSnackBar.show(context, 'Mjesto a\u017eurirano', ok);
+          if (context.mounted) AdminSnackBar.show(context, 'Mjesto azurirano', ok);
         },
       ),
     );
@@ -1305,7 +1297,7 @@ class _SpotsGridDialog extends StatelessWidget {
         title: 'Obriši mjesto?',
         message:
             'Mjesto će biti trajno obrisano samo ako nema povezanih rezervacija.',
-        confirmLabel: 'Obriši',
+          confirmLabel: 'Obriši',
         confirmColor: Colors.red,
         onConfirm: () async {
           final ok = await p.deleteParkingSpot(spot.id);

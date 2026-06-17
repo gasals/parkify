@@ -103,18 +103,16 @@ class _MapsScreenState extends State<MapsScreen> {
     super.dispose();
   }
 
-  void _filterZones(List<ParkingZone> zones) {
-    setState(() {
-      if (_searchQuery.isEmpty) {
-        _filteredZones = zones;
-      } else {
-        final query = _searchQuery.toLowerCase();
-        _filteredZones = zones.where((zone) {
-          return zone.name.toLowerCase().contains(query) ||
-              zone.address.toLowerCase().contains(query);
-        }).toList();
-      }
-    });
+  List<ParkingZone> _filterZones(List<ParkingZone> zones, String query) {
+    final normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return zones;
+    }
+
+    return zones.where((zone) {
+      return zone.name.toLowerCase().contains(normalizedQuery) ||
+          zone.address.toLowerCase().contains(normalizedQuery);
+    }).toList();
   }
 
   ParkingZone? _findZoneById(List<ParkingZone> zones, int? zoneId) {
@@ -319,11 +317,16 @@ class _MapsScreenState extends State<MapsScreen> {
           final hasFavoriteBanner = favoriteZone != null;
           final hasRecommendationBanner = recommendedZone != null;
           final hasRecommendationStatusBanner = recommendedZone == null;
+            final isZoneSheetOpen =
+              _selectedZone != null && _sheetState == BottomSheetState.info;
+            final isSearchActive = _searchQuery.trim().isNotEmpty;
+            final showTopBanners = !isZoneSheetOpen && !isSearchActive;
+            final showSearchBar = !isZoneSheetOpen;
           const baseBannerTop = 50.0;
           const favoriteBannerHeight = 44.0;
           const statusBannerHeight = 56.0;
-          const interBannerGap = 10.0;
-          const afterBannerGap = 12.0;
+            const interBannerGap = 2.0;
+            const afterBannerGap = 14.0;
 
           final recommendationBannerTop = hasFavoriteBanner
               ? baseBannerTop + favoriteBannerHeight + interBannerGap
@@ -333,15 +336,16 @@ class _MapsScreenState extends State<MapsScreen> {
               ? 56.0 + (visibleRecommendationReasons.length * 18.0)
               : statusBannerHeight;
 
-          final searchTop =
-              hasFavoriteBanner ||
+            final searchTop = isSearchActive
+              ? MediaQuery.of(context).padding.top + 56
+              : hasFavoriteBanner ||
                   hasRecommendationBanner ||
                   hasRecommendationStatusBanner
-              ? recommendationBannerTop +
-                    recommendationBannerHeight +
-                    afterBannerGap
-              : 100.0;
-          final searchResultsTop = searchTop + 50.0;
+                ? recommendationBannerTop +
+                  recommendationBannerHeight +
+                  afterBannerGap
+                : 100.0;
+            final searchResultsTop = searchTop + 56.0;
 
           return Stack(
             children: [
@@ -363,86 +367,35 @@ class _MapsScreenState extends State<MapsScreen> {
                   top: 50,
                   left: 12,
                   right: 12,
-                  child: GestureDetector(
-                    onTap: () async {
-                      await _openZoneInfo(favoriteZone);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.amber,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black12, blurRadius: 4),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star, color: Colors.white, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Moj favorit: ${favoriteZone.name}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  child: IgnorePointer(
+                    ignoring: !showTopBanners,
+                    child: AnimatedOpacity(
+                      opacity: showTopBanners ? 1 : 0,
+                      duration: const Duration(milliseconds: 140),
+                      child: GestureDetector(
+                        onTap: () async {
+                          await _openZoneInfo(favoriteZone);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-              if (recommendedZone != null)
-                Positioned(
-                  top: recommendationBannerTop,
-                  left: 12,
-                  right: 12,
-                  child: GestureDetector(
-                    onTap: () async {
-                      final resolvedZone =
-                          _findZoneById(
-                            provider.parkingZones,
-                            recommendedZone.id,
-                          ) ??
-                          recommendedZone;
-                      await _openZoneInfo(resolvedZone);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black12, blurRadius: 4),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black12, blurRadius: 4),
+                            ],
+                          ),
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
-                                Icons.auto_awesome,
-                                color: Colors.white,
-                                size: 18,
-                              ),
+                              const Icon(Icons.star, color: Colors.white, size: 18),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Preporučena zona: ${recommendedZone.name}',
+                                  'Moj favorit: ${favoriteZone.name}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -453,48 +406,113 @@ class _MapsScreenState extends State<MapsScreen> {
                               ),
                             ],
                           ),
-                          if (visibleRecommendationReasons.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Razlozi preporuke:',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (recommendedZone != null)
+                Positioned(
+                  top: recommendationBannerTop,
+                  left: 12,
+                  right: 12,
+                  child: IgnorePointer(
+                    ignoring: !showTopBanners,
+                    child: AnimatedOpacity(
+                      opacity: showTopBanners ? 1 : 0,
+                      duration: const Duration(milliseconds: 140),
+                      child: GestureDetector(
+                        onTap: () async {
+                          final resolvedZone =
+                              _findZoneById(
+                                provider.parkingZones,
+                                recommendedZone.id,
+                              ) ??
+                              recommendedZone;
+                          await _openZoneInfo(resolvedZone);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black12, blurRadius: 4),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.auto_awesome,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Preporučena zona: ${recommendedZone.name}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            for (final reason in visibleRecommendationReasons)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Padding(
-                                      padding: EdgeInsets.only(top: 2),
-                                      child: Icon(
-                                        Icons.circle,
-                                        color: Colors.white70,
-                                        size: 6,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        reason,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
+                              if (visibleRecommendationReasons.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'Razlozi preporuke:',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                          ],
-                        ],
+                                const SizedBox(height: 4),
+                                for (final reason in visibleRecommendationReasons)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 2),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 2),
+                                          child: Icon(
+                                            Icons.circle,
+                                            color: Colors.white70,
+                                            size: 6,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            reason,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -505,85 +523,100 @@ class _MapsScreenState extends State<MapsScreen> {
                   top: recommendationBannerTop,
                   left: 12,
                   right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+                  child: IgnorePointer(
+                    ignoring: !showTopBanners,
+                    child: AnimatedOpacity(
+                      opacity: showTopBanners ? 1 : 0,
+                      duration: const Duration(milliseconds: 140),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blueGrey,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black12, blurRadius: 4),
+                          ],
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Trenutno nema preporučene zone za vaš profil.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
+                  ),
+                ),
+
+              if (showSearchBar)
+                Positioned(
+                  top: searchTop,
+                  left: 12,
+                  right: 12,
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.blueGrey,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(color: Colors.black12, blurRadius: 4),
                       ],
                     ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.auto_awesome, color: Colors.white, size: 18),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Trenutno nema preporučene zone za vaš profil.',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Upišite lokaciju...',
+                        prefixIcon: Icon(
+                          Icons.location_on,
+                          color: AppColors.primary,
                         ),
-                      ],
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? GestureDetector(
+                                onTap: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _filteredZones = provider.parkingZones;
+                                  });
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  color: AppColors.textSecondary,
+                                ),
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                          _filteredZones = _filterZones(
+                            provider.parkingZones,
+                            value,
+                          );
+                        });
+                      },
                     ),
                   ),
                 ),
 
-              Positioned(
-                top: searchTop,
-                left: 12,
-                right: 12,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black12, blurRadius: 4),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Upišite lokaciju...',
-                      prefixIcon: Icon(
-                        Icons.location_on,
-                        color: AppColors.primary,
-                      ),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? GestureDetector(
-                              onTap: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                                _filterZones(provider.parkingZones);
-                              },
-                              child: Icon(
-                                Icons.close,
-                                color: AppColors.textSecondary,
-                              ),
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      setState(() => _searchQuery = value);
-                      _filterZones(provider.parkingZones);
-                    },
-                  ),
-                ),
-              ),
-
-              if (_searchQuery.isNotEmpty && _filteredZones.isNotEmpty)
+              if (showSearchBar && _searchQuery.isNotEmpty && _filteredZones.isNotEmpty)
                 Positioned(
                   top: searchResultsTop,
                   left: 12,
@@ -598,6 +631,7 @@ class _MapsScreenState extends State<MapsScreen> {
                     ),
                     child: ListView.builder(
                       shrinkWrap: true,
+                      padding: EdgeInsets.zero,
                       itemCount: _filteredZones.length > 5
                           ? 5
                           : _filteredZones.length,

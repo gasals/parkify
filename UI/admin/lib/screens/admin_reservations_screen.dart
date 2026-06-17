@@ -321,7 +321,6 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
               const SizedBox(width: 12),
               Expanded(child: _buildZoneAutocomplete()),
               const SizedBox(width: 12),
-              // FIX: isti stil kao autocomplete polja pored njega
               Expanded(
                 child: DropdownButtonFormField<ReservationStatus>(
                   initialValue: _selectedStatus,
@@ -361,10 +360,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                   spacing: 12,
                   runSpacing: 4,
                   children: [
-                    _legendItem('Na \u010dekanju', Colors.orange),
-                    _legendItem('Potvr\u0111ena', Colors.blue),
+                    _legendItem('Na cekanju', Colors.orange),
+                    _legendItem('Potvrdena', Colors.blue),
                     _legendItem('Aktivna', Colors.green),
-                    _legendItem('Zavr\u0161ena', Colors.grey),
+                    _legendItem('Zavrsena', Colors.grey),
                     _legendItem('Otkazana', Colors.red),
                     _legendItem('No show', Colors.purple),
                   ],
@@ -660,7 +659,6 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     );
   }
 
-  // static verzija za koristenje u DropdownMenuItem builderu
   static Color _statusColorStatic(ReservationStatus s) => switch (s) {
         ReservationStatus.pending   => Colors.orange,
         ReservationStatus.confirmed => Colors.blue,
@@ -674,12 +672,12 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
 
   Future<void> _checkIn(Reservation r, ReservationProvider p) async {
     final ok = await p.checkInReservation(r.id);
-    if (mounted) AdminSnackBar.show(context, ok ? 'Check-in uspje\u0161an' : 'Check-in nije uspio', ok);
+    if (mounted) AdminSnackBar.show(context, ok ? 'Check-in uspjesan' : 'Check-in nije uspio', ok);
   }
 
   Future<void> _checkOut(Reservation r, ReservationProvider p) async {
     final ok = await p.checkOutReservation(r.id);
-    if (mounted) AdminSnackBar.show(context, ok ? 'Check-out uspje\u0161an' : 'Check-out nije uspio', ok);
+    if (mounted) AdminSnackBar.show(context, ok ? 'Check-out uspjesan' : 'Check-out nije uspio', ok);
   }
 
   void _showChangeStatusDialog(
@@ -719,7 +717,7 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                                   );
                                   if (mounted) {
                                     AdminSnackBar.show(
-                                        context, 'Status a\u017euriran', ok);
+                                        context, 'Status azuriran', ok);
                                   }
                                 },
                           style: OutlinedButton.styleFrom(

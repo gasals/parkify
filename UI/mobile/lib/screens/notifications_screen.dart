@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
@@ -13,18 +15,32 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
+  Timer? _pollTimer;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userId = Provider.of<AuthProvider>(context, listen: false).user?.id;
       if (userId != null) {
-        Provider.of<NotificationProvider>(
+        final provider = Provider.of<NotificationProvider>(
           context,
           listen: false,
-        ).fetchNotifications(userId: userId);
+        );
+
+        provider.fetchNotifications(userId: userId);
+        _pollTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+          if (!mounted) return;
+          provider.fetchNotifications(userId: userId);
+        });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   @override

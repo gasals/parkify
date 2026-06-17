@@ -265,8 +265,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 }
 
-// ─── Add User Dialog ───────────────────────────────────────────────────────────
-
 class _AddUserDialog extends StatefulWidget {
   final Future<void> Function(UserCreateRequest) onConfirm;
   const _AddUserDialog({required this.onConfirm});
@@ -460,8 +458,6 @@ class _AddUserDialogState extends State<_AddUserDialog> {
     );
   }
 }
-
-// ─── Edit User Dialog ──────────────────────────────────────────────────────────
 
 class _EditUserDialog extends StatefulWidget {
   final User user;

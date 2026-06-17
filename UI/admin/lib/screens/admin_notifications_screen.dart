@@ -5,6 +5,7 @@ import '../models/notification_model.dart';
 import '../models/user_model.dart';
 import '../providers/notification_provider.dart';
 import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import '../widgets/common_widgets.dart';
 
 class AdminNotificationsScreen extends StatefulWidget {
@@ -15,8 +16,7 @@ class AdminNotificationsScreen extends StatefulWidget {
       _AdminNotificationsScreenState();
 }
 
-class _AdminNotificationsScreenState
-    extends State<AdminNotificationsScreen> {
+class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   static const Map<int, String> _notificationTypeLabels = {
     _NotificationTypes.reservationConfirmed: 'Uspjeh rezervacije',
     _NotificationTypes.reservationReminder: 'Podsjetnik',
@@ -41,8 +41,10 @@ class _AdminNotificationsScreenState
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Provider.of<NotificationProvider>(context, listen: false)
-            .fetchNotifications();
+        Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        ).fetchNotifications();
         Provider.of<UserProvider>(context, listen: false).searchUsers();
       }
     });
@@ -58,20 +60,26 @@ class _AdminNotificationsScreenState
   void _onScroll() {
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      Provider.of<NotificationProvider>(context, listen: false)
-          .fetchNextPage(userId: _selectedUser?.id, isRead: _filterRead);
+      Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      ).fetchNextPage(userId: _selectedUser?.id, isRead: _filterRead);
     }
   }
 
   void _applyFilter(bool? isRead) {
     setState(() => _filterRead = isRead);
-    Provider.of<NotificationProvider>(context, listen: false)
-        .fetchNotifications(userId: _selectedUser?.id, isRead: isRead);
+    Provider.of<NotificationProvider>(
+      context,
+      listen: false,
+    ).fetchNotifications(userId: _selectedUser?.id, isRead: isRead);
   }
 
   Future<void> _performSearch() async {
-    await Provider.of<NotificationProvider>(context, listen: false)
-        .fetchNotifications(userId: _selectedUser?.id, isRead: _filterRead);
+    await Provider.of<NotificationProvider>(
+      context,
+      listen: false,
+    ).fetchNotifications(userId: _selectedUser?.id, isRead: _filterRead);
   }
 
   Future<void> _clearFilters() async {
@@ -81,8 +89,10 @@ class _AdminNotificationsScreenState
       _filterType = null;
     });
     _userSearchCtrl.clear();
-    await Provider.of<NotificationProvider>(context, listen: false)
-        .fetchNotifications();
+    await Provider.of<NotificationProvider>(
+      context,
+      listen: false,
+    ).fetchNotifications();
   }
 
   @override
@@ -132,7 +142,10 @@ class _AdminNotificationsScreenState
                     ..._notificationTypeLabels.entries.map(
                       (entry) => DropdownMenuItem<int?>(
                         value: entry.key,
-                        child: Text(entry.value, style: const TextStyle(fontSize: 13)),
+                        child: Text(
+                          entry.value,
+                          style: const TextStyle(fontSize: 13),
+                        ),
                       ),
                     ),
                   ],
@@ -151,11 +164,25 @@ class _AdminNotificationsScreenState
           const SizedBox(height: 16),
           Row(
             children: [
-              _FilterPill(label: 'Sve', selected: _filterRead == null, onTap: () => _applyFilter(null)),
+              _FilterPill(
+                label: 'Sve',
+                selected: _filterRead == null,
+                onTap: () => _applyFilter(null),
+              ),
               const SizedBox(width: 8),
-              _FilterPill(label: 'Nepročitane', selected: _filterRead == false, onTap: () => _applyFilter(false), color: kDanger),
+              _FilterPill(
+                label: 'Nepročitane',
+                selected: _filterRead == false,
+                onTap: () => _applyFilter(false),
+                color: kDanger,
+              ),
               const SizedBox(width: 8),
-              _FilterPill(label: 'Pročitane', selected: _filterRead == true, onTap: () => _applyFilter(true), color: kSuccess),
+              _FilterPill(
+                label: 'Pročitane',
+                selected: _filterRead == true,
+                onTap: () => _applyFilter(true),
+                color: kSuccess,
+              ),
               const Spacer(),
               CommonButtons.buildAddButton(
                 onPressed: () => _showSendDialog(toAll: false),
@@ -164,14 +191,25 @@ class _AdminNotificationsScreenState
               const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () => _showSendDialog(toAll: true),
-                icon: const Icon(Icons.campaign_outlined, size: 18, color: Colors.white),
-                label: const Text('Pošalji svima',
-                    style: TextStyle(color: Colors.white, fontSize: 13)),
+                icon: const Icon(
+                  Icons.campaign_outlined,
+                  size: 18,
+                  color: Colors.white,
+                ),
+                label: const Text(
+                  'Pošalji svima',
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kSuccess,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
             ],
@@ -186,9 +224,13 @@ class _AdminNotificationsScreenState
       builder: (context, provider, _) => Autocomplete<User>(
         optionsBuilder: (value) {
           if (value.text.isEmpty) return const Iterable<User>.empty();
-          return provider.users.where((user) =>
-              user.username.toLowerCase().contains(value.text.toLowerCase()) ||
-              user.email.toLowerCase().contains(value.text.toLowerCase()));
+          return provider.users.where(
+            (user) =>
+                user.username.toLowerCase().contains(
+                  value.text.toLowerCase(),
+                ) ||
+                user.email.toLowerCase().contains(value.text.toLowerCase()),
+          );
         },
         displayStringForOption: (user) => '${user.username} (${user.email})',
         onSelected: (user) {
@@ -207,7 +249,8 @@ class _AdminNotificationsScreenState
             onChanged: (value) async {
               _userSearchCtrl.text = value;
               if (_selectedUser != null &&
-                  value != '${_selectedUser!.username} (${_selectedUser!.email})') {
+                  value !=
+                      '${_selectedUser!.username} (${_selectedUser!.email})') {
                 setState(() => _selectedUser = null);
               }
               if (value.isNotEmpty) {
@@ -230,8 +273,8 @@ class _AdminNotificationsScreenState
         final visibleNotifications = _filterType == null
             ? provider.notifications
             : provider.notifications
-                .where((notification) => notification.type == _filterType)
-                .toList();
+                  .where((notification) => notification.type == _filterType)
+                  .toList();
 
         if (provider.isLoading && provider.notifications.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -241,10 +284,16 @@ class _AdminNotificationsScreenState
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.notifications_none, size: 64, color: Colors.grey[300]),
+                Icon(
+                  Icons.notifications_none,
+                  size: 64,
+                  color: Colors.grey[300],
+                ),
                 const SizedBox(height: 16),
-                Text('Nema notifikacija za odabrane filtere',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 16)),
+                Text(
+                  'Nema notifikacija za odabrane filtere',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                ),
               ],
             ),
           );
@@ -257,18 +306,19 @@ class _AdminNotificationsScreenState
             mainAxisSpacing: 20,
             childAspectRatio: 2.0,
           ),
-          itemCount:
-              visibleNotifications.length + (provider.isLoading ? 1 : 0),
+          itemCount: visibleNotifications.length + (provider.isLoading ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == visibleNotifications.length) {
               return const Center(child: CircularProgressIndicator());
             }
             final userProvider = context.read<UserProvider>();
             final user = userProvider.users.cast<User?>().firstWhere(
-                  (item) => item?.id == visibleNotifications[index].userId,
-                  orElse: () => null,
-                );
-            final username = user?.username ?? 'Korisnik #${visibleNotifications[index].userId}';
+              (item) => item?.id == visibleNotifications[index].userId,
+              orElse: () => null,
+            );
+            final username =
+                user?.username ??
+                'Korisnik #${visibleNotifications[index].userId}';
             return _NotificationCard(
               notification: visibleNotifications[index],
               username: username,
@@ -280,12 +330,13 @@ class _AdminNotificationsScreenState
   }
 
   void _showSendDialog({required bool toAll}) {
-    showDialog(context: context,
-        builder: (_) => _SendNotificationDialog(toAll: toAll));
+    showDialog(
+      context: context,
+      builder: (_) => _SendNotificationDialog(toAll: toAll),
+    );
   }
 }
 
-// ─── Notification Card ────────────────────────────────────────────────────────
 
 class _NotificationCard extends StatelessWidget {
   final AppNotification notification;
@@ -293,21 +344,49 @@ class _NotificationCard extends StatelessWidget {
   const _NotificationCard({required this.notification, required this.username});
 
   static const Map<int, ({IconData icon, Color color})> _typeData = {
-    _NotificationTypes.reservationConfirmed: (icon: Icons.check_circle_outline, color: Color(0xFF10B981)),
-    _NotificationTypes.reservationReminder: (icon: Icons.alarm_outlined, color: Color(0xFFF59E0B)),
-    _NotificationTypes.paymentSuccess: (icon: Icons.payment_outlined, color: Color(0xFF3B82F6)),
-    _NotificationTypes.paymentFailure: (icon: Icons.error_outline, color: Color(0xFFEF4444)),
-    _NotificationTypes.availabilityNotice: (icon: Icons.local_parking, color: Color(0xFF6366F1)),
-    _NotificationTypes.specialOffer: (icon: Icons.local_offer_outlined, color: Color(0xFFF59E0B)),
-    _NotificationTypes.reservationCancelled: (icon: Icons.cancel_outlined, color: Color(0xFFEF4444)),
-    _NotificationTypes.checkInReminder: (icon: Icons.login_outlined, color: Color(0xFF14B8A6)),
-    _NotificationTypes.parkingFull: (icon: Icons.block_outlined, color: Colors.grey),
+    _NotificationTypes.reservationConfirmed: (
+      icon: Icons.check_circle_outline,
+      color: Color(0xFF10B981),
+    ),
+    _NotificationTypes.reservationReminder: (
+      icon: Icons.alarm_outlined,
+      color: Color(0xFFF59E0B),
+    ),
+    _NotificationTypes.paymentSuccess: (
+      icon: Icons.payment_outlined,
+      color: Color(0xFF3B82F6),
+    ),
+    _NotificationTypes.paymentFailure: (
+      icon: Icons.error_outline,
+      color: Color(0xFFEF4444),
+    ),
+    _NotificationTypes.availabilityNotice: (
+      icon: Icons.local_parking,
+      color: Color(0xFF6366F1),
+    ),
+    _NotificationTypes.specialOffer: (
+      icon: Icons.local_offer_outlined,
+      color: Color(0xFFF59E0B),
+    ),
+    _NotificationTypes.reservationCancelled: (
+      icon: Icons.cancel_outlined,
+      color: Color(0xFFEF4444),
+    ),
+    _NotificationTypes.checkInReminder: (
+      icon: Icons.login_outlined,
+      color: Color(0xFF14B8A6),
+    ),
+    _NotificationTypes.parkingFull: (
+      icon: Icons.block_outlined,
+      color: Colors.grey,
+    ),
   };
 
   @override
   Widget build(BuildContext context) {
-    final td = _typeData[notification.type] ??
-      (icon: Icons.notifications_outlined, color: Colors.grey);
+    final td =
+        _typeData[notification.type] ??
+        (icon: Icons.notifications_outlined, color: Colors.grey);
     final tIcon = td.icon;
     final tColor = td.color;
 
@@ -367,26 +446,37 @@ class _NotificationCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(children: [
-                  Icon(Icons.person_outline, size: 12, color: Colors.grey[400]),
-                  const SizedBox(width: 4),
-                  Text(username,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[400])),
-                ]),
-                Row(children: [
-                  Container(
-                    width: 7, height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: notification.isRead
-                          ? Colors.grey[300]
-                          : kDanger,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 12,
+                      color: Colors.grey[400],
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(_fmtDate(notification.created),
-                      style: TextStyle(fontSize: 11, color: Colors.grey[400])),
-                ]),
+                    const SizedBox(width: 4),
+                    Text(
+                      username,
+                      style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: notification.isRead ? Colors.grey[300] : kDanger,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _fmtDate(notification.created),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                    ),
+                  ],
+                ),
               ],
             ),
           ],
@@ -416,9 +506,14 @@ class _ChannelBadge extends StatelessWidget {
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 10, color: color, fontWeight: FontWeight.bold)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
@@ -448,17 +543,19 @@ class _FilterPill extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: color, width: selected ? 0 : 1),
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : color)),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : color,
+          ),
+        ),
       ),
     );
   }
 }
 
-// ─── Send Notification Dialog ─────────────────────────────────────────────────
 
 class _SendNotificationDialog extends StatefulWidget {
   final bool toAll;
@@ -469,10 +566,9 @@ class _SendNotificationDialog extends StatefulWidget {
       _SendNotificationDialogState();
 }
 
-class _SendNotificationDialogState
-    extends State<_SendNotificationDialog> {
+class _SendNotificationDialogState extends State<_SendNotificationDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _titleCtrl   = TextEditingController();
+  final _titleCtrl = TextEditingController();
   final _messageCtrl = TextEditingController();
 
   int _selectedType = _NotificationTypes.reservationConfirmed;
@@ -481,14 +577,46 @@ class _SendNotificationDialogState
   bool _isLoading = false;
 
   static const _types = [
-    (_NotificationTypes.reservationConfirmed, 'Potvrda rezervacije', Icons.check_circle_outline),
-    (_NotificationTypes.reservationReminder, 'Podsjetnik za rezervaciju', Icons.alarm_outlined),
-    (_NotificationTypes.paymentSuccess, 'Plaćanje uspješno', Icons.payment_outlined),
-    (_NotificationTypes.paymentFailure, 'Plaćanje neuspješno', Icons.error_outline),
-    (_NotificationTypes.availabilityNotice, 'Obavijest o dostupnosti', Icons.local_parking),
-    (_NotificationTypes.specialOffer, 'Posebna ponuda', Icons.local_offer_outlined),
-    (_NotificationTypes.reservationCancelled, 'Otkazana rezervacija', Icons.cancel_outlined),
-    (_NotificationTypes.checkInReminder, 'Check-in podsjetnik', Icons.login_outlined),
+    (
+      _NotificationTypes.reservationConfirmed,
+      'Potvrda rezervacije',
+      Icons.check_circle_outline,
+    ),
+    (
+      _NotificationTypes.reservationReminder,
+      'Podsjetnik za rezervaciju',
+      Icons.alarm_outlined,
+    ),
+    (
+      _NotificationTypes.paymentSuccess,
+      'Plaćanje uspješno',
+      Icons.payment_outlined,
+    ),
+    (
+      _NotificationTypes.paymentFailure,
+      'Plaćanje neuspješno',
+      Icons.error_outline,
+    ),
+    (
+      _NotificationTypes.availabilityNotice,
+      'Obavijest o dostupnosti',
+      Icons.local_parking,
+    ),
+    (
+      _NotificationTypes.specialOffer,
+      'Posebna ponuda',
+      Icons.local_offer_outlined,
+    ),
+    (
+      _NotificationTypes.reservationCancelled,
+      'Otkazana rezervacija',
+      Icons.cancel_outlined,
+    ),
+    (
+      _NotificationTypes.checkInReminder,
+      'Check-in podsjetnik',
+      Icons.login_outlined,
+    ),
     (_NotificationTypes.parkingFull, 'Parking pun', Icons.block_outlined),
   ];
 
@@ -501,8 +629,7 @@ class _SendNotificationDialogState
 
   @override
   Widget build(BuildContext context) {
-    final headerColor =
-        widget.toAll ? kSuccess : kPrimary;
+    final headerColor = widget.toAll ? kSuccess : kPrimary;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -528,69 +655,76 @@ class _SendNotificationDialogState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    if (!widget.toAll) ...[
-                      _label('Korisnik'),
+                      if (!widget.toAll) ...[
+                        _label('Korisnik'),
+                        const SizedBox(height: 8),
+                        _buildUserDropdown(),
+                        const SizedBox(height: 20),
+                      ],
+                      _label('Naslov'),
                       const SizedBox(height: 8),
-                      _buildUserDropdown(),
-                      const SizedBox(height: 20),
-                    ],
-                    _label('Naslov'),
-                    const SizedBox(height: 8),
-                    AdminFormField(
+                      AdminFormField(
                         controller: _titleCtrl,
                         label: 'Naslov notifikacije',
-                      icon: Icons.title,
-                      enabled: !_isLoading,
-                      validator: _validateTitle),
-                    const SizedBox(height: 20),
-                    _label('Poruka'),
-                    const SizedBox(height: 8),
-                    AdminFormField(
+                        icon: Icons.title,
+                        enabled: !_isLoading,
+                        validator: _validateTitle,
+                      ),
+                      const SizedBox(height: 20),
+                      _label('Poruka'),
+                      const SizedBox(height: 8),
+                      AdminFormField(
                         controller: _messageCtrl,
                         label: 'Tekst poruke',
                         icon: Icons.message_outlined,
-                      maxLines: 4,
-                      enabled: !_isLoading,
-                      validator: _validateMessage),
-                    const SizedBox(height: 20),
-                    _label('Tip notifikacije'),
-                    const SizedBox(height: 8),
-                    _buildTypeGrid(),
-                    const SizedBox(height: 20),
-                    _label('Kanal slanja'),
-                    const SizedBox(height: 8),
-                    _buildChannelSelector(),
-                    if (_selectedChannel != _NotificationChannels.inApp) ...[
-                      const SizedBox(height: 12),
-                      _buildEmailNote(),
-                    ],
+                        maxLines: 4,
+                        enabled: !_isLoading,
+                        validator: _validateMessage,
+                      ),
+                      const SizedBox(height: 20),
+                      _label('Tip notifikacije'),
+                      const SizedBox(height: 8),
+                      _buildTypeGrid(),
+                      const SizedBox(height: 20),
+                      _label('Kanal slanja'),
+                      const SizedBox(height: 8),
+                      _buildChannelSelector(),
+                      if (_selectedChannel != _NotificationChannels.inApp) ...[
+                        const SizedBox(height: 12),
+                        _buildEmailNote(),
+                      ],
                     ],
                   ),
                 ),
               ),
             ),
-            AdminDialogFooter(children: [
-              const AdminCancelButton(),
-              const SizedBox(width: 12),
-              AdminPrimaryButton(
-                label: _isLoading ? 'Slanje...' : 'Pošalji',
-                icon: Icons.send,
-                isLoading: _isLoading,
-                color: headerColor,
-                onPressed: _submit,
-              ),
-            ]),
+            AdminDialogFooter(
+              children: [
+                const AdminCancelButton(),
+                const SizedBox(width: 12),
+                AdminPrimaryButton(
+                  label: _isLoading ? 'Slanje...' : 'Pošalji',
+                  icon: Icons.send,
+                  isLoading: _isLoading,
+                  color: headerColor,
+                  onPressed: _submit,
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _label(String text) => Text(text,
-      style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF374151)));
+  Widget _label(String text) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFF374151),
+    ),
+  );
 
   Widget _buildUserDropdown() {
     return Consumer<UserProvider>(
@@ -655,14 +789,16 @@ class _SendNotificationDialogState
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(t.$3, size: 14,
-                    color: sel ? Colors.white : kPrimary),
+                Icon(t.$3, size: 14, color: sel ? Colors.white : kPrimary),
                 const SizedBox(width: 6),
-                Text(t.$2,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: sel ? Colors.white : kPrimary)),
+                Text(
+                  t.$2,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: sel ? Colors.white : kPrimary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -674,11 +810,32 @@ class _SendNotificationDialogState
   Widget _buildChannelSelector() {
     return Row(
       children: [
-        _ChannelOption(value: _NotificationChannels.inApp, label: 'In-App', icon: Icons.phone_android, selected: _selectedChannel == _NotificationChannels.inApp, onTap: () => setState(() => _selectedChannel = _NotificationChannels.inApp)),
+        _ChannelOption(
+          value: _NotificationChannels.inApp,
+          label: 'In-App',
+          icon: Icons.phone_android,
+          selected: _selectedChannel == _NotificationChannels.inApp,
+          onTap: () =>
+              setState(() => _selectedChannel = _NotificationChannels.inApp),
+        ),
         const SizedBox(width: 8),
-        _ChannelOption(value: _NotificationChannels.email, label: 'Email', icon: Icons.email_outlined, selected: _selectedChannel == _NotificationChannels.email, onTap: () => setState(() => _selectedChannel = _NotificationChannels.email)),
+        _ChannelOption(
+          value: _NotificationChannels.email,
+          label: 'Email',
+          icon: Icons.email_outlined,
+          selected: _selectedChannel == _NotificationChannels.email,
+          onTap: () =>
+              setState(() => _selectedChannel = _NotificationChannels.email),
+        ),
         const SizedBox(width: 8),
-        _ChannelOption(value: _NotificationChannels.both, label: 'Oboje', icon: Icons.all_inclusive, selected: _selectedChannel == _NotificationChannels.both, onTap: () => setState(() => _selectedChannel = _NotificationChannels.both)),
+        _ChannelOption(
+          value: _NotificationChannels.both,
+          label: 'Oboje',
+          icon: Icons.all_inclusive,
+          selected: _selectedChannel == _NotificationChannels.both,
+          onTap: () =>
+              setState(() => _selectedChannel = _NotificationChannels.both),
+        ),
       ],
     );
   }
@@ -779,14 +936,16 @@ class _ChannelOption extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, size: 20,
-                  color: selected ? Colors.white : kPrimary),
+              Icon(icon, size: 20, color: selected ? Colors.white : kPrimary),
               const SizedBox(height: 4),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: selected ? Colors.white : kPrimary)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : kPrimary,
+                ),
+              ),
             ],
           ),
         ),

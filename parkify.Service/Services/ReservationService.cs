@@ -1,4 +1,5 @@
-﻿using MapsterMapper;
+using MapsterMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using parkify.Model.Exceptions;
 using parkify.Model.Models;
@@ -9,6 +10,7 @@ using parkify.Service.Interfaces;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Security.Claims;
 
 namespace parkify.Service.Services
 {
@@ -17,14 +19,26 @@ namespace parkify.Service.Services
           IReservationService
     {
         private readonly IMessagePublisher _publisher;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ReservationService(
             Database.ParkifyContext context,
             IMapper mapper,
-            IMessagePublisher publisher)
+            IMessagePublisher publisher,
+            IHttpContextAccessor httpContextAccessor)
             : base(context, mapper)
         {
             _publisher = publisher;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private int? GetActorUserIdFromJwt()
+        {
+            var claimValue = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(claimValue, out var actorUserId))
+                return actorUserId;
+
+            return null;
         }
 
         public override IQueryable<Database.Reservation> AddFilter(
@@ -411,6 +425,17 @@ namespace parkify.Service.Services
             if (hasOverlap)
                 throw new UserException("Odabrano parking mjesto već ima aktivnu ili potvrđenu rezervaciju u traženom terminu.");
 
+            var hasUserOverlap = Context.Reservations.Any(r =>
+                r.UserId == entity.UserId &&
+                (r.Status == Database.ReservationStatus.Pending ||
+                 r.Status == Database.ReservationStatus.Confirmed ||
+                 r.Status == Database.ReservationStatus.Active) &&
+                entity.ReservationStart < r.ReservationEnd &&
+                r.ReservationStart < entity.ReservationEnd);
+
+            if (hasUserOverlap)
+                throw new UserException("Korisnik već ima rezervaciju koja se vremenski preklapa sa odabranim terminom.");
+
             if (!parkingSpot.IsActive)
                 throw new UserException("Odabrano parking mjesto nije aktivno.");
 
@@ -521,6 +546,13 @@ namespace parkify.Service.Services
                 .Select(r => r.Status)
                 .FirstOrDefault();
 
+            var actorUserId = GetActorUserIdFromJwt();
+
+            if (actorUserId.HasValue)
+            {
+                entity.ModifiedBy = actorUserId.Value;
+            }
+
             if (request.Status.HasValue &&
                 request.Status.Value == (int)Database.ReservationStatus.Confirmed)
             {
@@ -560,6 +592,17 @@ namespace parkify.Service.Services
                 ReleaseSpotForReservation(entity);
                 entity.Status = Database.ReservationStatus.Completed;
                 entity.Modified = DateTime.UtcNow;
+
+                _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
+                {
+                    UserId = entity.UserId,
+                    Title = "Rezervacija završena",
+                    Message = $"Rezervacija {entity.ReservationCode} je uspješno završena.",
+                    Type = (int)Database.NotificationType.ReservationConfirmed,
+                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
+                    ReservationId = entity.Id,
+                    ParkingZoneId = entity.ParkingZoneId
+                });
             }
 
             if (request.Status.HasValue &&
@@ -574,6 +617,17 @@ namespace parkify.Service.Services
                 ReleaseSpotForReservation(entity);
                 entity.Status = Database.ReservationStatus.NoShow;
                 entity.Modified = DateTime.UtcNow;
+
+                _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
+                {
+                    UserId = entity.UserId,
+                    Title = "Rezervacija oznacena kao no-show",
+                    Message = $"Rezervacija {entity.ReservationCode} je oznacena kao no-show.",
+                    Type = (int)Database.NotificationType.ReservationCancelled,
+                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
+                    ReservationId = entity.Id,
+                    ParkingZoneId = entity.ParkingZoneId
+                });
             }
 
             if (request.Status.HasValue &&
@@ -633,7 +687,19 @@ namespace parkify.Service.Services
 
                 entity.IsCheckedIn = true;
                 entity.CheckInTime = request.CheckInTime ?? DateTime.UtcNow;
+                entity.CheckInBy = actorUserId;
                 entity.Status = Database.ReservationStatus.Active;
+
+                _ = _publisher.PublishNotificationAsync(new parkify.RabbitMQ.Models.NotificationMessage
+                {
+                    UserId = entity.UserId,
+                    Title = "Check-in evidentiran",
+                    Message = $"Vaš check-in za rezervaciju {entity.ReservationCode} je evidentiran.",
+                    Type = (int)Database.NotificationType.CheckInReminder,
+                    Channel = parkify.RabbitMQ.Models.NotificationChannel.Both,
+                    ReservationId = entity.Id,
+                    ParkingZoneId = entity.ParkingZoneId
+                });
             }
 
             if (request.IsCheckedOut.HasValue && request.IsCheckedOut.Value)

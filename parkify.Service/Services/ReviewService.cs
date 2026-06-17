@@ -40,6 +40,14 @@ namespace parkify.Service.Services
 
         public override void BeforeInsert(ReviewInsertRequest request, Database.Review entity)
         {
+            var hasCompletedReservation = Context.Reservations.Any(x =>
+                x.UserId == request.UserId &&
+                x.ParkingZoneId == request.ParkingZoneId &&
+                x.Status == Database.ReservationStatus.Completed);
+
+            if (!hasCompletedReservation)
+                throw new UserException("Recenziju možete ostaviti tek nakon završene rezervacije u ovoj zoni.");
+
             if (Context.Reviews.Any(x => x.UserId == request.UserId && x.ParkingZoneId == request.ParkingZoneId))
                 throw new UserException("Ve? ste ocijenili ovu zonu.");
 

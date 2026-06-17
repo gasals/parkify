@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using parkify.Model.Models;
 
 namespace parkify.Service.Database
@@ -121,6 +121,9 @@ namespace parkify.Service.Database
             modelBuilder.Entity<Reservation>()
                 .HasIndex(r => r.ReservationCode)
                 .IsUnique();
+
+            modelBuilder.Entity<Reservation>()
+                .HasIndex(r => new { r.UserId, r.ReservationStart, r.ReservationEnd, r.Status });
 
             modelBuilder.Entity<Reservation>()
                 .Property(r => r.ReservationCode)

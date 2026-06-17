@@ -1,4 +1,4 @@
-﻿namespace parkify.Model.Models
+namespace parkify.Model.Models
 {
     public class Reservation
     {
@@ -25,6 +25,8 @@
         public DateTime? Modified { get; set; }
         public DateTime? CheckInTime { get; set; }
         public DateTime? CheckOutTime { get; set; }
+        public int? ModifiedBy { get; set; }
+        public int? CheckInBy { get; set; }
     }
 
 }

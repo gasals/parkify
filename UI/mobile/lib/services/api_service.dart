@@ -72,7 +72,6 @@ class ApiService {
         return decoded;
       }
     } catch (_) {
-      // Ignore invalid/non-JSON response bodies and use fallback text.
     }
 
     return fallback;

@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ZAJEDNIČKI ADMIN DIALOG WIDGETI
-// Koristiti u svim admin ekranima za unificirani izgled formi i dijaloga.
-// ─────────────────────────────────────────────────────────────────────────────
-
 const kPrimary = Color(0xFF6366F1);
 const kSuccess = Color(0xFF10B981);
 const kDanger  = Color(0xFFEF4444);
 const kWarning = Color(0xFFF59E0B);
 
-// ── Header dijaloga ───────────────────────────────────────────────────────────
 class AdminDialogHeader extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -54,7 +48,6 @@ class AdminDialogHeader extends StatelessWidget {
   }
 }
 
-// ── Footer dijaloga ───────────────────────────────────────────────────────────
 class AdminDialogFooter extends StatelessWidget {
   final List<Widget> children;
 
@@ -78,7 +71,6 @@ class AdminDialogFooter extends StatelessWidget {
   }
 }
 
-// ── Input polje forme ─────────────────────────────────────────────────────────
 class AdminFormField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -153,7 +145,6 @@ class AdminFormField extends StatelessWidget {
   }
 }
 
-// ── Dropdown polje forme ──────────────────────────────────────────────────────
 class AdminDropdownField<T> extends StatelessWidget {
   final T? value;
   final String label;
@@ -224,7 +215,6 @@ class AdminDropdownField<T> extends StatelessWidget {
   }
 }
 
-// ── Primarne akcija dugme ─────────────────────────────────────────────────────
 class AdminPrimaryButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -268,7 +258,6 @@ class AdminPrimaryButton extends StatelessWidget {
   }
 }
 
-// ── Otkaži dugme ──────────────────────────────────────────────────────────────
 class AdminCancelButton extends StatelessWidget {
   final String label;
   const AdminCancelButton({this.label = 'Otkaži', Key? key}) : super(key: key);
@@ -282,7 +271,6 @@ class AdminCancelButton extends StatelessWidget {
   }
 }
 
-// ── Status badge (soft, pill oblik) ───────────────────────────────────────────
 class AdminStatusBadge extends StatelessWidget {
   final String label;
   final Color color;
@@ -321,7 +309,6 @@ class AdminStatusBadge extends StatelessWidget {
   }
 }
 
-// ── Confirm dialog ────────────────────────────────────────────────────────────
 class AdminConfirmDialog extends StatelessWidget {
   final String title;
   final String message;
@@ -385,7 +372,6 @@ class AdminConfirmDialog extends StatelessWidget {
   }
 }
 
-// ── Snackbar helper ───────────────────────────────────────────────────────────
 class AdminSnackBar {
   static void show(BuildContext context, String message, bool success) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

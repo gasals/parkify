@@ -1,4 +1,4 @@
-﻿namespace parkify.Service.Database
+namespace parkify.Service.Database
 {
     public class Reservation
     {
@@ -26,6 +26,8 @@
         public DateTime? Modified { get; set; }
         public DateTime? CheckInTime { get; set; }
         public DateTime? CheckOutTime { get; set; }
+        public int? ModifiedBy { get; set; }
+        public int? CheckInBy { get; set; }
 
         public User User { get; set; } = null!;
         public ParkingZone ParkingZone { get; set; } = null!;
