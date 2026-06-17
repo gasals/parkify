@@ -91,12 +91,28 @@ namespace parkify.Service.Services
             var toComplete = await db.Reservations
                 .Where(r => r.Status == Database.ReservationStatus.Active && r.ReservationEnd <= now)
                 .ToListAsync();
+            var toNoShow = await db.Reservations
+                .Where(r =>
+                    r.Status == Database.ReservationStatus.Confirmed &&
+                    !r.IsCheckedIn &&
+                    r.ReservationEnd <= now)
+                .ToListAsync();
+
+            var spotIds = toComplete
+                .Select(r => r.ParkingSpotId)
+                .Concat(toNoShow.Select(r => r.ParkingSpotId))
+                .Distinct()
+                .ToList();
+
+            var spotsById = await db.ParkingSpots
+                .Where(s => spotIds.Contains(s.Id))
+                .ToDictionaryAsync(s => s.Id);
+
             foreach (var r in toComplete)
             {
                 r.Status = Database.ReservationStatus.Completed;
                 r.Modified = now;
-                var spot = await db.ParkingSpots.FirstOrDefaultAsync(s => s.Id == r.ParkingSpotId);
-                if (spot != null)
+                if (spotsById.TryGetValue(r.ParkingSpotId, out var spot))
                 {
                     spot.IsAvailable = true;
                     spot.Modified = now;
@@ -104,18 +120,11 @@ namespace parkify.Service.Services
                 _logger.LogInformation($"Rezervacija {r.Id} završena.");
             }
 
-            var toNoShow = await db.Reservations
-                .Where(r =>
-                    r.Status == Database.ReservationStatus.Confirmed &&
-                    !r.IsCheckedIn &&
-                    r.ReservationEnd <= now)
-                .ToListAsync();
             foreach (var r in toNoShow)
             {
                 r.Status = Database.ReservationStatus.NoShow;
                 r.Modified = now;
-                var spot = await db.ParkingSpots.FirstOrDefaultAsync(s => s.Id == r.ParkingSpotId);
-                if (spot != null)
+                if (spotsById.TryGetValue(r.ParkingSpotId, out var spot))
                 {
                     spot.IsAvailable = true;
                     spot.Modified = now;

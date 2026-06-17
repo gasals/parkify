@@ -39,8 +39,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     _loadDropdownData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Provider.of<ReservationProvider>(context, listen: false)
-            .searchReservations();
+        Provider.of<ReservationProvider>(
+          context,
+          listen: false,
+        ).searchReservations();
       }
     });
   }
@@ -49,7 +51,11 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     final p = Provider.of<ReservationProvider>(context, listen: false);
     final users = await p.getAllUsersList();
     final zones = await p.getAllParkingZonesList();
-    if (mounted) setState(() { _allUsers = users; _allZones = zones; });
+    if (mounted)
+      setState(() {
+        _allUsers = users;
+        _allZones = zones;
+      });
   }
 
   @override
@@ -77,8 +83,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
 
   Future<void> _performSearch() async {
     setState(() => _isSearching = true);
-    await Provider.of<ReservationProvider>(context, listen: false)
-        .searchReservations(
+    await Provider.of<ReservationProvider>(
+      context,
+      listen: false,
+    ).searchReservations(
       userId: _selectedUser?.id,
       parkingZoneId: _selectedZone?.id,
       status: _selectedStatus?.value,
@@ -150,7 +158,11 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       AdminSnackBar.show(context, 'PDF je uspješno sačuvan.', true);
     } catch (e) {
       if (!mounted) return;
-      AdminSnackBar.show(context, e.toString().replaceFirst('Exception: ', ''), false);
+      AdminSnackBar.show(
+        context,
+        e.toString().replaceFirst('Exception: ', ''),
+        false,
+      );
     } finally {
       if (mounted) {
         setState(() => _isDownloadingReport = false);
@@ -160,107 +172,110 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
 
   Future<_ReportOptions?> _showReportOptionsDialog({required bool finance}) {
     final today = DateTime.now();
-    final initialStart = DateTime(today.year, today.month, today.day)
-        .subtract(const Duration(days: 30));
+    final initialStart = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(const Duration(days: 30));
     final initialEnd = DateTime(today.year, today.month, today.day);
 
     return showDialog<_ReportOptions>(
-        context: context,
-        builder: (dialogContext) {
-          var start = initialStart;
-          var end = initialEnd;
-          var onlySelectedUser = finance && _selectedUser != null;
+      context: context,
+      builder: (dialogContext) {
+        var start = initialStart;
+        var end = initialEnd;
+        var onlySelectedUser = finance && _selectedUser != null;
 
-          Future<void> pickStartDate(StateSetter setDialogState) async {
-            final picked = await showDatePicker(
-              context: dialogContext,
-              initialDate: start,
-              firstDate: _reportFirstDate,
-              lastDate: end,
-            );
-
-            if (picked != null) {
-              setDialogState(() => start = picked);
-            }
-          }
-
-          Future<void> pickEndDate(StateSetter setDialogState) async {
-            final picked = await showDatePicker(
-              context: dialogContext,
-              initialDate: end,
-              firstDate: start,
-              lastDate: DateTime.now().add(const Duration(days: 365)),
-            );
-
-            if (picked != null) {
-              setDialogState(() => end = picked);
-            }
-          }
-
-          return StatefulBuilder(
-            builder: (context, setDialogState) => AlertDialog(
-              title: Text(finance ? 'Finansijski PDF' : 'Operativni PDF'),
-              content: SizedBox(
-                width: 340,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _CompactDateField(
-                      label: 'Od',
-                      value: _formatDialogDate(start),
-                      onTap: () => pickStartDate(setDialogState),
-                    ),
-                    const SizedBox(height: 10),
-                    _CompactDateField(
-                      label: 'Do',
-                      value: _formatDialogDate(end),
-                      onTap: () => pickEndDate(setDialogState),
-                    ),
-                    if (finance) ...[
-                      const SizedBox(height: 12),
-                      CheckboxListTile(
-                        value: onlySelectedUser,
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        title: const Text('Samo za odabranog korisnika'),
-                        subtitle: Text(
-                          _selectedUser == null
-                              ? 'Prvo odaberi korisnika u filteru.'
-                              : '${_selectedUser!.username} (${_selectedUser!.email})',
-                        ),
-                        onChanged: _selectedUser == null
-                            ? null
-                            : (value) => setDialogState(
-                                  () => onlySelectedUser = value ?? false,
-                                ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Otkaži'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop(
-                      _ReportOptions(
-                        range: DateTimeRange(start: start, end: end),
-                        onlySelectedUser: onlySelectedUser,
-                      ),
-                    );
-                  },
-                  child: const Text('Preuzmi'),
-                ),
-              ],
-            ),
+        Future<void> pickStartDate(StateSetter setDialogState) async {
+          final picked = await showDatePicker(
+            context: dialogContext,
+            initialDate: start,
+            firstDate: _reportFirstDate,
+            lastDate: end,
           );
-        },
-      );
+
+          if (picked != null) {
+            setDialogState(() => start = picked);
+          }
+        }
+
+        Future<void> pickEndDate(StateSetter setDialogState) async {
+          final picked = await showDatePicker(
+            context: dialogContext,
+            initialDate: end,
+            firstDate: start,
+            lastDate: DateTime.now().add(const Duration(days: 365)),
+          );
+
+          if (picked != null) {
+            setDialogState(() => end = picked);
+          }
+        }
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: Text(finance ? 'Finansijski PDF' : 'Operativni PDF'),
+            content: SizedBox(
+              width: 340,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _CompactDateField(
+                    label: 'Od',
+                    value: _formatDialogDate(start),
+                    onTap: () => pickStartDate(setDialogState),
+                  ),
+                  const SizedBox(height: 10),
+                  _CompactDateField(
+                    label: 'Do',
+                    value: _formatDialogDate(end),
+                    onTap: () => pickEndDate(setDialogState),
+                  ),
+                  if (finance) ...[
+                    const SizedBox(height: 12),
+                    CheckboxListTile(
+                      value: onlySelectedUser,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: const Text('Samo za odabranog korisnika'),
+                      subtitle: Text(
+                        _selectedUser == null
+                            ? 'Prvo odaberi korisnika u filteru.'
+                            : '${_selectedUser!.username} (${_selectedUser!.email})',
+                      ),
+                      onChanged: _selectedUser == null
+                          ? null
+                          : (value) => setDialogState(
+                              () => onlySelectedUser = value ?? false,
+                            ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Otkaži'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(
+                    _ReportOptions(
+                      range: DateTimeRange(start: start, end: end),
+                      onlySelectedUser: onlySelectedUser,
+                    ),
+                  );
+                },
+                child: const Text('Preuzmi'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   String _buildReportFileName({
@@ -332,20 +347,30 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                   items: [
                     const DropdownMenuItem<ReservationStatus>(
                       value: null,
-                      child: Text('Svi statusi', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                      child: Text(
+                        'Svi statusi',
+                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
                     ),
-                    ...ReservationStatus.values.map((s) => DropdownMenuItem(
-                          value: s,
-                          child: Row(children: [
+                    ...ReservationStatus.values.map(
+                      (s) => DropdownMenuItem(
+                        value: s,
+                        child: Row(
+                          children: [
                             Container(
-                              width: 8, height: 8,
+                              width: 8,
+                              height: 8,
                               decoration: BoxDecoration(
-                                  color: _statusColorStatic(s), shape: BoxShape.circle),
+                                color: _statusColorStatic(s),
+                                shape: BoxShape.circle,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Text(s.label, style: const TextStyle(fontSize: 13)),
-                          ]),
-                        )),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                   onChanged: (s) => setState(() => _selectedStatus = s),
                 ),
@@ -374,7 +399,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                     ? null
                     : () => _downloadReport(finance: false),
                 icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: Text(_isDownloadingReport ? 'Preuzimanje...' : 'Operativni PDF'),
+                label: Text(
+                  _isDownloadingReport ? 'Preuzimanje...' : 'Operativni PDF',
+                ),
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
@@ -382,13 +409,17 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                     ? null
                     : () => _downloadReport(finance: true),
                 icon: const Icon(Icons.request_quote_outlined),
-                label: Text(_isDownloadingReport ? 'Preuzimanje...' : 'Finansijski PDF'),
+                label: Text(
+                  _isDownloadingReport ? 'Preuzimanje...' : 'Finansijski PDF',
+                ),
               ),
               const SizedBox(width: 12),
               CommonButtons.buildClearButton(onPressed: _clearSearch),
               const SizedBox(width: 12),
               CommonButtons.buildSearchButton(
-                  onPressed: _performSearch, isLoading: _isSearching),
+                onPressed: _performSearch,
+                isLoading: _isSearching,
+              ),
             ],
           ),
         ],
@@ -401,8 +432,10 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-            width: 8, height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         const SizedBox(width: 4),
         Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[700])),
       ],
@@ -413,9 +446,11 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     return Autocomplete<User>(
       optionsBuilder: (val) {
         if (val.text.isEmpty) return [];
-        return _allUsers.where((u) =>
-            u.username.toLowerCase().contains(val.text.toLowerCase()) ||
-            u.email.toLowerCase().contains(val.text.toLowerCase()));
+        return _allUsers.where(
+          (u) =>
+              u.username.toLowerCase().contains(val.text.toLowerCase()) ||
+              u.email.toLowerCase().contains(val.text.toLowerCase()),
+        );
       },
       onSelected: (u) => setState(() => _selectedUser = u),
       displayStringForOption: (u) => '${u.username} (${u.email})',
@@ -425,13 +460,17 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
         onEditingComplete: oec,
         onChanged: (v) async {
           if (v.isNotEmpty) {
-            final r = await Provider.of<ReservationProvider>(ctx, listen: false)
-                .searchUsersLive(username: v);
+            final r = await Provider.of<ReservationProvider>(
+              ctx,
+              listen: false,
+            ).searchUsersLive(username: v);
             setState(() => _allUsers = r);
           }
         },
         decoration: SearchFieldDecoration.buildInputDecoration(
-            labelText: 'Korisnik', icon: Icons.person_outline),
+          labelText: 'Korisnik',
+          icon: Icons.person_outline,
+        ),
       ),
     );
   }
@@ -440,8 +479,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     return Autocomplete<ParkingZone>(
       optionsBuilder: (val) {
         if (val.text.isEmpty) return [];
-        return _allZones.where((z) =>
-            z.name.toLowerCase().contains(val.text.toLowerCase()));
+        return _allZones.where(
+          (z) => z.name.toLowerCase().contains(val.text.toLowerCase()),
+        );
       },
       onSelected: (z) => setState(() => _selectedZone = z),
       displayStringForOption: (z) => z.name,
@@ -451,13 +491,17 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
         onEditingComplete: oec,
         onChanged: (v) async {
           if (v.isNotEmpty) {
-            final r = await Provider.of<ReservationProvider>(ctx, listen: false)
-                .searchParkingZonesLive(name: v);
+            final r = await Provider.of<ReservationProvider>(
+              ctx,
+              listen: false,
+            ).searchParkingZonesLive(name: v);
             setState(() => _allZones = r);
           }
         },
         decoration: SearchFieldDecoration.buildInputDecoration(
-            labelText: 'Parking zona', icon: Icons.map_outlined),
+          labelText: 'Parking zona',
+          icon: Icons.map_outlined,
+        ),
       ),
     );
   }
@@ -469,7 +513,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (provider.reservations.isEmpty) {
-          return const Center(child: Text('Nema rezervacija koje odgovaraju pretrazi.'));
+          return const Center(
+            child: Text('Nema rezervacija koje odgovaraju pretrazi.'),
+          );
         }
         return GridView.builder(
           controller: _scrollController,
@@ -479,13 +525,16 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
             mainAxisSpacing: 20,
             childAspectRatio: 1.5,
           ),
-          itemCount: provider.reservations.length + (provider.isLoading ? 1 : 0),
+          itemCount:
+              provider.reservations.length + (provider.isLoading ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == provider.reservations.length) {
               return const Center(child: CircularProgressIndicator());
             }
             return _buildReservationTile(
-                provider.reservations[index], provider);
+              provider.reservations[index],
+              provider,
+            );
           },
         );
       },
@@ -493,7 +542,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
   }
 
   Widget _buildReservationTile(
-      Reservation reservation, ReservationProvider provider) {
+    Reservation reservation,
+    ReservationProvider provider,
+  ) {
     final statusEnum = ReservationStatus.fromValue(reservation.status);
     final statusColor = _statusColor(statusEnum);
     final userName = _resolveUserName(reservation.userId);
@@ -515,39 +566,50 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: kPrimary.withValues(alpha: 0.1),
-                  child: const Icon(Icons.confirmation_number_outlined,
-                      size: 18, color: kPrimary),
+                  child: const Icon(
+                    Icons.confirmation_number_outlined,
+                    size: 18,
+                    color: kPrimary,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     reservation.reservationCode,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                AdminStatusBadge(
-                  label: statusEnum.label,
-                  color: statusColor,
-                ),
+                AdminStatusBadge(label: statusEnum.label, color: statusColor),
               ],
             ),
             const Divider(height: 28),
             _infoRow(Icons.person_outline, 'Korisnik', userName),
             _infoRow(Icons.local_parking, 'Zona', zoneName),
-            _infoRow(Icons.calendar_today, 'Datum',
-                '${reservation.reservationStart.day.toString().padLeft(2, '0')}.'
-                '${reservation.reservationStart.month.toString().padLeft(2, '0')}.'
-                '${reservation.reservationStart.year}'),
-            _infoRow(Icons.access_time, 'Vrijeme',
-                '${reservation.reservationStart.hour.toString().padLeft(2, '0')}:'
-              '${reservation.reservationStart.minute.toString().padLeft(2, '0')}'
-              ' - '
-              '${reservation.reservationEnd.hour.toString().padLeft(2, '0')}:'
-              '${reservation.reservationEnd.minute.toString().padLeft(2, '0')}'),
-            _infoRow(Icons.monetization_on, 'Cijena',
-                '${reservation.finalPrice} BAM'),
+            _infoRow(
+              Icons.calendar_today,
+              'Datum',
+              '${reservation.reservationStart.day.toString().padLeft(2, '0')}.'
+                  '${reservation.reservationStart.month.toString().padLeft(2, '0')}.'
+                  '${reservation.reservationStart.year}',
+            ),
+            _infoRow(
+              Icons.access_time,
+              'Vrijeme',
+              '${reservation.reservationStart.hour.toString().padLeft(2, '0')}:'
+                  '${reservation.reservationStart.minute.toString().padLeft(2, '0')}'
+                  ' - '
+                  '${reservation.reservationEnd.hour.toString().padLeft(2, '0')}:'
+                  '${reservation.reservationEnd.minute.toString().padLeft(2, '0')}',
+            ),
+            _infoRow(
+              Icons.monetization_on,
+              'Cijena',
+              '${reservation.finalPrice} BAM',
+            ),
             const Spacer(),
             Row(
               children: [
@@ -556,27 +618,30 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                     onPressed: () =>
                         _showChangeStatusDialog(reservation, provider),
                     icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-                    label: const Text('STATUS',
-                        style: TextStyle(color: Colors.white, fontSize: 11)),
+                    label: const Text(
+                      'STATUS',
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ),
                 if ((!reservation.isCheckedIn &&
-                        reservation.status == ReservationStatus.confirmed.value) ||
+                        reservation.status ==
+                            ReservationStatus.confirmed.value) ||
                     (!reservation.isCheckedOut &&
-                        reservation.status == ReservationStatus.active.value)) ...[
+                        reservation.status ==
+                            ReservationStatus.active.value)) ...[
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: Icon(
-                        !reservation.isCheckedIn
-                            ? Icons.login
-                            : Icons.logout,
+                        !reservation.isCheckedIn ? Icons.login : Icons.logout,
                         size: 16,
                         color: !reservation.isCheckedIn
                             ? Colors.green
@@ -588,18 +653,22 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                       label: Text(
                         !reservation.isCheckedIn ? 'CHECK-IN' : 'CHECK-OUT',
                         style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.bold),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: !reservation.isCheckedIn
                             ? Colors.green
                             : Colors.orange,
                         side: BorderSide(
-                            color: !reservation.isCheckedIn
-                                ? Colors.green
-                                : Colors.orange),
+                          color: !reservation.isCheckedIn
+                              ? Colors.green
+                              : Colors.orange,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ),
@@ -614,9 +683,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
 
   String _resolveUserName(int userId) {
     final user = _allUsers.cast<User?>().firstWhere(
-          (item) => item?.id == userId,
-          orElse: () => null,
-        );
+      (item) => item?.id == userId,
+      orElse: () => null,
+    );
 
     if (user == null) {
       return 'Korisnik #$userId';
@@ -633,9 +702,9 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
     }
 
     final zone = _allZones.cast<ParkingZone?>().firstWhere(
-          (item) => item?.id == reservation.parkingZoneId,
-          orElse: () => null,
-        );
+      (item) => item?.id == reservation.parkingZoneId,
+      orElse: () => null,
+    );
 
     return zone?.name.trim().isNotEmpty == true
         ? zone!.name
@@ -651,50 +720,65 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
           const SizedBox(width: 8),
           Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           const Spacer(),
-          Text(value.trim().isEmpty ? '-' : value,
-              style:
-                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            value.trim().isEmpty ? '-' : value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
   }
 
   static Color _statusColorStatic(ReservationStatus s) => switch (s) {
-        ReservationStatus.pending   => Colors.orange,
-        ReservationStatus.confirmed => Colors.blue,
-        ReservationStatus.active    => Colors.green,
-        ReservationStatus.completed => Colors.grey,
-        ReservationStatus.cancelled => Colors.red,
-        ReservationStatus.noShow    => Colors.purple,
-      };
+    ReservationStatus.pending => Colors.orange,
+    ReservationStatus.confirmed => Colors.blue,
+    ReservationStatus.active => Colors.green,
+    ReservationStatus.completed => Colors.grey,
+    ReservationStatus.cancelled => Colors.red,
+    ReservationStatus.noShow => Colors.purple,
+  };
 
   Color _statusColor(ReservationStatus s) => _statusColorStatic(s);
 
   Future<void> _checkIn(Reservation r, ReservationProvider p) async {
     final ok = await p.checkInReservation(r.id);
-    if (mounted) AdminSnackBar.show(context, ok ? 'Check-in uspjesan' : 'Check-in nije uspio', ok);
+    if (mounted) {
+      AdminSnackBar.show(
+        context,
+        ok ? 'Check-in uspjesan' : (p.errorMessage ?? 'Check-in nije uspio'),
+        ok,
+      );
+    }
   }
 
   Future<void> _checkOut(Reservation r, ReservationProvider p) async {
     final ok = await p.checkOutReservation(r.id);
-    if (mounted) AdminSnackBar.show(context, ok ? 'Check-out uspjesan' : 'Check-out nije uspio', ok);
+    if (mounted) {
+      AdminSnackBar.show(
+        context,
+        ok ? 'Check-out uspjesan' : (p.errorMessage ?? 'Check-out nije uspio'),
+        ok,
+      );
+    }
   }
 
   void _showChangeStatusDialog(
-      Reservation reservation, ReservationProvider provider) {
+    Reservation reservation,
+    ReservationProvider provider,
+  ) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: SizedBox(
           width: 400,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const AdminDialogHeader(
-                  icon: Icons.swap_horiz_outlined,
-                  title: 'Promijeni status rezervacije'),
+                icon: Icons.swap_horiz_outlined,
+                title: 'Promijeni status rezervacije',
+              ),
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
@@ -710,41 +794,52 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                               ? null
                               : () async {
                                   Navigator.pop(context);
-                                  final ok =
-                                      await provider.updateReservationStatus(
-                                    reservation.id,
-                                    status.value,
-                                  );
+                                  final ok = await provider
+                                      .updateReservationStatus(
+                                        reservation.id,
+                                        status.value,
+                                      );
                                   if (mounted) {
                                     AdminSnackBar.show(
-                                        context, 'Status azuriran', ok);
+                                      context,
+                                      'Status azuriran',
+                                      ok,
+                                    );
                                   }
                                 },
                           style: OutlinedButton.styleFrom(
                             backgroundColor: isSelected
-                              ? color.withValues(alpha: 0.1)
+                                ? color.withValues(alpha: 0.1)
                                 : null,
                             side: BorderSide(
-                                color: isSelected ? color : Colors.grey[300]!),
+                              color: isSelected ? color : Colors.grey[300]!,
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                width: 8, height: 8,
+                                width: 8,
+                                height: 8,
                                 decoration: BoxDecoration(
-                                    color: color, shape: BoxShape.circle),
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                               const SizedBox(width: 8),
-                              Text(status.label,
-                                  style: TextStyle(
-                                      color: isSelected ? color : Colors.black87,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal)),
+                              Text(
+                                status.label,
+                                style: TextStyle(
+                                  color: isSelected ? color : Colors.black87,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -754,7 +849,8 @@ class _AdminReservationsScreenState extends State<AdminReservationsScreen> {
                 ),
               ),
               AdminDialogFooter(
-                  children: [const AdminCancelButton(label: 'Zatvori')]),
+                children: [const AdminCancelButton(label: 'Zatvori')],
+              ),
             ],
           ),
         ),
@@ -794,16 +890,29 @@ class _CompactDateField extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_today_outlined, size: 18, color: Colors.grey[700]),
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 18,
+              color: Colors.grey[700],
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  Text(
+                    label,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
                   const SizedBox(height: 2),
-                  Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),

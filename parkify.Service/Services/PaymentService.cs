@@ -8,6 +8,7 @@ using parkify.RabbitMQ.Models;
 using parkify.Service.Interfaces;
 using Stripe;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace parkify.Service.Services
 {
@@ -48,7 +49,7 @@ namespace parkify.Service.Services
             var paymentIntent = await intentService.CreateAsync(options);
 
             request.StripePaymentIntentId = paymentIntent.Id;
-            var payment = Insert(request);
+            var payment = await Insert(request);
 
             return new PaymentIntentCreateResponse
             {
@@ -80,7 +81,7 @@ namespace parkify.Service.Services
             return query;
         }
 
-        public override void BeforeInsert(PaymentInsertRequest request, Database.Payment entity)
+        public override async Task BeforeInsert(PaymentInsertRequest request, Database.Payment entity)
         {
             entity.PaymentCode = Guid.NewGuid().ToString();
             entity.Status = Database.PaymentStatus.Pending;
@@ -95,13 +96,13 @@ namespace parkify.Service.Services
 
             if (request.ReservationId.HasValue)
             {
-                var reservationExists = Context.Reservations.Any(r => r.Id == request.ReservationId.Value);
+                var reservationExists = await Context.Reservations.AnyAsync(r => r.Id == request.ReservationId.Value);
                 if (!reservationExists)
                     throw new UserException("Rezervacija ne postoji");
             }
             else if (request.WalletId.HasValue)
             {
-                var walletExists = Context.Wallets.Any(w => w.Id == request.WalletId.Value);
+                var walletExists = await Context.Wallets.AnyAsync(w => w.Id == request.WalletId.Value);
                 if (!walletExists)
                     throw new UserException("Wallet ne postoji");
             }
@@ -110,12 +111,12 @@ namespace parkify.Service.Services
                 throw new UserException("Morate navesti Rezervaciju ili Novčanik");
             }
 
-            base.BeforeInsert(request, entity);
+            await base.BeforeInsert(request, entity);
         }
 
         public async Task<Payment> ConfirmPayment(int paymentId)
         {
-            var payment = Context.Payments.FirstOrDefault(p => p.Id == paymentId);
+            var payment = await Context.Payments.FirstOrDefaultAsync(p => p.Id == paymentId);
 
             if (payment == null)
                 throw new UserException("Plaćanje nije pronađeno");
@@ -147,7 +148,7 @@ namespace parkify.Service.Services
             if (paymentIntent.AmountReceived != expectedAmountInPfennig)
                 throw new UserException("Stripe iznos se ne podudara sa lokalnim plaćanjem.");
 
-            if (Context.Payments.Any(p =>
+            if (await Context.Payments.AnyAsync(p =>
                     p.Id != payment.Id &&
                     p.StripePaymentIntentId == payment.StripePaymentIntentId &&
                     p.Status == Database.PaymentStatus.Completed))
@@ -163,7 +164,7 @@ namespace parkify.Service.Services
 
             if (payment.ReservationId.HasValue)
             {
-                var reservation = Context.Reservations.Find(payment.ReservationId.Value);
+                var reservation = await Context.Reservations.FindAsync(payment.ReservationId.Value);
                 if (reservation != null)
                 {
                     reservation.PaymentAmountPaid = payment.Amount;
@@ -171,13 +172,13 @@ namespace parkify.Service.Services
                         ? Database.ReservationStatus.Confirmed
                         : Database.ReservationStatus.Pending;
 
-                    var parkingZone = Context.ParkingZones.Find(reservation.ParkingZoneId);
+                    var parkingZone = await Context.ParkingZones.FindAsync(reservation.ParkingZoneId);
                     if (parkingZone != null && parkingZone.AvailableSpots > 0)
                     {
                         parkingZone.AvailableSpots -= 1;
                     }
 
-                    var parkingSpot = Context.ParkingSpots.Find(reservation.ParkingSpotId);
+                    var parkingSpot = await Context.ParkingSpots.FindAsync(reservation.ParkingSpotId);
                     if (parkingSpot != null)
                     {
                         parkingSpot.IsAvailable = false;
@@ -198,7 +199,7 @@ namespace parkify.Service.Services
             }
             else if (payment.WalletId.HasValue)
             {
-                var wallet = Context.Wallets.Find(payment.WalletId.Value);
+                var wallet = await Context.Wallets.FindAsync(payment.WalletId.Value);
                 if (wallet != null)
                 {
                     wallet.Balance += payment.Amount;
@@ -223,7 +224,7 @@ namespace parkify.Service.Services
                 }
             }
 
-            Context.SaveChanges();
+            await Context.SaveChangesAsync();
 
             if (notification != null)
             {
@@ -235,7 +236,7 @@ namespace parkify.Service.Services
 
         public async Task<Payment> RefundPayment(int paymentId, string reason)
         {
-            var payment = Context.Payments.FirstOrDefault(p => p.Id == paymentId);
+            var payment = await Context.Payments.FirstOrDefaultAsync(p => p.Id == paymentId);
 
             if (payment == null)
                 throw new UserException("Plaćanje nije pronađeno.");
@@ -284,7 +285,7 @@ namespace parkify.Service.Services
 
             if (payment.ReservationId.HasValue)
             {
-                var reservation = Context.Reservations.FirstOrDefault(r => r.Id == payment.ReservationId.Value);
+                var reservation = await Context.Reservations.FirstOrDefaultAsync(r => r.Id == payment.ReservationId.Value);
                 if (reservation != null)
                 {
                     reservation.PaymentAmountPaid = 0;
@@ -294,13 +295,13 @@ namespace parkify.Service.Services
                     {
                         reservation.Status = Database.ReservationStatus.Cancelled;
 
-                        var parkingZone = Context.ParkingZones.Find(reservation.ParkingZoneId);
+                        var parkingZone = await Context.ParkingZones.FindAsync(reservation.ParkingZoneId);
                         if (parkingZone != null)
                         {
                             parkingZone.AvailableSpots += 1;
                         }
 
-                        var parkingSpot = Context.ParkingSpots.Find(reservation.ParkingSpotId);
+                        var parkingSpot = await Context.ParkingSpots.FindAsync(reservation.ParkingSpotId);
                         if (parkingSpot != null)
                         {
                             parkingSpot.IsAvailable = true;
@@ -311,7 +312,7 @@ namespace parkify.Service.Services
             }
             else if (payment.WalletId.HasValue)
             {
-                var wallet = Context.Wallets.Find(payment.WalletId.Value);
+                var wallet = await Context.Wallets.FindAsync(payment.WalletId.Value);
                 if (wallet != null)
                 {
                     wallet.Balance -= payment.Amount;
@@ -327,7 +328,7 @@ namespace parkify.Service.Services
                 }
             }
 
-            Context.SaveChanges();
+            await Context.SaveChangesAsync();
 
             await _publisher.PublishNotificationAsync(new NotificationMessage
             {

@@ -17,30 +17,30 @@ namespace parkify.API.Controllers
 
         [HttpGet]
         [Authorize]
-        public override PagedResult<City> GetList([FromQuery] CitySearch searchObject)
+        public override async Task<PagedResult<City>> GetList([FromQuery] CitySearch searchObject)
         {
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
         [Authorize]
-        public override City GetById(int id)
+        public override async Task<City?> GetById(int id)
         {
-            return base.GetById(id);
+            return await base.GetById(id);
         }
 
         [HttpPost]
         [Authorize(Roles = AppRoles.Admin)]
-        public override City Insert([FromBody] CityInsertRequest request)
+        public override async Task<City> Insert([FromBody] CityInsertRequest request)
         {
-            return base.Insert(request);
+            return await base.Insert(request);
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = AppRoles.Admin)]
-        public override City Update(int id, [FromBody] CityUpdateRequest request)
+        public override async Task<City> Update(int id, [FromBody] CityUpdateRequest request)
         {
-            return base.Update(id, request);
+            return await base.Update(id, request);
         }
 
         [HttpDelete("{id}")]

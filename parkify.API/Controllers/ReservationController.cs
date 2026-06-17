@@ -17,21 +17,24 @@ namespace parkify.API.Controllers
 
         [HttpGet]
         [Authorize]
-        public override PagedResult<Reservation> GetList([FromQuery] ReservationSearch searchObject)
+        public override async Task<PagedResult<Reservation>> GetList([FromQuery] ReservationSearch searchObject)
         {
             if (!IsCurrentUserAdmin())
             {
                 searchObject.UserId = GetCurrentUserIdOrThrow();
             }
 
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
         [Authorize]
-        public override Reservation GetById(int id)
+        public override async Task<Reservation?> GetById(int id)
         {
-            var reservation = base.GetById(id);
+            var reservation = await base.GetById(id);
+
+            if (reservation == null)
+                return null;
 
             if (!IsCurrentUserAdmin() && reservation.UserId != GetCurrentUserIdOrThrow())
                 throw new UnauthorizedAccessException("Nemate pravo pristupa ovoj rezervaciji.");
@@ -41,7 +44,7 @@ namespace parkify.API.Controllers
 
         [HttpPost]
         [Authorize]
-        public override Reservation Insert([FromBody] ReservationInsertRequest request)
+        public override async Task<Reservation> Insert([FromBody] ReservationInsertRequest request)
         {
             var currentUserId = GetCurrentUserIdOrThrow();
             if (!IsCurrentUserAdmin())
@@ -53,37 +56,40 @@ namespace parkify.API.Controllers
                 request.UserId = currentUserId;
             }
 
-            return base.Insert(request);
+            return await base.Insert(request);
         }
 
         [HttpPut("{id}")]
         [Authorize]
-        public override Reservation Update(int id, [FromBody] ReservationUpdateRequest request)
+        public override async Task<Reservation> Update(int id, [FromBody] ReservationUpdateRequest request)
         {
             if (!IsCurrentUserAdmin())
             {
-                var reservation = base.GetById(id);
+                var reservation = await base.GetById(id);
+                if (reservation == null)
+                    throw new UnauthorizedAccessException("Rezervacija nije pronađena.");
+
                 if (reservation.UserId != GetCurrentUserIdOrThrow())
                     throw new UnauthorizedAccessException("Nemate pravo izmjene ove rezervacije.");
             }
 
-            return base.Update(id, request);
+            return await base.Update(id, request);
         }
 
         [HttpGet("report/pdf")]
         [Authorize(Roles = AppRoles.Admin)]
-        public IActionResult GetAdminReportPdf([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        public async Task<IActionResult> GetAdminReportPdf([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
-            var pdfBytes = (_service as IReservationService)!.GenerateAdminReportPdf(from, to);
+            var pdfBytes = await (_service as IReservationService)!.GenerateAdminReportPdf(from, to);
             var fileName = $"parkify-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
             return File(pdfBytes, "application/pdf", fileName);
         }
 
         [HttpGet("report/finance/pdf")]
         [Authorize(Roles = AppRoles.Admin)]
-        public IActionResult GetFinanceReportPdf([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int? userId)
+        public async Task<IActionResult> GetFinanceReportPdf([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int? userId)
         {
-            var pdfBytes = (_service as IReservationService)!.GenerateFinanceReportPdf(from, to, userId);
+            var pdfBytes = await (_service as IReservationService)!.GenerateFinanceReportPdf(from, to, userId);
             var fileName = $"parkify-finance-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
             return File(pdfBytes, "application/pdf", fileName);
         }

@@ -21,21 +21,24 @@ namespace parkify.API.Controllers
 
         [HttpGet]
         [Authorize]
-        public override PagedResult<Notification> GetList([FromQuery] NotificationSearch searchObject)
+        public override async Task<PagedResult<Notification>> GetList([FromQuery] NotificationSearch searchObject)
         {
             if (!IsCurrentUserAdmin())
             {
                 searchObject.UserId = GetCurrentUserIdOrThrow();
             }
 
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
         [Authorize]
-        public override Notification GetById(int id)
+        public override async Task<Notification?> GetById(int id)
         {
-            var notification = base.GetById(id);
+            var notification = await base.GetById(id);
+
+            if (notification == null)
+                return null;
 
             if (!IsCurrentUserAdmin() && notification.UserId != GetCurrentUserIdOrThrow())
                 throw new UnauthorizedAccessException("Nemate pravo pristupa ovoj notifikaciji.");
@@ -61,16 +64,19 @@ namespace parkify.API.Controllers
 
         [HttpPatch("{id}/read")]
         [Authorize]
-        public IActionResult MarkAsRead(int id)
+        public async Task<IActionResult> MarkAsRead(int id)
         {
             if (!IsCurrentUserAdmin())
             {
-                var notification = base.GetById(id);
+                var notification = await base.GetById(id);
+                if (notification == null)
+                    return NotFound();
+
                 if (notification.UserId != GetCurrentUserIdOrThrow())
                     throw new UnauthorizedAccessException("Nemate pravo izmjene ove notifikacije.");
             }
 
-            _notificationService.Update(id, new NotificationUpdateRequest { IsRead = true });
+            await _notificationService.Update(id, new NotificationUpdateRequest { IsRead = true });
             return Ok();
         }
     }

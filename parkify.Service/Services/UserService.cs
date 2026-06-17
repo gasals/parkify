@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
@@ -54,7 +55,7 @@ namespace parkify.Service.Services
             return query;
         }
 
-        public override void BeforeInsert(UserInsertRequest request, Database.User entity)
+        public override async Task BeforeInsert(UserInsertRequest request, Database.User entity)
         {
             if (request.Password != request.PasswordConfirm)
                 throw new UserException("Lozinka i potvrda lozinke se ne podudaraju.");
@@ -62,13 +63,13 @@ namespace parkify.Service.Services
             if (!IsValidEmail(request.Email))
                 throw new UserException("Email nije u validnom formatu.");
 
-            if (Context.Users.Any(x => x.Username == request.Username))
+            if (await Context.Users.AnyAsync(x => x.Username == request.Username))
                 throw new UserException("Korisničko ime je zauzeto.");
 
-            if (Context.Users.Any(x => x.Email == request.Email))
+            if (await Context.Users.AnyAsync(x => x.Email == request.Email))
                 throw new UserException("Email je već u upotrebi.");
 
-            if (request.CityId.HasValue && !Context.Cities.Any(x => x.Id == request.CityId.Value))
+            if (request.CityId.HasValue && !await Context.Cities.AnyAsync(x => x.Id == request.CityId.Value))
                 throw new UserException("Odabrani grad ne postoji.");
 
             entity.IsAdmin = false;
@@ -77,10 +78,10 @@ namespace parkify.Service.Services
             entity.PasswordHash = GenerateHash(entity.PasswordSalt, request.Password);
 
 
-            base.BeforeInsert(request, entity);
+            await base.BeforeInsert(request, entity);
         }
 
-        public override void AfterInsert(Database.User entity, UserInsertRequest request)
+        public override async Task AfterInsert(Database.User entity, UserInsertRequest request)
         {
             if (!entity.IsAdmin)
             {
@@ -91,13 +92,13 @@ namespace parkify.Service.Services
                     Created = DateTime.UtcNow
                 };
                 Context.Wallets.Add(newWallet);
-                Context.SaveChanges();
+                await Context.SaveChangesAsync();
             }
 
-            base.AfterInsert(entity, request);
+            await base.AfterInsert(entity, request);
         }
 
-        public override void BeforeUpdate(UserUpdateRequest request, Database.User entity)
+        public override async Task BeforeUpdate(UserUpdateRequest request, Database.User entity)
         {
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
@@ -118,22 +119,22 @@ namespace parkify.Service.Services
             if (!IsValidEmail(request.Email))
                 throw new UserException("Email nije u validnom formatu.");
 
-            var emailExists = Context.Users
-                .Any(x => x.Email == request.Email && x.Id != entity.Id);
+            var emailExists = await Context.Users
+                .AnyAsync(x => x.Email == request.Email && x.Id != entity.Id);
 
             if (emailExists)
                 throw new UserException("Email je već zauzet.");
 
-            if (request.CityId.HasValue && !Context.Cities.Any(x => x.Id == request.CityId.Value))
+            if (request.CityId.HasValue && !await Context.Cities.AnyAsync(x => x.Id == request.CityId.Value))
                 throw new UserException("Odabrani grad ne postoji.");
 
-            base.BeforeUpdate(request, entity);
+            await base.BeforeUpdate(request, entity);
         }
 
-        public User Login(string username, string password)
+        public async Task<User?> Login(string username, string password)
         {
-            var entity = Context.Users
-                .FirstOrDefault(x => x.Username == username);
+            var entity = await Context.Users
+                .FirstOrDefaultAsync(x => x.Username == username);
 
             if (entity == null)
                 return null;
@@ -145,20 +146,20 @@ namespace parkify.Service.Services
 
             return Mapper.Map<User>(entity);
         }
-        public User GetLoggedInUser(string username)
+        public async Task<User?> GetLoggedInUser(string username)
         {
-            var entity = Context.Users
-                .FirstOrDefault(x => x.Username == username);
+            var entity = await Context.Users
+                .FirstOrDefaultAsync(x => x.Username == username);
 
             if (entity == null)
                 return null;
 
             return Mapper.Map<User>(entity);
         }
-        public override User GetById(int id)
+        public override async Task<User?> GetById(int id)
         {
-            var entity = Context.Users
-                .FirstOrDefault(x => x.Id == id);
+            var entity = await Context.Users
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (entity == null)
                 return null;
@@ -166,15 +167,15 @@ namespace parkify.Service.Services
             return Mapper.Map<User>(entity);
         }
 
-        public User Delete(int id)
+        public async Task<User> Delete(int id)
         {
-            var entity = Context.Users.FirstOrDefault(x => x.Id == id);
+            var entity = await Context.Users.FirstOrDefaultAsync(x => x.Id == id);
 
             if (entity == null)
                 throw new UserException("Korisnik sa tim ID-om ne postoji.");
 
             Context.Users.Remove(entity);
-            Context.SaveChanges();
+            await Context.SaveChangesAsync();
 
             return Mapper.Map<User>(entity);
         }

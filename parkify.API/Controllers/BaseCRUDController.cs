@@ -17,14 +17,14 @@ namespace parkify.API.Controllers
         }
 
         [HttpPost]
-        public virtual TModel Insert(TInsert request)
+        public virtual async Task<TModel> Insert(TInsert request)
         {
-            return _service.Insert(request);
+            return await _service.Insert(request);
         }
         [HttpPut("{id}")]
-        public virtual TModel Update(int id, TUpdate request)
+        public virtual async Task<TModel> Update(int id, TUpdate request)
         {
-            return _service.Update(id, request);
+            return await _service.Update(id, request);
         }
 
 

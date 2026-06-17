@@ -7,7 +7,7 @@ namespace parkify.Service.Interfaces
     public interface IParkingZoneService : ICRUDService<ParkingZone, ParkingZoneSearch, ParkingZoneInsertRequest, ParkingZoneUpdateRequest>
     {
         ParkingZone Delete(int id);
-        List<ParkingZone> GetRecommendations(int userId, int count = 5);
-        List<ParkingZoneRecommendation> GetRecommendationsWithExplanation(int userId, int count = 5);
+        Task<List<ParkingZone>> GetRecommendations(int userId, int count = 5);
+        Task<List<ParkingZoneRecommendation>> GetRecommendationsWithExplanation(int userId, int count = 5);
     }
 }

@@ -20,6 +20,11 @@ class ReservationProvider extends ChangeNotifier {
   int get totalPages => _totalPages;
   int get totalCount => _totalCount;
 
+  String _messageFromError(Object error, String fallback) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty ? fallback : message;
+  }
+
   Future<void> searchReservations({
     int? userId,
     int? parkingZoneId,
@@ -53,7 +58,10 @@ class ReservationProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       log('Admin ReservationProvider.searchReservations error: $e');
-      _errorMessage = 'Došlo je do greške pri pretrazi rezervacija.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri pretrazi rezervacija.',
+      );
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -98,7 +106,10 @@ class ReservationProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       log('Admin ReservationProvider.updateReservationStatus error: $e');
-      _errorMessage = 'Došlo je do greške pri ažuriranju statusa rezervacije.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri ažuriranju statusa rezervacije.',
+      );
       notifyListeners();
       return false;
     }
@@ -119,7 +130,10 @@ class ReservationProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       log('Admin ReservationProvider.checkInReservation error: $e');
-      _errorMessage = 'Došlo je do greške pri check-in-u rezervacije.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri check-in-u rezervacije.',
+      );
       notifyListeners();
       return false;
     }
@@ -140,7 +154,10 @@ class ReservationProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       log('Admin ReservationProvider.checkOutReservation error: $e');
-      _errorMessage = 'Došlo je do greške pri check-out-u rezervacije.';
+      _errorMessage = _messageFromError(
+        e,
+        'Došlo je do greške pri check-out-u rezervacije.',
+      );
       notifyListeners();
       return false;
     }

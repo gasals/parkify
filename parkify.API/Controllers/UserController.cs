@@ -26,14 +26,14 @@ namespace parkify.API.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request?.Username) || string.IsNullOrWhiteSpace(request.Password))
             {
                 return BadRequest(new { error = "Username i lozinka su obavezni." });
             }
 
-            var user = (_service as IUserService)?.Login(request.Username, request.Password);
+            var user = await (_service as IUserService)!.Login(request.Username, request.Password);
 
             if (user == null)
             {
@@ -45,34 +45,34 @@ namespace parkify.API.Controllers
 
         [HttpPost]
         [Authorize(Roles = AppRoles.Admin)]
-        public override User Insert([FromBody] UserInsertRequest request)
+        public override async Task<User> Insert([FromBody] UserInsertRequest request)
         {
-            return base.Insert(request);
+            return await base.Insert(request);
         }
 
         [HttpPut("{id}")]
-        public override User Update(int id, [FromBody] UserUpdateRequest request)
+        public override async Task<User> Update(int id, [FromBody] UserUpdateRequest request)
         {
             if (!CanAccessUser(id))
                 throw new UnauthorizedAccessException("Nemate pravo izmjene ovog korisnika.");
 
-            return base.Update(id, request);
+            return await base.Update(id, request);
         }
 
         [HttpGet("{id}")]
-        public override User GetById(int id)
+        public override async Task<User?> GetById(int id)
         {
             if (!CanAccessUser(id))
                 throw new UnauthorizedAccessException("Nemate pravo pristupa ovom korisniku.");
 
-            return base.GetById(id);
+            return await base.GetById(id);
         }
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public IActionResult Register([FromBody] UserInsertRequest request)
+        public async Task<IActionResult> Register([FromBody] UserInsertRequest request)
         {
-            var user = (_service as IUserService)?.Insert(request);
+            var user = await (_service as IUserService)!.Insert(request);
 
             if (user == null)
             {
@@ -93,9 +93,9 @@ namespace parkify.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = AppRoles.Admin)]
-        public override PagedResult<User> GetList([FromQuery] UserSearch searchObject)
+        public override async Task<PagedResult<User>> GetList([FromQuery] UserSearch searchObject)
         {
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         private bool CanAccessUser(int targetUserId)

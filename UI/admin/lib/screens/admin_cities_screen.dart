@@ -101,7 +101,9 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
     final provider = context.read<CityProvider>();
     SnackBarHelper.showMessage(
       context,
-      ok ? 'Grad je obrisan.' : (provider.errorMessage ?? 'Brisanje nije uspjelo.'),
+      ok
+          ? 'Grad je obrisan.'
+          : (provider.errorMessage ?? 'Brisanje nije uspjelo.'),
       ok,
     );
   }
@@ -115,16 +117,7 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                PageHeader.build(title: 'Gradovi'),
-                const Spacer(),
-                CommonButtons.buildAddButton(
-                  onPressed: () => _openCityDialog(),
-                  label: 'Dodaj grad',
-                ),
-              ],
-            ),
+            Row(children: [PageHeader.build(title: 'Gradovi')]),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(20),
@@ -147,6 +140,11 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
                     onPressed: _search,
                     isLoading: _isSearching,
                   ),
+                  const SizedBox(width: 12),
+                  CommonButtons.buildAddButton(
+                    onPressed: () => _openCityDialog(),
+                    label: 'Dodaj grad',
+                  ),
                 ],
               ),
             ),
@@ -156,7 +154,8 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
                 builder: (context, provider, _) {
                   final cities = provider.cities.where((city) {
                     final query = _searchController.text.trim().toLowerCase();
-                    return query.isEmpty || city.name.toLowerCase().contains(query);
+                    return query.isEmpty ||
+                        city.name.toLowerCase().contains(query);
                   }).toList();
 
                   if (provider.isLoading && cities.isEmpty) {
@@ -182,7 +181,10 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
                           ),
                           leading: CircleAvatar(
                             backgroundColor: kPrimary.withValues(alpha: 0.1),
-                            child: const Icon(Icons.location_city, color: kPrimary),
+                            child: const Icon(
+                              Icons.location_city,
+                              color: kPrimary,
+                            ),
                           ),
                           title: Text(
                             city.name,
@@ -197,12 +199,18 @@ class _AdminCitiesScreenState extends State<AdminCitiesScreen> {
                               IconButton(
                                 tooltip: 'Uredi grad',
                                 onPressed: () => _openCityDialog(city: city),
-                                icon: const Icon(Icons.edit_outlined, color: kPrimary),
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                  color: kPrimary,
+                                ),
                               ),
                               IconButton(
                                 tooltip: 'Obriši grad',
                                 onPressed: () => _deleteCity(city),
-                                icon: const Icon(Icons.delete_outline, color: kDanger),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: kDanger,
+                                ),
                               ),
                             ],
                           ),
@@ -308,10 +316,12 @@ class _CityDialogState extends State<_CityDialog> {
     }
 
     final name = _nameController.text.trim();
-    final latitude =
-        double.parse(_latitudeController.text.trim().replaceAll(',', '.'));
-    final longitude =
-        double.parse(_longitudeController.text.trim().replaceAll(',', '.'));
+    final latitude = double.parse(
+      _latitudeController.text.trim().replaceAll(',', '.'),
+    );
+    final longitude = double.parse(
+      _longitudeController.text.trim().replaceAll(',', '.'),
+    );
 
     setState(() => _isSaving = true);
     final provider = context.read<CityProvider>();
@@ -357,7 +367,9 @@ class _CityDialogState extends State<_CityDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             AdminDialogHeader(
-              icon: _isEdit ? Icons.edit_location_alt_outlined : Icons.add_location_alt_outlined,
+              icon: _isEdit
+                  ? Icons.edit_location_alt_outlined
+                  : Icons.add_location_alt_outlined,
               title: _isEdit ? 'Uredi grad' : 'Dodaj grad',
             ),
             Padding(
@@ -366,87 +378,107 @@ class _CityDialogState extends State<_CityDialog> {
                 key: _formKey,
                 child: Column(
                   children: [
-                  AdminFormField(
-                    controller: _nameController,
-                    label: 'Naziv grada',
-                    icon: Icons.location_city_outlined,
-                    validator: _validateName,
-                    enabled: !_isSaving,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AdminFormField(
-                          controller: _latitudeController,
-                          label: 'Latitude',
-                          icon: Icons.my_location_outlined,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: _validateLatitude,
-                          enabled: !_isSaving,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: AdminFormField(
-                          controller: _longitudeController,
-                          label: 'Longitude',
-                          icon: Icons.explore_outlined,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: _validateLongitude,
-                          enabled: !_isSaving,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      height: 260,
-                      child: FlutterMap(
-                        mapController: _mapController,
-                        options: MapOptions(
-                          initialCenter: _pickedLocation,
-                          initialZoom: 13,
-                          onTap: (_, point) {
-                            setState(() {
-                              _pickedLocation = point;
-                              _latitudeController.text = point.latitude.toStringAsFixed(6);
-                              _longitudeController.text = point.longitude.toStringAsFixed(6);
-                            });
-                          },
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'parkify.admin',
-                          ),
-                          MarkerLayer(markers: [
-                            Marker(
-                              point: _pickedLocation,
-                              width: 44,
-                              height: 44,
-                              child: const Icon(Icons.location_pin, size: 40, color: kPrimary),
+                    AdminFormField(
+                      controller: _nameController,
+                      label: 'Naziv grada',
+                      icon: Icons.location_city_outlined,
+                      validator: _validateName,
+                      enabled: !_isSaving,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AdminFormField(
+                            controller: _latitudeController,
+                            label: 'Latitude',
+                            icon: Icons.my_location_outlined,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
                             ),
-                          ]),
-                        ],
+                            validator: _validateLatitude,
+                            enabled: !_isSaving,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AdminFormField(
+                            controller: _longitudeController,
+                            label: 'Longitude',
+                            icon: Icons.explore_outlined,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            validator: _validateLongitude,
+                            enabled: !_isSaving,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        height: 260,
+                        child: FlutterMap(
+                          mapController: _mapController,
+                          options: MapOptions(
+                            initialCenter: _pickedLocation,
+                            initialZoom: 13,
+                            onTap: (_, point) {
+                              setState(() {
+                                _pickedLocation = point;
+                                _latitudeController.text = point.latitude
+                                    .toStringAsFixed(6);
+                                _longitudeController.text = point.longitude
+                                    .toStringAsFixed(6);
+                              });
+                            },
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'parkify.admin',
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: _pickedLocation,
+                                  width: 44,
+                                  height: 44,
+                                  child: const Icon(
+                                    Icons.location_pin,
+                                    size: 40,
+                                    color: kPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.info_outline, size: 16, color: kPrimary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Klikni na mapu da odabereš lokaciju grada.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: kPrimary,
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Klikni na mapu da odabereš lokaciju grada.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

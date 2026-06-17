@@ -15,20 +15,23 @@ namespace parkify.API.Controllers
         }
 
         [HttpGet]
-        public override PagedResult<Wallet> GetList([FromQuery] WalletSearchObject searchObject)
+        public override async Task<PagedResult<Wallet>> GetList([FromQuery] WalletSearchObject searchObject)
         {
             if (!IsCurrentUserAdmin())
             {
                 searchObject.UserId = GetCurrentUserIdOrThrow();
             }
 
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
-        public override Wallet GetById(int id)
+        public override async Task<Wallet?> GetById(int id)
         {
-            var wallet = base.GetById(id);
+            var wallet = await base.GetById(id);
+
+            if (wallet == null)
+                return null;
 
             if (!IsCurrentUserAdmin() && wallet.UserId != GetCurrentUserIdOrThrow())
                 throw new UnauthorizedAccessException("Nemate pravo pristupa ovom novčaniku.");

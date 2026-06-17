@@ -6,8 +6,8 @@ namespace parkify.Service.Interfaces
 {
     public interface IUserService : ICRUDService<User, UserSearch, UserInsertRequest, UserUpdateRequest>
     {
-        User Login(string username, string password);
-        User GetLoggedInUser(string username);
-        User Delete(int id);
+        Task<User?> Login(string username, string password);
+        Task<User?> GetLoggedInUser(string username);
+        Task<User> Delete(int id);
     }
 }

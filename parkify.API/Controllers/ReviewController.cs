@@ -14,20 +14,23 @@ namespace parkify.API.Controllers
         }
 
         [HttpGet]
-        public override PagedResult<Review> GetList([FromQuery] ReviewSearch searchObject)
+        public override async Task<PagedResult<Review>> GetList([FromQuery] ReviewSearch searchObject)
         {
             if (!IsCurrentUserAdmin())
             {
                 searchObject.UserId = GetCurrentUserIdOrThrow();
             }
 
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
-        public override Review GetById(int id)
+        public override async Task<Review?> GetById(int id)
         {
-            var review = base.GetById(id);
+            var review = await base.GetById(id);
+
+            if (review == null)
+                return null;
 
             if (!IsCurrentUserAdmin() && review.UserId != GetCurrentUserIdOrThrow())
                 throw new UnauthorizedAccessException("Nemate pravo pristupa ovoj recenziji.");
@@ -36,7 +39,7 @@ namespace parkify.API.Controllers
         }
 
         [HttpPost]
-        public override Review Insert([FromBody] ReviewInsertRequest request)
+        public override async Task<Review> Insert([FromBody] ReviewInsertRequest request)
         {
             var currentUserId = GetCurrentUserIdOrThrow();
             if (!IsCurrentUserAdmin())
@@ -48,20 +51,23 @@ namespace parkify.API.Controllers
                 request.UserId = currentUserId;
             }
 
-            return base.Insert(request);
+            return await base.Insert(request);
         }
 
         [HttpPut("{id}")]
-        public override Review Update(int id, [FromBody] ReviewUpdateRequest request)
+        public override async Task<Review> Update(int id, [FromBody] ReviewUpdateRequest request)
         {
             if (!IsCurrentUserAdmin())
             {
-                var review = base.GetById(id);
+                var review = await base.GetById(id);
+                if (review == null)
+                    throw new UnauthorizedAccessException("Recenzija nije pronađena.");
+
                 if (review.UserId != GetCurrentUserIdOrThrow())
                     throw new UnauthorizedAccessException("Nemate pravo izmjene ove recenzije.");
             }
 
-            return base.Update(id, request);
+            return await base.Update(id, request);
         }
     }
 }

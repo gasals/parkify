@@ -44,7 +44,7 @@ namespace parkify.Service.Services
             return query;
         }
 
-        public override void BeforeInsert(ParkingSpotInsertRequest request, Database.ParkingSpot entity)
+        public override Task BeforeInsert(ParkingSpotInsertRequest request, Database.ParkingSpot entity)
         {
             var parkingZone = Context.ParkingZones.Find(request.ParkingZoneId);
             if (parkingZone == null)
@@ -63,7 +63,7 @@ namespace parkify.Service.Services
 
             entity.SpotCode = $"Z{request.ParkingZoneId}/{request.RowNumber}-{request.ColumnNumber}";
 
-            base.BeforeInsert(request, entity);
+            return base.BeforeInsert(request, entity);
         }
 
         public ParkingSpot Delete(int id)

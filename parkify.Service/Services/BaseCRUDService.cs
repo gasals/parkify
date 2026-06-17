@@ -12,15 +12,15 @@ namespace parkify.Service.Services
         {
         }
 
-        public virtual TModel Insert(TInsert request)
+        public virtual async Task<TModel> Insert(TInsert request)
         {
-            using var transaction = Context.Database.BeginTransaction();
+            await using var transaction = await Context.Database.BeginTransactionAsync();
 
             TDbEntity entity = Mapper.Map<TDbEntity>(request);
 
             try
             {
-                BeforeInsert(request, entity);
+                await BeforeInsert(request, entity);
 
                 if (typeof(TDbEntity).GetProperty("Created") != null)
                 {
@@ -28,31 +28,31 @@ namespace parkify.Service.Services
                 }
 
                 Context.Add(entity);
-                Context.SaveChanges();
+                await Context.SaveChangesAsync();
 
-                AfterInsert(entity, request);
-                transaction.Commit();
+                await AfterInsert(entity, request);
+                await transaction.CommitAsync();
 
                 return Mapper.Map<TModel>(entity);
             }
             catch
             {
-                transaction.Rollback();
+                await transaction.RollbackAsync();
                 throw;
             }
         }
 
-        public virtual void BeforeInsert(TInsert request, TDbEntity entity) { }
+        public virtual Task BeforeInsert(TInsert request, TDbEntity entity) => Task.CompletedTask;
 
-        public virtual void AfterInsert(TDbEntity entity, TInsert request) { }
+        public virtual Task AfterInsert(TDbEntity entity, TInsert request) => Task.CompletedTask;
 
-        public virtual TModel Update(int id, TUpdate request)
+        public virtual async Task<TModel> Update(int id, TUpdate request)
         {
-            using var transaction = Context.Database.BeginTransaction();
+            await using var transaction = await Context.Database.BeginTransactionAsync();
 
             var set = Context.Set<TDbEntity>();
 
-            var entity = set.Find(id);
+            var entity = await set.FindAsync(id);
 
             try
             {
@@ -62,26 +62,26 @@ namespace parkify.Service.Services
 
                 Mapper.Config.Default.IgnoreNullValues(false);
 
-                BeforeUpdate(request, entity);
+                await BeforeUpdate(request, entity);
 
                 if (typeof(TDbEntity).GetProperty("Modified") != null)
                 {
                     typeof(TDbEntity)?.GetProperty("Modified")?.SetValue(entity, DateTime.UtcNow);
                 }
 
-                Context.SaveChanges();
-                transaction.Commit();
+                await Context.SaveChangesAsync();
+                await transaction.CommitAsync();
 
                 return Mapper.Map<TModel>(entity);
             }
             catch
             {
                 Mapper.Config.Default.IgnoreNullValues(false);
-                transaction.Rollback();
+                await transaction.RollbackAsync();
                 throw;
             }
         }
-        public virtual void BeforeUpdate(TUpdate request, TDbEntity entity) { }
+        public virtual Task BeforeUpdate(TUpdate request, TDbEntity entity) => Task.CompletedTask;
 
     }
 }

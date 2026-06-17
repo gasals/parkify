@@ -1,4 +1,5 @@
 using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 using parkify.Model.Models;
 using parkify.Model.Requests;
 using parkify.Model.SearchObject;
@@ -38,7 +39,7 @@ namespace parkify.Service.Services
             return query.OrderByDescending(x => x.Created);
         }
 
-        public override void BeforeUpdate(
+        public override Task BeforeUpdate(
             NotificationUpdateRequest request,
             Database.Notification entity)
         {
@@ -47,7 +48,7 @@ namespace parkify.Service.Services
                 entity.IsRead = true;
                 entity.ReadDate = DateTime.UtcNow;
             }
-            base.BeforeUpdate(request, entity);
+            return base.BeforeUpdate(request, entity);
         }
 
         public async Task SendToUser(NotificationInsertRequest request)
@@ -66,10 +67,10 @@ namespace parkify.Service.Services
 
         public async Task SendToAll(NotificationInsertRequest request)
         {
-            var userIds = Context.Users
+            var userIds = await Context.Users
                 .Where(u => u.IsActive)
                 .Select(u => u.Id)
-                .ToList();
+                .ToListAsync();
 
             var publishTasks = new List<Task>(userIds.Count);
 
@@ -90,24 +91,28 @@ namespace parkify.Service.Services
             await Task.WhenAll(publishTasks);
         }
 
-        public void SendSpecialOfferToAll(string title, string message)
+        public async Task SendSpecialOfferToAll(string title, string message)
         {
-            var userIds = Context.Users
+            var userIds = await Context.Users
                 .Where(u => u.IsActive)
                 .Select(u => u.Id)
-                .ToList();
+                .ToListAsync();
+
+            var publishTasks = new List<Task>(userIds.Count);
 
             foreach (var userId in userIds)
             {
-                _ = _publisher.PublishNotificationAsync(new NotificationMessage
+                publishTasks.Add(_publisher.PublishNotificationAsync(new NotificationMessage
                 {
                     UserId = userId,
                     Title = title,
                     Message = message,
                     Type = (int)NotificationType.SpecialOffer,
                     Channel = NotificationChannel.Both
-                });
+                }));
             }
+
+            await Task.WhenAll(publishTasks);
         }
     }
 }

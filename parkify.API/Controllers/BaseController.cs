@@ -19,15 +19,15 @@ namespace parkify.API.Controllers
             _service = service;
         }
         [HttpGet]
-        public virtual PagedResult<TModel> GetList([FromQuery] TSearch searchObject)
+        public virtual async Task<PagedResult<TModel>> GetList([FromQuery] TSearch searchObject)
         {
-            return _service.GetPaged(searchObject);
+            return await _service.GetPaged(searchObject);
         }
 
         [HttpGet("{id}")]
-        public virtual TModel GetById(int id)
+        public virtual async Task<TModel?> GetById(int id)
         {
-            return _service.GetById(id);
+            return await _service.GetById(id);
         }
 
         protected int GetCurrentUserIdOrThrow()

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../models/parking_zone_model.dart';
 import '../models/reservation_model.dart';
 import '../providers/auth_provider.dart';
+import '../providers/parking_zone_provider.dart';
 import '../providers/reservation_provider.dart';
 
 class MyReservationsScreen extends StatefulWidget {
@@ -17,6 +19,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
 
   int _currentPage = 1;
   bool _isFetchingMore = false;
+  DateTime? _fromDate;
+  DateTime? _toDate;
+  int? _selectedZoneId;
 
   @override
   void initState() {
@@ -27,8 +32,16 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.user?.id ?? 0;
+      final parkingZoneProvider = Provider.of<ParkingZoneProvider>(
+        context,
+        listen: false,
+      );
 
       if (mounted) {
+        if (parkingZoneProvider.parkingZones.isEmpty) {
+          parkingZoneProvider.getParkingZones(page: 1, pageSize: 200);
+        }
+
         Provider.of<ReservationProvider>(
           context,
           listen: false,
@@ -73,8 +86,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         title: const Text('Moje rezervacije'),
         backgroundColor: AppColors.primary,
       ),
-      body: Consumer<ReservationProvider>(
-        builder: (context, provider, _) {
+      body: Consumer2<ReservationProvider, ParkingZoneProvider>(
+        builder: (context, provider, parkingZoneProvider, _) {
+          final filteredReservations = _applyFilters(provider.reservations);
+          final hasActiveFilters =
+              _fromDate != null || _toDate != null || _selectedZoneId != null;
+
           if (provider.isLoading && provider.reservations.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -108,30 +125,225 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
             );
           }
 
-          return ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(12),
-            itemCount: provider.hasMore
-                ? provider.reservations.length + 1
-                : provider.reservations.length,
-            itemBuilder: (context, index) {
-              if (index < provider.reservations.length) {
-                final reservation = provider.reservations[index];
-                return _buildReservationCard(context, reservation);
-              } else {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-            },
+          return Column(
+            children: [
+              _buildFilters(parkingZoneProvider),
+              Expanded(
+                child: filteredReservations.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Nema rezervacija za odabrane filtere.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(12),
+                        itemCount: provider.hasMore && !hasActiveFilters
+                            ? filteredReservations.length + 1
+                            : filteredReservations.length,
+                        itemBuilder: (context, index) {
+                          if (index < filteredReservations.length) {
+                            final reservation = filteredReservations[index];
+                            final zoneName = _resolveZoneName(
+                              parkingZoneProvider.parkingZones,
+                              reservation.parkingZoneId,
+                            );
+                            return _buildReservationCard(
+                              context,
+                              reservation,
+                              zoneName,
+                            );
+                          }
+
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        },
+                      ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildReservationCard(BuildContext context, Reservation reservation) {
+  List<Reservation> _applyFilters(List<Reservation> source) {
+    return source.where((reservation) {
+      if (_selectedZoneId != null &&
+          reservation.parkingZoneId != _selectedZoneId) {
+        return false;
+      }
+
+      final startDate = DateTime(
+        reservation.reservationStart.year,
+        reservation.reservationStart.month,
+        reservation.reservationStart.day,
+      );
+
+      if (_fromDate != null) {
+        final from = DateTime(
+          _fromDate!.year,
+          _fromDate!.month,
+          _fromDate!.day,
+        );
+        if (startDate.isBefore(from)) {
+          return false;
+        }
+      }
+
+      if (_toDate != null) {
+        final to = DateTime(_toDate!.year, _toDate!.month, _toDate!.day);
+        if (startDate.isAfter(to)) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day.$month.${date.year}';
+  }
+
+  String _resolveZoneName(List<ParkingZone> zones, int zoneId) {
+    for (final zone in zones) {
+      if (zone.id == zoneId) {
+        return zone.name;
+      }
+    }
+    return 'Zona #$zoneId';
+  }
+
+  Future<void> _pickFromDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _fromDate ?? DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (selected == null) return;
+
+    setState(() {
+      _fromDate = selected;
+      if (_toDate != null && _toDate!.isBefore(_fromDate!)) {
+        _toDate = _fromDate;
+      }
+    });
+  }
+
+  Future<void> _pickToDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _toDate ?? _fromDate ?? DateTime.now(),
+      firstDate:
+          _fromDate ?? DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (selected == null) return;
+
+    setState(() {
+      _toDate = selected;
+    });
+  }
+
+  Widget _buildFilters(ParkingZoneProvider zoneProvider) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickFromDate,
+                  icon: const Icon(Icons.date_range, size: 18),
+                  label: Text(
+                    _fromDate == null ? 'Od datuma' : _formatDate(_fromDate!),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickToDate,
+                  icon: const Icon(Icons.event, size: 18),
+                  label: Text(
+                    _toDate == null ? 'Do datuma' : _formatDate(_toDate!),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int?>(
+                  value: _selectedZoneId,
+                  decoration: const InputDecoration(
+                    labelText: 'Zona',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('Sve zone'),
+                    ),
+                    ...zoneProvider.parkingZones.map(
+                      (zone) => DropdownMenuItem<int?>(
+                        value: zone.id,
+                        child: Text(zone.name, overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedZoneId = value;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _fromDate = null;
+                    _toDate = null;
+                    _selectedZoneId = null;
+                  });
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Očisti'),
+                style: TextButton.styleFrom(foregroundColor: Colors.grey),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReservationCard(
+    BuildContext context,
+    Reservation reservation,
+    String zoneName,
+  ) {
     final statusColor = _getStatusColor(reservation.status);
     final statusText = reservation.getStatusText();
     final statusIcon = _getStatusIcon(reservation.status);
@@ -235,6 +447,12 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildDetailRowWithIcon(
+                    Icons.local_parking,
+                    'Zona',
+                    zoneName,
+                  ),
+                  const SizedBox(height: 8),
                   _buildDetailRowWithIcon(
                     Icons.access_time,
                     'Početak',
@@ -371,10 +589,6 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                           context,
                           listen: false,
                         );
-                        final authProvider = Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
-                        );
                         final success = await provider.cancelReservation(
                           reservation.id,
                         );
@@ -384,14 +598,17 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                               content: Text('Rezervacija je otkazana'),
                             ),
                           );
+                        } else if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                provider.errorMessage ??
+                                    'Otkazivanje rezervacije nije uspjelo.',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         }
-                        await provider.getUserReservations(
-                          userId: authProvider.user?.id ?? 0,
-                          page: 1,
-                        );
-                        setState(() {
-                          _currentPage = 1;
-                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
@@ -464,10 +681,6 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                           context,
                           listen: false,
                         );
-                        final authProvider = Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
-                        );
                         final success = await provider.confirmReservation(
                           reservation.id,
                         );
@@ -477,14 +690,17 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                               content: Text('Rezervacija je potvrđena'),
                             ),
                           );
+                        } else if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                provider.errorMessage ??
+                                    'Potvrda rezervacije nije uspjela.',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         }
-                        await provider.getUserReservations(
-                          userId: authProvider.user?.id ?? 0,
-                          page: 1,
-                        );
-                        setState(() {
-                          _currentPage = 1;
-                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

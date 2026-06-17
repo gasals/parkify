@@ -22,21 +22,24 @@ namespace parkify.API.Controllers
 
         [HttpGet]
         [Authorize]
-        public override PagedResult<Payment> GetList([FromQuery] PaymentSearch searchObject)
+        public override async Task<PagedResult<Payment>> GetList([FromQuery] PaymentSearch searchObject)
         {
             if (!IsCurrentUserAdmin())
             {
                 searchObject.UserId = GetCurrentUserIdOrThrow();
             }
 
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
         [Authorize]
-        public override Payment GetById(int id)
+        public override async Task<Payment?> GetById(int id)
         {
-            var payment = base.GetById(id);
+            var payment = await base.GetById(id);
+
+            if (payment == null)
+                return null;
 
             if (!IsCurrentUserAdmin() && payment.UserId != GetCurrentUserIdOrThrow())
                 throw new UnauthorizedAccessException("Nemate pravo pristupa ovom plaćanju.");
@@ -46,7 +49,7 @@ namespace parkify.API.Controllers
 
         [HttpPost]
         [Authorize]
-        public override Payment Insert([FromBody] PaymentInsertRequest request)
+        public override async Task<Payment> Insert([FromBody] PaymentInsertRequest request)
         {
             var currentUserId = GetCurrentUserIdOrThrow();
             if (!IsCurrentUserAdmin())
@@ -58,14 +61,14 @@ namespace parkify.API.Controllers
                 request.UserId = currentUserId;
             }
 
-            return base.Insert(request);
+            return await base.Insert(request);
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = AppRoles.Admin)]
-        public override Payment Update(int id, [FromBody] PaymentUpdateRequest request)
+        public override async Task<Payment> Update(int id, [FromBody] PaymentUpdateRequest request)
         {
-            return base.Update(id, request);
+            return await base.Update(id, request);
         }
 
         [HttpPost("create-with-intent")]
@@ -92,7 +95,10 @@ namespace parkify.API.Controllers
         {
             if (!IsCurrentUserAdmin())
             {
-                var existingPayment = base.GetById(id);
+                var existingPayment = await base.GetById(id);
+                if (existingPayment == null)
+                    return NotFound();
+
                 if (existingPayment.UserId != GetCurrentUserIdOrThrow())
                     throw new UnauthorizedAccessException("Nemate pravo potvrde ovog plaćanja.");
             }
@@ -112,7 +118,10 @@ namespace parkify.API.Controllers
 
             if (!IsCurrentUserAdmin())
             {
-                var existingPayment = base.GetById(id);
+                var existingPayment = await base.GetById(id);
+                if (existingPayment == null)
+                    return NotFound();
+
                 if (existingPayment.UserId != GetCurrentUserIdOrThrow())
                     throw new UnauthorizedAccessException("Nemate pravo refundacije ovog plaćanja.");
             }

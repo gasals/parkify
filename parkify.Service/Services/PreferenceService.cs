@@ -49,7 +49,7 @@ namespace parkify.Service.Services
                     NotifyAboutOffers = true
                 };
 
-                var created = Insert(newPreference);
+                var created = await Insert(newPreference);
                 return created;
             }
 
@@ -67,7 +67,7 @@ namespace parkify.Service.Services
                 throw new UserException("Korisničke preference nisu pronađene");
             }
 
-            Update(preference.Id, request);
+            await Update(preference.Id, request);
             return Mapper.Map<Preference>(preference);
         }
     }

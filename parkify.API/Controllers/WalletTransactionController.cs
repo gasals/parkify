@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using parkify.Model.Helpers;
 using parkify.Model.Models;
 using parkify.Model.SearchObject;
@@ -19,15 +20,15 @@ namespace parkify.API.Controllers
         }
 
         [HttpGet]
-        public override PagedResult<WalletTransaction> GetList([FromQuery] WalletTransactionSearchObject searchObject)
+        public override async Task<PagedResult<WalletTransaction>> GetList([FromQuery] WalletTransactionSearchObject searchObject)
         {
             if (!IsCurrentUserAdmin())
             {
                 var currentUserId = GetCurrentUserIdOrThrow();
-                var walletId = _context.Wallets
+                var walletId = await _context.Wallets
                     .Where(w => w.UserId == currentUserId)
                     .Select(w => (int?)w.Id)
-                    .FirstOrDefault();
+                    .FirstOrDefaultAsync();
 
                 if (!walletId.HasValue)
                     return new PagedResult<WalletTransaction>();
@@ -35,18 +36,20 @@ namespace parkify.API.Controllers
                 searchObject.WalletId = walletId.Value;
             }
 
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
-        public override WalletTransaction GetById(int id)
+        public override async Task<WalletTransaction?> GetById(int id)
         {
-            var item = base.GetById(id);
+            var item = await base.GetById(id);
+            if (item == null)
+                return null;
 
             if (!IsCurrentUserAdmin())
             {
                 var currentUserId = GetCurrentUserIdOrThrow();
-                var isOwner = _context.Wallets.Any(w => w.Id == item.WalletId && w.UserId == currentUserId);
+                var isOwner = await _context.Wallets.AnyAsync(w => w.Id == item.WalletId && w.UserId == currentUserId);
                 if (!isOwner)
                     throw new UnauthorizedAccessException("Nemate pravo pristupa ovoj transakciji.");
             }

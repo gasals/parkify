@@ -38,7 +38,7 @@ namespace parkify.Service.Services
             return query;
         }
 
-        public override void BeforeInsert(ReviewInsertRequest request, Database.Review entity)
+        public override Task BeforeInsert(ReviewInsertRequest request, Database.Review entity)
         {
             var hasCompletedReservation = Context.Reservations.Any(x =>
                 x.UserId == request.UserId &&
@@ -56,10 +56,10 @@ namespace parkify.Service.Services
 
             entity.ReviewText = request.ReviewText.Trim();
 
-            base.BeforeInsert(request, entity);
+            return base.BeforeInsert(request, entity);
         }
 
-        public override void BeforeUpdate(ReviewUpdateRequest request, Database.Review entity)
+        public override Task BeforeUpdate(ReviewUpdateRequest request, Database.Review entity)
         {
             if (request.ReviewText != null)
             {
@@ -69,7 +69,7 @@ namespace parkify.Service.Services
                 entity.ReviewText = request.ReviewText.Trim();
             }
 
-            base.BeforeUpdate(request, entity);
+            return base.BeforeUpdate(request, entity);
         }
     }
 }

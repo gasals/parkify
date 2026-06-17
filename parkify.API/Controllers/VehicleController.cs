@@ -16,20 +16,23 @@ namespace parkify.API.Controllers
         }
 
         [HttpGet]
-        public override PagedResult<Vehicle> GetList([FromQuery] VehicleSearchObject searchObject)
+        public override async Task<PagedResult<Vehicle>> GetList([FromQuery] VehicleSearchObject searchObject)
         {
             if (!IsCurrentUserAdmin())
             {
                 searchObject.UserId = GetCurrentUserIdOrThrow();
             }
 
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
-        public override Vehicle GetById(int id)
+        public override async Task<Vehicle?> GetById(int id)
         {
-            var vehicle = base.GetById(id);
+            var vehicle = await base.GetById(id);
+
+            if (vehicle == null)
+                return null;
 
             if (!IsCurrentUserAdmin() && vehicle.UserId != GetCurrentUserIdOrThrow())
                 throw new UnauthorizedAccessException("Nemate pravo pristupa ovom vozilu.");
@@ -38,7 +41,7 @@ namespace parkify.API.Controllers
         }
 
         [HttpPost]
-        public override Vehicle Insert([FromBody] VehicleInsertRequest request)
+        public override async Task<Vehicle> Insert([FromBody] VehicleInsertRequest request)
         {
             var currentUserId = GetCurrentUserIdOrThrow();
             if (!IsCurrentUserAdmin())
@@ -50,20 +53,23 @@ namespace parkify.API.Controllers
                 request.UserId = currentUserId;
             }
 
-            return base.Insert(request);
+            return await base.Insert(request);
         }
 
         [HttpPut("{id}")]
-        public override Vehicle Update(int id, [FromBody] VehicleUpdateRequest request)
+        public override async Task<Vehicle> Update(int id, [FromBody] VehicleUpdateRequest request)
         {
             if (!IsCurrentUserAdmin())
             {
-                var vehicle = base.GetById(id);
+                var vehicle = await base.GetById(id);
+                if (vehicle == null)
+                    throw new UnauthorizedAccessException("Vozilo nije pronađeno.");
+
                 if (vehicle.UserId != GetCurrentUserIdOrThrow())
                     throw new UnauthorizedAccessException("Nemate pravo izmjene ovog vozila.");
             }
 
-            return base.Update(id, request);
+            return await base.Update(id, request);
         }
     }
 }

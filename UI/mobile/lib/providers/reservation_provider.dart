@@ -16,6 +16,16 @@ class ReservationProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get hasMore => _hasMore;
 
+  void _upsertReservation(Reservation reservation) {
+    final index = _reservations.indexWhere((r) => r.id == reservation.id);
+    if (index == -1) {
+      _reservations.add(reservation);
+      return;
+    }
+
+    _reservations[index] = reservation;
+  }
+
   Future<Reservation> createReservation(
     ReservationCreateRequest request,
   ) async {
@@ -30,7 +40,10 @@ class ReservationProvider extends ChangeNotifier {
       return reservation;
     } catch (e) {
       log('ReservationProvider.createReservation error: $e');
-      _errorMessage = 'Došlo je do greške pri kreiranju rezervacije.';
+      _errorMessage = ApiService.userFriendlyError(
+        e,
+        fallback: 'Došlo je do greške pri kreiranju rezervacije.',
+      );
       notifyListeners();
       rethrow;
     } finally {
@@ -67,7 +80,10 @@ class ReservationProvider extends ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       log('ReservationProvider.getUserReservations error: $e');
-      _errorMessage = 'Došlo je do greške pri učitavanju rezervacija.';
+      _errorMessage = ApiService.userFriendlyError(
+        e,
+        fallback: 'Došlo je do greške pri učitavanju rezervacija.',
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -80,13 +96,18 @@ class ReservationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await ApiService.cancelReservation(reservationId);
-      _reservations.removeWhere((r) => r.id == reservationId);
+      final cancelledReservation = await ApiService.cancelReservation(
+        reservationId,
+      );
+      _upsertReservation(cancelledReservation);
       notifyListeners();
       return true;
     } catch (e) {
       log('ReservationProvider.cancelReservation error: $e');
-      _errorMessage = 'Došlo je do greške pri otkazivanju rezervacije.';
+      _errorMessage = ApiService.userFriendlyError(
+        e,
+        fallback: 'Došlo je do greške pri otkazivanju rezervacije.',
+      );
       notifyListeners();
       return false;
     } finally {
@@ -101,12 +122,18 @@ class ReservationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await ApiService.confirmReservation(reservationId);
+      final confirmedReservation = await ApiService.confirmReservation(
+        reservationId,
+      );
+      _upsertReservation(confirmedReservation);
       notifyListeners();
       return true;
     } catch (e) {
       log('ReservationProvider.confirmReservation error: $e');
-      _errorMessage = 'Došlo je do greške pri potvrdi rezervacije.';
+      _errorMessage = ApiService.userFriendlyError(
+        e,
+        fallback: 'Došlo je do greške pri potvrdi rezervacije.',
+      );
       notifyListeners();
       return false;
     } finally {

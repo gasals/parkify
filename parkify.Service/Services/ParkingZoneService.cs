@@ -1,5 +1,6 @@
 ﻿using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using parkify.Model.Exceptions;
 using parkify.Model.Models;
 using parkify.Model.Requests;
@@ -12,9 +13,12 @@ namespace parkify.Service.Services
         : BaseCRUDService<ParkingZone, ParkingZoneSearch, Database.ParkingZone, ParkingZoneInsertRequest, ParkingZoneUpdateRequest>,
           IParkingZoneService
     {
-        public ParkingZoneService(Database.ParkifyContext context, IMapper mapper)
+        private readonly IMemoryCache _memoryCache;
+
+        public ParkingZoneService(Database.ParkifyContext context, IMapper mapper, IMemoryCache memoryCache)
             : base(context, mapper)
         {
+            _memoryCache = memoryCache;
         }
 
         public override IQueryable<Database.ParkingZone> AddFilter(ParkingZoneSearch search, IQueryable<Database.ParkingZone> query)
@@ -39,55 +43,62 @@ namespace parkify.Service.Services
             return query;
         }
 
-        public List<ParkingZone> GetRecommendations(int userId, int count = 5)
+        public async Task<List<ParkingZone>> GetRecommendations(int userId, int count = 5)
         {
-            return GetRecommendationsWithExplanation(userId, count)
+            var recommendations = await GetRecommendationsWithExplanation(userId, count);
+            return recommendations
                 .Select(x => x.Zone)
                 .ToList();
         }
 
-        public List<ParkingZoneRecommendation> GetRecommendationsWithExplanation(int userId, int count = 5)
+        public async Task<List<ParkingZoneRecommendation>> GetRecommendationsWithExplanation(int userId, int count = 5)
         {
             var take = Math.Clamp(count, 1, 20);
 
-            var zones = Context.ParkingZones
-                .AsNoTracking()
-                .Where(x => x.IsActive)
-                .ToList();
+            var zones = await _memoryCache.GetOrCreateAsync("parking-zones-active-v1", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
+                return await Context.ParkingZones
+                    .AsNoTracking()
+                    .Where(x => x.IsActive)
+                    .ToListAsync();
+            }) ?? new List<Database.ParkingZone>();
 
             if (!zones.Any())
             {
                 return new List<ParkingZoneRecommendation>();
             }
 
-            var preference = Context.Preferences
+            var preference = await Context.Preferences
                 .AsNoTracking()
-                .FirstOrDefault(x => x.UserId == userId);
+                .FirstOrDefaultAsync(x => x.UserId == userId);
 
-            var userReservations = Context.Reservations
+            var zoneMetrics = await Context.ParkingZones
+                .AsNoTracking()
+                .Where(x => x.IsActive)
+                .Select(x => new
+                {
+                    x.Id,
+                    ReservationCount = Context.Reservations.Count(r => r.UserId == userId && r.ParkingZoneId == x.Id),
+                    UserRating = Context.Reviews
+                        .Where(r => r.UserId == userId && r.ParkingZoneId == x.Id)
+                        .Select(r => (int?)r.Rating)
+                        .Max() ?? 0,
+                    AverageRating = Math.Round(
+                        Context.Reviews
+                            .Where(r => r.ParkingZoneId == x.Id)
+                            .Select(r => (double?)r.Rating)
+                            .Average() ?? 0,
+                        2)
+                })
+                .ToDictionaryAsync(x => x.Id);
+
+            var lastReservationZoneId = await Context.Reservations
                 .AsNoTracking()
                 .Where(x => x.UserId == userId)
-                .ToList();
-
-            var reservationCounts = userReservations
-                .GroupBy(x => x.ParkingZoneId)
-                .ToDictionary(x => x.Key, x => x.Count());
-
-            var lastReservationZoneId = userReservations
                 .OrderByDescending(x => x.ReservationStart)
                 .Select(x => (int?)x.ParkingZoneId)
-                .FirstOrDefault();
-
-            var userRatings = Context.Reviews
-                .AsNoTracking()
-                .Where(x => x.UserId == userId)
-                .GroupBy(x => x.ParkingZoneId)
-                .ToDictionary(x => x.Key, x => x.Max(y => y.Rating));
-
-            var averageRatings = Context.Reviews
-                .AsNoTracking()
-                .GroupBy(x => x.ParkingZoneId)
-                .ToDictionary(x => x.Key, x => Math.Round(x.Average(y => y.Rating), 2));
+                .FirstOrDefaultAsync();
 
             var referenceZone = zones.FirstOrDefault(x => x.Id == preference?.FavoriteParkingZoneId)
                 ?? zones.FirstOrDefault(x => x.Id == lastReservationZoneId);
@@ -96,16 +107,18 @@ namespace parkify.Service.Services
                 .Select(zone =>
                 {
                     var mappedZone = Mapper.Map<ParkingZone>(zone);
-                    mappedZone.AverageRating = averageRatings.TryGetValue(zone.Id, out var avgRating)
-                        ? avgRating
-                        : 0;
+                    var metrics = zoneMetrics.TryGetValue(zone.Id, out var metric)
+                        ? metric
+                        : null;
+
+                    mappedZone.AverageRating = metrics?.AverageRating ?? 0;
 
                     var breakdown = CalculateRecommendationBreakdown(
                         zone,
                         preference,
                         referenceZone,
-                        reservationCounts.TryGetValue(zone.Id, out var reservationCount) ? reservationCount : 0,
-                        userRatings.TryGetValue(zone.Id, out var userRating) ? userRating : 0,
+                        metrics?.ReservationCount ?? 0,
+                        metrics?.UserRating ?? 0,
                         mappedZone.AverageRating);
 
                     return new ZoneRecommendationResult(mappedZone, breakdown.Score, breakdown.Reasons);

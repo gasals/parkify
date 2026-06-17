@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 using parkify.Model.Helpers;
 using parkify.Model.SearchObject;
 using parkify.Service.Database;
@@ -17,24 +18,23 @@ namespace parkify.Service.Services
             Mapper = mapper;
         }
 
-        public PagedResult<TModel> GetPaged(TSearch searchObject)
+        public async Task<PagedResult<TModel>> GetPaged(TSearch searchObject)
         {
-
             List<TModel> result = new List<TModel>();
+
+            searchObject ??= Activator.CreateInstance<TSearch>();
+            searchObject.NormalizePaging();
 
             var query = Context.Set<TDbEntity>().AsQueryable();
 
             query = AddFilter(searchObject, query);
 
-            int count = query.Count();
+            int count = await query.CountAsync();
 
-            if (searchObject?.Page.HasValue == true && searchObject?.PageSize.HasValue == true)
-            {
-                int skip = searchObject.Page.Value - 1;
-                query = query.Skip(skip * searchObject.PageSize.Value).Take(searchObject.PageSize.Value);
-            }
+            int skip = searchObject.Page - 1;
+            query = query.Skip(skip * searchObject.PageSize).Take(searchObject.PageSize);
 
-            var list = query.ToList();
+            var list = await query.ToListAsync();
 
             result = Mapper.Map(list, result);
 
@@ -51,9 +51,9 @@ namespace parkify.Service.Services
             return query;
         }
 
-        public virtual TModel GetById(int id)
+        public virtual async Task<TModel?> GetById(int id)
         {
-            var entity = Context.Set<TDbEntity>().Find(id);
+            var entity = await Context.Set<TDbEntity>().FindAsync(id);
 
             if (entity != null)
             {

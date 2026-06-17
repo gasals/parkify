@@ -17,46 +17,46 @@ namespace parkify.API.Controllers
 
         [HttpPost]
         [Authorize(Roles = AppRoles.Admin)]
-        public override ParkingZone Insert(ParkingZoneInsertRequest request)
+        public override async Task<ParkingZone> Insert(ParkingZoneInsertRequest request)
         {
-            return base.Insert(request);
+            return await base.Insert(request);
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = AppRoles.Admin)]
-        public override ParkingZone Update(int id, ParkingZoneUpdateRequest request)
+        public override async Task<ParkingZone> Update(int id, ParkingZoneUpdateRequest request)
         {
-            return base.Update(id, request);
+            return await base.Update(id, request);
         }
 
         [HttpGet]
         [Authorize]
-        public override PagedResult<ParkingZone> GetList([FromQuery] ParkingZoneSearch searchObject)
+        public override async Task<PagedResult<ParkingZone>> GetList([FromQuery] ParkingZoneSearch searchObject)
         {
-            return base.GetList(searchObject);
+            return await base.GetList(searchObject);
         }
 
         [HttpGet("{id}")]
         [Authorize]
-        public override ParkingZone GetById(int id)
+        public override async Task<ParkingZone?> GetById(int id)
         {
-            return base.GetById(id);
+            return await base.GetById(id);
         }
 
         [HttpGet("recommendations")]
         [Authorize]
-        public IActionResult GetRecommendations([FromQuery] int count = 5, [FromQuery] int? userId = null)
+        public async Task<IActionResult> GetRecommendations([FromQuery] int count = 5, [FromQuery] int? userId = null)
         {
             var effectiveUserId = ResolveRecommendationUserId(userId);
-            return Ok((_service as IParkingZoneService)!.GetRecommendations(effectiveUserId, count));
+            return Ok(await (_service as IParkingZoneService)!.GetRecommendations(effectiveUserId, count));
         }
 
         [HttpGet("recommendations/explained")]
         [Authorize]
-        public IActionResult GetRecommendationsExplained([FromQuery] int count = 5, [FromQuery] int? userId = null)
+        public async Task<IActionResult> GetRecommendationsExplained([FromQuery] int count = 5, [FromQuery] int? userId = null)
         {
             var effectiveUserId = ResolveRecommendationUserId(userId);
-            return Ok((_service as IParkingZoneService)!.GetRecommendationsWithExplanation(effectiveUserId, count));
+            return Ok(await (_service as IParkingZoneService)!.GetRecommendationsWithExplanation(effectiveUserId, count));
         }
 
         [HttpDelete("{id}")]
